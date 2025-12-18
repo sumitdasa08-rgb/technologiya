@@ -50,7 +50,7 @@ const TestimonialsSection = () => {
   }, []);
 
   return (
-    <section id="testimonials" ref={sectionRef} className="py-32 bg-card">
+    <section id="reviews" ref={sectionRef} className="py-32 bg-card">
       <div className="container mx-auto px-4">
         <div className={`text-center mb-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <span className="text-sm font-medium text-muted-foreground tracking-widest uppercase">Testimonials</span>
