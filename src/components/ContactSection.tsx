@@ -1,8 +1,8 @@
-import { Phone, Mail, MapPin, Clock, Send } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const ContactSection = () => {
@@ -12,6 +12,25 @@ const ContactSection = () => {
     issue: "",
     message: "",
   });
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,75 +38,62 @@ const ContactSection = () => {
     setFormData({ name: "", phone: "", issue: "", message: "" });
   };
 
+  const contactInfo = [
+    { icon: Phone, label: "Phone", value: "8812910655", href: "tel:8812910655" },
+    { icon: Mail, label: "Email", value: "techfixpro@service.com", href: "mailto:techfixpro@service.com" },
+    { icon: Clock, label: "Hours", value: "Mon-Sat: 9AM-9PM", href: null },
+    { icon: MapPin, label: "Service", value: "Home Visit Available", href: null },
+  ];
+
   return (
-    <section id="contact" className="py-24 bg-card/50">
+    <section id="contact" ref={sectionRef} className="py-32 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <span className="text-primary font-medium text-sm uppercase tracking-wider">Get In Touch</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-4">
-            Book Your Service
+        <div className={`text-center mb-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <span className="text-sm font-medium text-muted-foreground tracking-widest uppercase">Contact</span>
+          <h2 className="text-4xl md:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight">
+            Get in touch.
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Ready to fix your tech issues? Fill out the form or call us directly. We respond within minutes!
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light">
+            Ready to fix your tech? Fill out the form or call us directly.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-16 max-w-5xl mx-auto">
           {/* Contact Info */}
-          <div className="space-y-8">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Phone className="w-6 h-6 text-primary" />
+          <div className={`space-y-8 transition-all duration-700 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+            {contactInfo.map((item, index) => (
+              <div key={index} className="flex items-start gap-5">
+                <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-5 h-5 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1">{item.label}</h3>
+                  {item.href ? (
+                    <a href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                      {item.value}
+                    </a>
+                  ) : (
+                    <p className="text-muted-foreground">{item.value}</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Phone</h3>
-                <a href="tel:8812910655" className="text-muted-foreground hover:text-primary transition-colors text-lg">
-                  8812910655
-                </a>
-              </div>
-            </div>
+            ))}
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                <Mail className="w-6 h-6 text-secondary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                <p className="text-muted-foreground">techfixpro@service.com</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Working Hours</h3>
-                <p className="text-muted-foreground">Mon - Sat: 9:00 AM - 9:00 PM</p>
-                <p className="text-muted-foreground">Sunday: 10:00 AM - 6:00 PM</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-6 h-6 text-secondary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Location</h3>
-                <p className="text-muted-foreground">Home Visit & Remote Support Available</p>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-              <p className="text-foreground font-medium mb-2">💡 Quick Tip</p>
-              <p className="text-sm text-muted-foreground">
-                Call us directly at <span className="text-primary font-medium">8812910655</span> for faster response and immediate booking!
+            <div className="p-6 rounded-2xl bg-card border border-border mt-8">
+              <p className="text-foreground font-medium mb-2">Quick Tip</p>
+              <p className="text-sm text-muted-foreground font-light">
+                Call us directly at <span className="text-foreground font-medium">8812910655</span> for faster response and immediate booking!
               </p>
             </div>
           </div>
 
           {/* Contact Form */}
-          <form onSubmit={handleSubmit} className="bg-card p-8 rounded-2xl border border-border">
+          <form 
+            onSubmit={handleSubmit} 
+            className={`p-8 rounded-3xl bg-card border border-border transition-all duration-700 ${
+              isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
+            }`}
+          >
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Your Name</label>
@@ -96,7 +102,7 @@ const ContactSection = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="bg-input border-border"
+                  className="bg-background border-border rounded-xl h-12"
                 />
               </div>
               <div>
@@ -106,7 +112,7 @@ const ContactSection = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
-                  className="bg-input border-border"
+                  className="bg-background border-border rounded-xl h-12"
                 />
               </div>
               <div>
@@ -116,7 +122,7 @@ const ContactSection = () => {
                   value={formData.issue}
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                   required
-                  className="bg-input border-border"
+                  className="bg-background border-border rounded-xl h-12"
                 />
               </div>
               <div>
@@ -126,14 +132,14 @@ const ContactSection = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   rows={4}
-                  className="bg-input border-border resize-none"
+                  className="bg-background border-border resize-none rounded-xl"
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:opacity-90 py-6"
+                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-300 hover:scale-[1.02]"
               >
-                <Send className="w-4 h-4 mr-2" /> Book Service
+                Book Service <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </form>
