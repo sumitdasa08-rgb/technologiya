@@ -32,6 +32,20 @@ const ContactSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Listen for prefill events from services section
+  useEffect(() => {
+    const handlePrefill = (e: CustomEvent<{ issue: string; message: string }>) => {
+      setFormData(prev => ({
+        ...prev,
+        issue: e.detail.issue,
+        message: e.detail.message,
+      }));
+    };
+
+    window.addEventListener("prefillContact", handlePrefill as EventListener);
+    return () => window.removeEventListener("prefillContact", handlePrefill as EventListener);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success("Booking request sent! We'll call you shortly.");

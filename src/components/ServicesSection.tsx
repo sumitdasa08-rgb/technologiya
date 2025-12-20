@@ -1,5 +1,6 @@
-import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings } from "lucide-react";
+import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const services = [
   {
@@ -61,6 +62,34 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const handleServiceClick = (title: string, description: string) => {
+    const contactSection = document.getElementById("contact");
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: "smooth" });
+      // Dispatch custom event to pre-fill form
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("prefillContact", {
+          detail: { issue: title, message: description }
+        }));
+      }, 500);
+    }
+  };
+
+  const handleBookSlot = () => {
+    const contactSection = document.getElementById("contact");
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("prefillContact", {
+          detail: { 
+            issue: "Book Slot - ₹150 Consultation", 
+            message: "I want to book a slot for ₹150 for computer/mobile software related issue consultation." 
+          }
+        }));
+      }, 500);
+    }
+  };
+
   return (
     <section id="services" ref={sectionRef} className="py-32 bg-background">
       <div className="container mx-auto px-4">
@@ -78,6 +107,7 @@ const ServicesSection = () => {
           {services.map((service, index) => (
             <div 
               key={index}
+              onClick={() => handleServiceClick(service.title, service.description)}
               className={`group p-8 rounded-3xl bg-card border border-border hover:border-foreground/20 transition-all duration-500 hover:shadow-xl cursor-pointer ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
@@ -94,6 +124,30 @@ const ServicesSection = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Book Slot Section */}
+        <div className={`mt-16 p-8 md:p-12 rounded-3xl bg-card border border-border transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '600ms' }}>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-foreground flex items-center justify-center">
+                <Calendar className="w-8 h-8 text-background" />
+              </div>
+              <div>
+                <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Book Your Slot Now</h3>
+                <p className="text-muted-foreground font-light">For any type of computer/mobile software related issue</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-3xl md:text-4xl font-bold text-foreground">₹150</span>
+              <Button 
+                onClick={handleBookSlot}
+                className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8 rounded-full font-medium transition-all duration-300 hover:scale-105"
+              >
+                Book Now
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
