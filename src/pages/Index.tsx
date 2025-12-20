@@ -6,6 +6,7 @@ import TeamSection from "@/components/TeamSection";
 import PrivacySection from "@/components/PrivacySection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { Helmet } from "react-helmet-async";
 
 const Index = () => {
@@ -25,6 +26,7 @@ const Index = () => {
         <PrivacySection />
         <ContactSection />
         <Footer />
+        <WhatsAppButton />
       </main>
     </>
   );
