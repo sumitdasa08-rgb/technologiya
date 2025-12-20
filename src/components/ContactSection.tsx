@@ -1,4 +1,4 @@
-import { Phone, Mail, Clock, MapPin, ArrowRight } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,7 +93,7 @@ const ContactSection = () => {
               </div>
             ))}
 
-            <div className="p-6 rounded-2xl bg-card border border-border mt-8">
+            <div className="glass-card p-6 rounded-2xl mt-8">
               <p className="text-foreground font-medium mb-2">Quick Tip</p>
               <p className="text-sm text-muted-foreground font-light">
                 Call us directly at <span className="text-foreground font-medium">8812910655</span> for faster response and immediate booking!
@@ -104,7 +104,7 @@ const ContactSection = () => {
           {/* Contact Form */}
           <form 
             onSubmit={handleSubmit} 
-            className={`p-8 rounded-3xl bg-card border border-border transition-all duration-700 ${
+            className={`glass-card p-8 rounded-3xl transition-all duration-700 ease-apple ${
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
             }`}
           >
@@ -116,7 +116,7 @@ const ContactSection = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="bg-background border-border rounded-xl h-12"
+                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
                 />
               </div>
               <div>
@@ -126,7 +126,7 @@ const ContactSection = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
-                  className="bg-background border-border rounded-xl h-12"
+                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
                 />
               </div>
               <div>
@@ -136,7 +136,7 @@ const ContactSection = () => {
                   value={formData.issue}
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                   required
-                  className="bg-background border-border rounded-xl h-12"
+                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
                 />
               </div>
               <div>
@@ -146,15 +146,23 @@ const ContactSection = () => {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   rows={4}
-                  className="bg-background border-border resize-none rounded-xl"
+                  className="bg-background/50 border-border/50 resize-none rounded-xl backdrop-blur-sm transition-all duration-300 focus:bg-background"
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-300 hover:scale-[1.02]"
+                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-[1.02] hover:shadow-lg"
               >
                 Book Service <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
+              
+              {/* Money Back Guarantee */}
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">100% Money Back Guarantee</span> if not solved
+                </p>
+              </div>
             </div>
           </form>
         </div>
