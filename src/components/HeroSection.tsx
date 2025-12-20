@@ -53,18 +53,18 @@ const HeroSection = () => {
           </Button>
         </div>
 
-        <div className="opacity-0 animate-fade-up delay-500 mt-24 grid grid-cols-2 md:grid-cols-4 gap-12 max-w-3xl mx-auto">
+        <div className="opacity-0 animate-fade-up delay-500 mt-24 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {[
             { number: "500+", label: "Devices Fixed" },
             { number: "100%", label: "Transparent" },
             { number: "24hr", label: "Quick Service" },
             { number: "5★", label: "Customer Rating" },
           ].map((stat, index) => (
-            <div key={index} className="text-center group">
-              <div className="text-4xl md:text-5xl font-bold text-foreground mb-2 transition-transform duration-300 group-hover:scale-110">
+            <div key={index} className="glass-card rounded-2xl p-6 text-center group hover-lift">
+              <div className="text-3xl md:text-4xl font-semibold text-foreground mb-2 tracking-tight">
                 {stat.number}
               </div>
-              <div className="text-sm text-muted-foreground tracking-wide">{stat.label}</div>
+              <div className="text-xs text-muted-foreground tracking-wide uppercase">{stat.label}</div>
             </div>
           ))}
         </div>

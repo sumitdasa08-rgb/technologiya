@@ -14,8 +14,8 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled ? "bg-background/80 backdrop-blur-xl border-b border-border" : "bg-transparent"
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-apple ${
+      scrolled ? "glass border-b border-border/50" : "bg-transparent"
     }`}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <a href="#" className="flex items-center gap-3 group">
@@ -55,8 +55,8 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden absolute top-full left-0 right-0 bg-background border-b border-border transition-all duration-300 ${
-        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+      <div className={`md:hidden absolute top-full left-0 right-0 glass border-b border-border/50 transition-all duration-500 ease-apple ${
+        isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
       }`}>
         <div className="container mx-auto px-4 py-6 space-y-4">
           {["Services", "Reviews", "Team", "Privacy", "Contact"].map((item) => (

@@ -94,41 +94,43 @@ export default {
   			xl: 'var(--shadow-xl)',
   			'2xl': 'var(--shadow-2xl)'
   		},
-  		fontFamily: {
-  			sans: [
-  				'DM Sans',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'-apple-system',
-  				'BlinkMacSystemFont',
-  				'Segoe UI',
-  				'Roboto',
-  				'Helvetica Neue',
-  				'Arial',
-  				'Noto Sans',
-  				'sans-serif'
-  			],
-  			serif: [
-  				'Crimson Pro',
-  				'ui-serif',
-  				'Georgia',
-  				'Cambria',
-  				'Times New Roman',
-  				'Times',
-  				'serif'
-  			],
-  			mono: [
-  				'SF Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'Liberation Mono',
-  				'Courier New',
-  				'monospace'
-  			]
-  		}
+		fontFamily: {
+			sans: [
+				'Inter',
+				'-apple-system',
+				'BlinkMacSystemFont',
+				'SF Pro Display',
+				'Segoe UI',
+				'Roboto',
+				'Helvetica Neue',
+				'Arial',
+				'sans-serif'
+			],
+			serif: [
+				'SF Pro Display',
+				'ui-serif',
+				'Georgia',
+				'Cambria',
+				'Times New Roman',
+				'serif'
+			],
+			mono: [
+				'SF Mono',
+				'ui-monospace',
+				'SFMono-Regular',
+				'Menlo',
+				'Monaco',
+				'Consolas',
+				'monospace'
+			]
+		},
+		transitionTimingFunction: {
+			'apple': 'cubic-bezier(0.22, 1, 0.36, 1)',
+		},
+		backdropBlur: {
+			'glass': '20px',
+			'glass-lg': '32px',
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
