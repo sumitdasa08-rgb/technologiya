@@ -1,10 +1,38 @@
-import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
+declare global {
+  interface Window {
+    Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
+  }
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: { name: string; contact: string };
+  theme: { color: string };
+  handler: (response: RazorpayResponse) => void;
+}
+
+interface RazorpayInstance {
+  open: () => void;
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
 const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -13,6 +41,7 @@ const ContactSection = () => {
     message: "",
   });
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,10 +75,66 @@ const ContactSection = () => {
     return () => window.removeEventListener("prefillContact", handlePrefill as EventListener);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Booking request sent! We'll call you shortly.");
-    setFormData({ name: "", phone: "", issue: "", message: "" });
+    
+    if (!formData.name || !formData.phone || !formData.issue) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: 150,
+          name: formData.name,
+          phone: formData.phone,
+          issue: formData.issue,
+        },
+      });
+
+      if (error) throw error;
+
+      const options: RazorpayOptions = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'TechFix Pro',
+        description: `Service Booking - ${formData.issue}`,
+        order_id: data.orderId,
+        prefill: {
+          name: formData.name,
+          contact: formData.phone,
+        },
+        theme: { color: '#000000' },
+        handler: (response: RazorpayResponse) => {
+          console.log('Payment successful:', response);
+          toast.success("Payment successful! We'll contact you shortly.");
+          setFormData({ name: "", phone: "", issue: "", message: "" });
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error("Failed to initiate payment. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -151,9 +236,19 @@ const ContactSection = () => {
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-[1.02] hover:shadow-lg"
+                disabled={isLoading}
+                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Book Service <ArrowRight className="w-4 h-4 ml-2" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Pay ₹150 & Book <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
               
               {/* Money Back Guarantee */}
