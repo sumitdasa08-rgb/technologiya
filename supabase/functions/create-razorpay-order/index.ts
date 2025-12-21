@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,11 +16,20 @@ serve(async (req) => {
     
     const keyId = Deno.env.get('RAZORPAY_KEY_ID');
     const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!keyId || !keySecret) {
       console.error('Razorpay keys not configured');
       throw new Error('Payment gateway not configured');
     }
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase not configured');
+      throw new Error('Database not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Creating Razorpay order for amount:', amount);
 
@@ -52,11 +62,33 @@ serve(async (req) => {
 
     console.log('Order created successfully:', order.id);
 
+    // Save booking to database
+    const { data: booking, error: dbError } = await supabase
+      .from('bookings')
+      .insert({
+        name,
+        phone,
+        issue,
+        amount,
+        razorpay_order_id: order.id,
+        payment_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      // Don't throw, payment order is already created
+    } else {
+      console.log('Booking saved:', booking.id);
+    }
+
     return new Response(JSON.stringify({ 
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
       keyId,
+      bookingId: booking?.id,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

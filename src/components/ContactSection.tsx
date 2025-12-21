@@ -120,8 +120,22 @@ const ContactSection = () => {
           contact: formData.phone,
         },
         theme: { color: '#000000' },
-        handler: (response: RazorpayResponse) => {
+        handler: async (response: RazorpayResponse) => {
           console.log('Payment successful:', response);
+          
+          // Update payment status in database
+          try {
+            await supabase.functions.invoke('update-payment-status', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+          } catch (err) {
+            console.error('Failed to update payment status:', err);
+          }
+          
           toast.success("Payment successful! We'll contact you shortly.");
           setFormData({ name: "", phone: "", issue: "", message: "" });
         },

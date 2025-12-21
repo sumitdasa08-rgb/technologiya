@@ -2,3 +2,6 @@ project_id = "ryehkycxyhdpufigcotc"
 
 [functions.create-razorpay-order]
 verify_jwt = false
+
+[functions.update-payment-status]
+verify_jwt = false
