@@ -89,20 +89,44 @@ const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.issue) {
+    // Client-side validation
+    const trimmedName = formData.name.trim();
+    const trimmedPhone = formData.phone.trim();
+    const trimmedIssue = formData.issue.trim();
+
+    if (!trimmedName || !trimmedPhone || !trimmedIssue) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate phone format (10-15 digits)
+    const phoneDigits = trimmedPhone.replace(/[\s\-\(\)]/g, '');
+    if (!/^\d{10,15}$/.test(phoneDigits)) {
+      toast.error("Please enter a valid phone number (10-15 digits)");
+      return;
+    }
+
+    // Validate input lengths
+    if (trimmedName.length > 100) {
+      toast.error("Name must be less than 100 characters");
+      return;
+    }
+
+    if (trimmedIssue.length > 500) {
+      toast.error("Issue description must be less than 500 characters");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // Send service_type instead of amount - server determines pricing
       const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: 150,
-          name: formData.name,
-          phone: formData.phone,
-          issue: formData.issue,
+          service_type: 'consultation', // Server-side pricing
+          name: trimmedName,
+          phone: trimmedPhone,
+          issue: trimmedIssue,
         },
       });
 
