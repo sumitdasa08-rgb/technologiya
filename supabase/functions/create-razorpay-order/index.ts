@@ -9,8 +9,19 @@ const corsHeaders = {
 // Server-side pricing - client cannot modify these values
 const SERVICE_PRICING: Record<string, number> = {
   'consultation': 150,
+  'Consultation': 150,
+  'Windows OS Upgrade': 250,
   'windows_upgrade': 250,
+  'OS Changes & Updates': 300,
+  'os_changes': 300,
+  'Microsoft Office': 350,
   'ms_office': 350,
+  'Storage Solutions': 250,
+  'storage': 250,
+  'Software Fixes': 300,
+  'software_fixes': 300,
+  'Audio Repair': 250,
+  'audio_repair': 250,
   'hardware_repair': 500,
   'data_recovery': 750,
 };
@@ -69,7 +80,7 @@ serve(async (req) => {
 
   try {
     const requestData = await req.json();
-    const { service_type, name, phone, issue } = requestData;
+    const { service_type, name, phone, issue, description } = requestData;
     
     // Server-side input validation
     const validationErrors = validateInput({ service_type, name, phone, issue });
@@ -153,6 +164,7 @@ serve(async (req) => {
         name: name.trim(),
         phone: phone.trim(),
         issue: issue.trim(),
+        description: description ? description.trim() : null,
         amount,
         razorpay_order_id: order.id,
         payment_status: 'pending',
