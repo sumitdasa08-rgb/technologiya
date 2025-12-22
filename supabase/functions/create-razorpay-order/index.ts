@@ -6,13 +6,86 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Server-side pricing - client cannot modify these values
+const SERVICE_PRICING: Record<string, number> = {
+  'consultation': 150,
+  'windows_upgrade': 250,
+  'ms_office': 350,
+  'hardware_repair': 500,
+  'data_recovery': 750,
+};
+
+const DEFAULT_SERVICE_AMOUNT = 150; // Default consultation fee
+
+// Input validation
+const validateInput = (data: { service_type?: string; name: string; phone: string; issue: string }) => {
+  const errors: string[] = [];
+
+  // Validate name (required, max 100 chars, no HTML)
+  if (!data.name || typeof data.name !== 'string') {
+    errors.push('Name is required');
+  } else if (data.name.trim().length === 0) {
+    errors.push('Name cannot be empty');
+  } else if (data.name.length > 100) {
+    errors.push('Name must be less than 100 characters');
+  } else if (/<[^>]*>/.test(data.name)) {
+    errors.push('Name contains invalid characters');
+  }
+
+  // Validate phone (required, 10-15 digits)
+  if (!data.phone || typeof data.phone !== 'string') {
+    errors.push('Phone is required');
+  } else {
+    const phoneDigits = data.phone.replace(/[\s\-\(\)]/g, '');
+    if (!/^\d{10,15}$/.test(phoneDigits)) {
+      errors.push('Phone must be 10-15 digits');
+    }
+  }
+
+  // Validate issue (required, max 500 chars)
+  if (!data.issue || typeof data.issue !== 'string') {
+    errors.push('Issue description is required');
+  } else if (data.issue.trim().length === 0) {
+    errors.push('Issue description cannot be empty');
+  } else if (data.issue.length > 500) {
+    errors.push('Issue description must be less than 500 characters');
+  }
+
+  // Validate service_type if provided
+  if (data.service_type && typeof data.service_type === 'string') {
+    if (!SERVICE_PRICING[data.service_type]) {
+      // Don't error, just use default
+      console.log('Unknown service type, using default pricing:', data.service_type);
+    }
+  }
+
+  return errors;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { amount, name, phone, issue } = await req.json();
+    const requestData = await req.json();
+    const { service_type, name, phone, issue } = requestData;
+    
+    // Server-side input validation
+    const validationErrors = validateInput({ service_type, name, phone, issue });
+    if (validationErrors.length > 0) {
+      console.error('Validation errors:', validationErrors);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid input', 
+        details: validationErrors 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Server-side amount calculation - client cannot override
+    const amount = SERVICE_PRICING[service_type] || DEFAULT_SERVICE_AMOUNT;
     
     const keyId = Deno.env.get('RAZORPAY_KEY_ID');
     const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
@@ -21,12 +94,18 @@ serve(async (req) => {
 
     if (!keyId || !keySecret) {
       console.error('Razorpay keys not configured');
-      throw new Error('Payment gateway not configured');
+      return new Response(JSON.stringify({ error: 'Payment service unavailable' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!supabaseUrl || !supabaseKey) {
       console.error('Supabase not configured');
-      throw new Error('Database not configured');
+      return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -46,9 +125,10 @@ serve(async (req) => {
         currency: 'INR',
         receipt: `receipt_${Date.now()}`,
         notes: {
-          name,
-          phone,
-          issue,
+          name: name.trim(),
+          phone: phone.trim(),
+          issue: issue.trim(),
+          service_type: service_type || 'consultation',
         },
       }),
     });
@@ -57,18 +137,22 @@ serve(async (req) => {
     
     if (!response.ok) {
       console.error('Razorpay error:', order);
-      throw new Error(order.error?.description || 'Failed to create order');
+      // Return generic error to client
+      return new Response(JSON.stringify({ error: 'Failed to create payment order' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Order created successfully:', order.id);
 
-    // Save booking to database
+    // Save booking to database with sanitized inputs
     const { data: booking, error: dbError } = await supabase
       .from('bookings')
       .insert({
-        name,
-        phone,
-        issue,
+        name: name.trim(),
+        phone: phone.trim(),
+        issue: issue.trim(),
         amount,
         razorpay_order_id: order.id,
         payment_status: 'pending',
@@ -78,7 +162,7 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      // Don't throw, payment order is already created
+      // Don't expose database errors to client
     } else {
       console.log('Booking saved:', booking.id);
     }
@@ -95,7 +179,8 @@ serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error creating order:', errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    // Return generic error to client
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
