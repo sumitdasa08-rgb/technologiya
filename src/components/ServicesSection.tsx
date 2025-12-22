@@ -62,14 +62,19 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleServiceClick = (title: string, description: string) => {
+  const handleServiceClick = (title: string, description: string, price: string) => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: "smooth" });
-      // Dispatch custom event to pre-fill form
+      // Dispatch custom event to pre-fill form with service type for pricing
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
-          detail: { issue: title, message: description }
+          detail: { 
+            issue: title, 
+            message: description,
+            service_type: title,
+            price: parseInt(price.replace(/[₹,]/g, ''))
+          }
         }));
       }, 500);
     }
@@ -82,8 +87,10 @@ const ServicesSection = () => {
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { 
-            issue: "Book Slot - ₹150 Consultation", 
-            message: "I want to book a slot for ₹150 for computer/mobile software related issue consultation." 
+            issue: "Consultation", 
+            message: "I want to book a slot for computer/mobile software related issue consultation.",
+            service_type: "consultation",
+            price: 150
           }
         }));
       }, 500);
@@ -110,7 +117,7 @@ const ServicesSection = () => {
           {services.map((service, index) => (
             <div 
               key={index}
-              onClick={() => handleServiceClick(service.title, service.description)}
+              onClick={() => handleServiceClick(service.title, service.description, service.price)}
               className={`group glass-card p-8 rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}

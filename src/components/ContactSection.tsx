@@ -40,6 +40,10 @@ const ContactSection = () => {
     issue: "",
     message: "",
   });
+  const [selectedService, setSelectedService] = useState({
+    service_type: "consultation",
+    price: 150
+  });
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -63,12 +67,18 @@ const ContactSection = () => {
 
   // Listen for prefill events from services section
   useEffect(() => {
-    const handlePrefill = (e: CustomEvent<{ issue: string; message: string }>) => {
+    const handlePrefill = (e: CustomEvent<{ issue: string; message: string; service_type?: string; price?: number }>) => {
       setFormData(prev => ({
         ...prev,
         issue: e.detail.issue,
         message: e.detail.message,
       }));
+      if (e.detail.service_type && e.detail.price) {
+        setSelectedService({
+          service_type: e.detail.service_type,
+          price: e.detail.price
+        });
+      }
     };
 
     window.addEventListener("prefillContact", handlePrefill as EventListener);
@@ -120,13 +130,14 @@ const ContactSection = () => {
     setIsLoading(true);
 
     try {
-      // Send service_type instead of amount - server determines pricing
+      // Send service_type for dynamic pricing and description for full record
       const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          service_type: 'consultation', // Server-side pricing
+          service_type: selectedService.service_type,
           name: trimmedName,
           phone: trimmedPhone,
           issue: trimmedIssue,
+          description: formData.message.trim(),
         },
       });
 
@@ -162,6 +173,7 @@ const ContactSection = () => {
           
           toast.success("Payment successful! We'll contact you shortly.");
           setFormData({ name: "", phone: "", issue: "", message: "" });
+          setSelectedService({ service_type: "consultation", price: 150 });
         },
       };
 
@@ -284,7 +296,7 @@ const ContactSection = () => {
                   </>
                 ) : (
                   <>
-                    Pay ₹150 & Book <ArrowRight className="w-4 h-4 ml-2" />
+                    Pay ₹{selectedService.price} & Book <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </Button>

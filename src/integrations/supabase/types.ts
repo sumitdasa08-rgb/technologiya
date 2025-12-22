@@ -19,6 +19,7 @@ export type Database = {
           amount: number
           created_at: string
           currency: string
+          description: string | null
           id: string
           issue: string
           name: string
@@ -32,6 +33,7 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           issue: string
           name: string
@@ -45,6 +47,7 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           issue?: string
           name?: string
