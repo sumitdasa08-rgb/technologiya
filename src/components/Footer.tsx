@@ -1,4 +1,5 @@
 import { Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -38,7 +39,16 @@ const Footer = () => {
 
         <div className="pt-8 border-t border-background/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/40">
           <p>© 2024 TechFix Pro. All rights reserved.</p>
-          <p>Designed with precision for better tech support.</p>
+          <div className="flex items-center gap-4">
+            <Link 
+              to="/terms-and-conditions" 
+              className="hover:text-background transition-colors underline"
+            >
+              Terms & Conditions
+            </Link>
+            <span>|</span>
+            <p>Designed with precision for better tech support.</p>
+          </div>
         </div>
       </div>
     </footer>
