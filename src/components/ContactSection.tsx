@@ -65,6 +65,8 @@ const ContactSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
   // Listen for prefill events from services section
   useEffect(() => {
     const handlePrefill = (e: CustomEvent<{ issue: string; message: string; service_type?: string; price?: number }>) => {
@@ -79,6 +81,10 @@ const ContactSection = () => {
           price: e.detail.price
         });
       }
+      // Focus on name input after form is prefilled
+      setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 100);
     };
 
     window.addEventListener("prefillContact", handlePrefill as EventListener);
@@ -247,6 +253,7 @@ const ContactSection = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Your Name</label>
                 <Input
+                  ref={nameInputRef}
                   placeholder="Enter your name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
