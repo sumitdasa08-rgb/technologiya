@@ -1,10 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encode as hexEncode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Verify Razorpay signature using HMAC SHA256
+async function verifyRazorpaySignature(
+  orderId: string,
+  paymentId: string,
+  signature: string,
+  secret: string
+): Promise<boolean> {
+  const message = `${orderId}|${paymentId}`;
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(message);
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, messageData);
+  const generatedSignature = new TextDecoder().decode(hexEncode(new Uint8Array(signatureBuffer)));
+
+  return generatedSignature === signature;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -13,7 +40,33 @@ serve(async (req) => {
 
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
-    
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      console.error('Missing required payment parameters');
+      throw new Error('Missing required payment parameters');
+    }
+
+    // Verify signature
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    if (!razorpayKeySecret) {
+      console.error('Razorpay secret not configured');
+      throw new Error('Payment verification not configured');
+    }
+
+    const isValidSignature = await verifyRazorpaySignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      razorpayKeySecret
+    );
+
+    if (!isValidSignature) {
+      console.error('Invalid Razorpay signature for order:', razorpay_order_id);
+      throw new Error('Payment verification failed - invalid signature');
+    }
+
+    console.log('Signature verified successfully for order:', razorpay_order_id);
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
