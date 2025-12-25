@@ -126,31 +126,44 @@ serve(async (req) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_order_id || !razorpay_payment_id) {
       console.error('Missing required payment parameters');
       throw new Error('Missing required payment parameters');
     }
 
-    // Verify signature
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-    if (!razorpayKeySecret) {
-      console.error('Razorpay secret not configured');
-      throw new Error('Payment verification not configured');
+    // Check if this is a UPI payment (manual confirmation) or Razorpay payment
+    const isUPIPayment = razorpay_order_id.startsWith('UPI-');
+
+    if (isUPIPayment) {
+      // UPI payments use manual confirmation - no signature verification needed
+      console.log('Processing UPI payment confirmation for order:', razorpay_order_id);
+    } else {
+      // Razorpay payments require signature verification
+      if (!razorpay_signature) {
+        console.error('Missing signature for Razorpay payment');
+        throw new Error('Missing required payment parameters');
+      }
+
+      const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+      if (!razorpayKeySecret) {
+        console.error('Razorpay secret not configured');
+        throw new Error('Payment verification not configured');
+      }
+
+      const isValidSignature = await verifyRazorpaySignature(
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        razorpayKeySecret
+      );
+
+      if (!isValidSignature) {
+        console.error('Invalid Razorpay signature for order:', razorpay_order_id);
+        throw new Error('Payment verification failed - invalid signature');
+      }
+
+      console.log('Signature verified successfully for order:', razorpay_order_id);
     }
-
-    const isValidSignature = await verifyRazorpaySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      razorpayKeySecret
-    );
-
-    if (!isValidSignature) {
-      console.error('Invalid Razorpay signature for order:', razorpay_order_id);
-      throw new Error('Payment verification failed - invalid signature');
-    }
-
-    console.log('Signature verified successfully for order:', razorpay_order_id);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
