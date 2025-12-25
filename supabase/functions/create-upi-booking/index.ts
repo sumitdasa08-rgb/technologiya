@@ -20,8 +20,8 @@ const SERVICE_PRICING: Record<string, number> = {
 
 const DEFAULT_SERVICE_AMOUNT = 150;
 
-// Telegram notification function
-async function sendTelegramNotification(booking: {
+// Telegram notification function with inline buttons
+async function sendTelegramNotificationWithButtons(booking: {
   name: string;
   phone: string;
   issue: string;
@@ -37,16 +37,32 @@ async function sendTelegramNotification(booking: {
     return;
   }
 
-  const message = `🔔 *New Booking Received!*
+  const message = `🔔 *NEW BOOKING - PAYMENT PENDING*
 
 📋 *Reference:* \`${booking.bookingRef}\`
-👤 *Name:* ${booking.name}
+━━━━━━━━━━━━━━━━━━━━━
+👤 *Customer:* ${booking.name}
 📱 *Phone:* ${booking.phone}
-🔧 *Issue:* ${booking.issue}
+🔧 *Service:* ${booking.issue}
 ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
 💰 *Amount:* ₹${booking.amount}
+━━━━━━━━━━━━━━━━━━━━━
 
-⏳ *Status:* Pending UPI Payment`;
+⏳ *Awaiting UPI Payment Confirmation*
+
+👇 *Did you receive the payment?*`;
+
+  // Create inline keyboard with Yes/No buttons
+  const inlineKeyboard = {
+    inline_keyboard: [
+      [
+        { text: '✅ Yes - Payment Received', callback_data: `payment_yes:${booking.bookingRef}:${booking.phone}:${encodeURIComponent(booking.name)}` },
+      ],
+      [
+        { text: '❌ No - Payment Not Received', callback_data: `payment_no:${booking.bookingRef}:${booking.phone}:${encodeURIComponent(booking.name)}` },
+      ]
+    ]
+  };
 
   try {
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -56,6 +72,7 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
         chat_id: chatId,
         text: message,
         parse_mode: 'Markdown',
+        reply_markup: inlineKeyboard,
       }),
     });
 
@@ -63,7 +80,7 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
       const error = await response.text();
       console.error('Telegram notification failed:', error);
     } else {
-      console.log('Telegram notification sent successfully');
+      console.log('Telegram notification with buttons sent successfully');
     }
   } catch (error) {
     console.error('Error sending Telegram notification:', error);
@@ -188,8 +205,8 @@ serve(async (req) => {
 
     console.log('Booking created:', booking.id, 'Reference:', bookingRef);
 
-    // Send Telegram notification (non-blocking)
-    sendTelegramNotification({
+    // Send Telegram notification with Yes/No buttons (non-blocking)
+    sendTelegramNotificationWithButtons({
       name: name.trim(),
       phone: phone.trim(),
       issue: issue.trim(),
