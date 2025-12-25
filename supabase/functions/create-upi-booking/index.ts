@@ -29,8 +29,11 @@ async function sendTelegramNotificationWithButtons(booking: {
   amount: number;
   bookingRef: string;
 }) {
-  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
-  const chatId = Deno.env.get('TELEGRAM_CHAT_ID');
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')?.trim();
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID')?.trim();
+
+  console.log('Telegram config - Bot token exists:', !!botToken, 'Token length:', botToken?.length);
+  console.log('Telegram config - Chat ID:', chatId);
 
   if (!botToken || !chatId) {
     console.log('Telegram credentials not configured, skipping notification');
