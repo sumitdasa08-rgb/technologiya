@@ -130,7 +130,22 @@ serve(async (req) => {
   }
 
   try {
-    const update = await req.json();
+    // Handle GET requests (Telegram webhook verification)
+    if (req.method === 'GET') {
+      return new Response(JSON.stringify({ ok: true, message: 'Webhook is active' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await req.text();
+    if (!body) {
+      console.log('Empty request body received');
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const update = JSON.parse(body);
     console.log('Received Telegram update:', JSON.stringify(update));
 
     // Handle callback query (button press)
