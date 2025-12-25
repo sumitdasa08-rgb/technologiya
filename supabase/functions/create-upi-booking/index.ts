@@ -20,6 +20,56 @@ const SERVICE_PRICING: Record<string, number> = {
 
 const DEFAULT_SERVICE_AMOUNT = 150;
 
+// Telegram notification function
+async function sendTelegramNotification(booking: {
+  name: string;
+  phone: string;
+  issue: string;
+  description?: string;
+  amount: number;
+  bookingRef: string;
+}) {
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID');
+
+  if (!botToken || !chatId) {
+    console.log('Telegram credentials not configured, skipping notification');
+    return;
+  }
+
+  const message = `🔔 *New Booking Received!*
+
+📋 *Reference:* \`${booking.bookingRef}\`
+👤 *Name:* ${booking.name}
+📱 *Phone:* ${booking.phone}
+🔧 *Issue:* ${booking.issue}
+${booking.description ? `📝 *Details:* ${booking.description}` : ''}
+💰 *Amount:* ₹${booking.amount}
+
+⏳ *Status:* Pending UPI Payment`;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Telegram notification failed:', error);
+    } else {
+      console.log('Telegram notification sent successfully');
+    }
+  } catch (error) {
+    console.error('Error sending Telegram notification:', error);
+  }
+}
+
 // Rate limiting
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10;
@@ -137,6 +187,16 @@ serve(async (req) => {
     }
 
     console.log('Booking created:', booking.id, 'Reference:', bookingRef);
+
+    // Send Telegram notification (non-blocking)
+    sendTelegramNotification({
+      name: name.trim(),
+      phone: phone.trim(),
+      issue: issue.trim(),
+      description: description?.trim(),
+      amount,
+      bookingRef,
+    }).catch(err => console.error('Failed to send notification:', err));
 
     return new Response(
       JSON.stringify({
