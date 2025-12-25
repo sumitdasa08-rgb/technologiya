@@ -5,34 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import UPIPayment from "./UPIPayment";
 
-declare global {
-  interface Window {
-    Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
-  }
-}
-
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  prefill: { name: string; contact: string };
-  theme: { color: string };
-  handler: (response: RazorpayResponse) => void;
-}
-
-interface RazorpayInstance {
-  open: () => void;
-}
-
-interface RazorpayResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
 const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -46,6 +20,8 @@ const ContactSection = () => {
   });
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showUPIPayment, setShowUPIPayment] = useState(false);
+  const [bookingRef, setBookingRef] = useState<string | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,6 +57,9 @@ const ContactSection = () => {
           price: e.detail.price
         });
       }
+      // Reset UPI payment view when prefilling
+      setShowUPIPayment(false);
+      setBookingRef(null);
       // Focus on name input after form is prefilled
       setTimeout(() => {
         nameInputRef.current?.focus();
@@ -89,17 +68,6 @@ const ContactSection = () => {
 
     window.addEventListener("prefillContact", handlePrefill as EventListener);
     return () => window.removeEventListener("prefillContact", handlePrefill as EventListener);
-  }, []);
-
-  // Load Razorpay script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,8 +104,8 @@ const ContactSection = () => {
     setIsLoading(true);
 
     try {
-      // Send service_type for dynamic pricing and description for full record
-      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+      // Create UPI booking
+      const { data, error } = await supabase.functions.invoke('create-upi-booking', {
         body: {
           service_type: selectedService.service_type,
           name: trimmedName,
@@ -149,45 +117,39 @@ const ContactSection = () => {
 
       if (error) throw error;
 
-      const options: RazorpayOptions = {
-        key: data.keyId,
-        amount: data.amount,
-        currency: data.currency,
-        name: 'TechFix Pro',
-        description: `Service Booking - ${formData.issue}`,
-        order_id: data.orderId,
-        prefill: {
-          name: formData.name,
-          contact: formData.phone,
-        },
-        theme: { color: '#000000' },
-        handler: async (response: RazorpayResponse) => {
-          console.log('Payment successful:', response);
-          
-          // Update payment status in database
-          try {
-            await supabase.functions.invoke('update-payment-status', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              },
-            });
-          } catch (err) {
-            console.error('Failed to update payment status:', err);
-          }
-          
-          toast.success("Payment successful! We'll contact you shortly.");
-          setFormData({ name: "", phone: "", issue: "", message: "" });
-          setSelectedService({ service_type: "consultation", price: 150 });
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      setBookingRef(data.bookingRef);
+      setShowUPIPayment(true);
+      toast.success("Booking created! Please complete payment via UPI.");
     } catch (error) {
-      console.error('Payment error:', error);
-      toast.error("Failed to initiate payment. Please try again.");
+      console.error('Booking error:', error);
+      toast.error("Failed to create booking. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePaymentConfirmed = async () => {
+    setIsLoading(true);
+    try {
+      // Update booking status to payment_confirmed
+      const { error } = await supabase.functions.invoke('update-payment-status', {
+        body: {
+          razorpay_order_id: bookingRef,
+          razorpay_payment_id: `UPI-CONFIRMED-${Date.now()}`,
+          razorpay_signature: 'upi-manual-confirmation',
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Thank you! We've received your booking. Our team will verify the payment and contact you within 30 minutes.");
+      setFormData({ name: "", phone: "", issue: "", message: "" });
+      setSelectedService({ service_type: "consultation", price: 150 });
+      setShowUPIPayment(false);
+      setBookingRef(null);
+    } catch (error) {
+      console.error('Confirmation error:', error);
+      toast.error("Failed to confirm. Please call us at 8812910655.");
     } finally {
       setIsLoading(false);
     }
@@ -242,81 +204,90 @@ const ContactSection = () => {
             </div>
           </div>
 
-          {/* Contact Form */}
-          <form 
-            onSubmit={handleSubmit} 
+          {/* Contact Form / UPI Payment */}
+          <div 
             className={`glass-card p-8 rounded-3xl transition-all duration-700 ease-apple ${
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
             }`}
           >
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Your Name</label>
-                <Input
-                  ref={nameInputRef}
-                  placeholder="Enter your name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Phone Number</label>
-                <Input
-                  placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Issue Type</label>
-                <Input
-                  placeholder="e.g., Windows upgrade, Sound issue"
-                  value={formData.issue}
-                  onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-                  required
-                  className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Describe Your Issue</label>
-                <Textarea
-                  placeholder="Tell us more about the problem..."
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  rows={4}
-                  className="bg-background/50 border-border/50 resize-none rounded-xl backdrop-blur-sm transition-all duration-300 focus:bg-background"
-                />
-              </div>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    Pay ₹{selectedService.price} & Book <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-              
-              {/* Money Back Guarantee */}
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">100% Money Back Guarantee</span> if not solved
-                </p>
-              </div>
-            </div>
-          </form>
+            {showUPIPayment ? (
+              <UPIPayment 
+                amount={selectedService.price} 
+                onPaymentConfirmed={handlePaymentConfirmed}
+                isLoading={isLoading}
+              />
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Your Name</label>
+                    <Input
+                      ref={nameInputRef}
+                      placeholder="Enter your name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                      className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Phone Number</label>
+                    <Input
+                      placeholder="Enter your phone number"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      required
+                      className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Issue Type</label>
+                    <Input
+                      placeholder="e.g., Windows upgrade, Sound issue"
+                      value={formData.issue}
+                      onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
+                      required
+                      className="bg-background/50 border-border/50 rounded-xl h-12 backdrop-blur-sm transition-all duration-300 focus:bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Describe Your Issue</label>
+                    <Textarea
+                      placeholder="Tell us more about the problem..."
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      rows={4}
+                      className="bg-background/50 border-border/50 resize-none rounded-xl backdrop-blur-sm transition-all duration-300 focus:bg-background"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        Book & Pay ₹{selectedService.price} via UPI <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Money Back Guarantee */}
+                  <div className="flex items-center justify-center gap-2 pt-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">₹150 service fee non-refundable</span> | Extra amount refundable if unfixable
+                    </p>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </section>
