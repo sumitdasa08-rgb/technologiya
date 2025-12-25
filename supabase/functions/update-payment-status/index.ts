@@ -44,6 +44,38 @@ const getClientIP = (req: Request): string => {
   return 'unknown';
 };
 
+// Telegram notification function
+async function sendTelegramNotification(message: string) {
+  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const chatId = Deno.env.get('TELEGRAM_CHAT_ID');
+
+  if (!botToken || !chatId) {
+    console.log('Telegram credentials not configured, skipping notification');
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Telegram notification failed:', error);
+    } else {
+      console.log('Telegram notification sent successfully');
+    }
+  } catch (error) {
+    console.error('Error sending Telegram notification:', error);
+  }
+}
+
 // Verify Razorpay signature using HMAC SHA256
 async function verifyRazorpaySignature(
   orderId: string,
@@ -149,6 +181,21 @@ serve(async (req) => {
     }
 
     console.log('Payment status updated for booking:', data.id);
+
+    // Send Telegram notification for payment confirmation
+    const confirmationMessage = `✅ *Payment Confirmed!*
+
+📋 *Reference:* \`${razorpay_order_id}\`
+👤 *Name:* ${data.name}
+📱 *Phone:* ${data.phone}
+🔧 *Issue:* ${data.issue}
+💰 *Amount:* ₹${data.amount}
+
+🎉 *Status:* Payment Completed`;
+
+    sendTelegramNotification(confirmationMessage).catch(err => 
+      console.error('Failed to send confirmation notification:', err)
+    );
 
     return new Response(JSON.stringify({ 
       success: true,
