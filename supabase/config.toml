@@ -1,5 +1,8 @@
 project_id = "ryehkycxyhdpufigcotc"
 
+[functions.create-upi-booking]
+verify_jwt = false
+
 [functions.create-razorpay-order]
 verify_jwt = false
 
