@@ -62,10 +62,37 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Custom smooth scroll with slower duration
+  const smoothScrollTo = (element: HTMLElement, duration: number = 1200) => {
+    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const startPosition = window.pageYOffset;
+    const distance = targetPosition - startPosition;
+    let startTime: number | null = null;
+
+    const easeInOutCubic = (t: number): number => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    };
+
+    const animation = (currentTime: number) => {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const ease = easeInOutCubic(progress);
+      
+      window.scrollTo(0, startPosition + distance * ease);
+      
+      if (timeElapsed < duration) {
+        requestAnimationFrame(animation);
+      }
+    };
+
+    requestAnimationFrame(animation);
+  };
+
   const handleServiceClick = (title: string, description: string, price: string) => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      smoothScrollTo(contactSection, 1200); // 1.2 seconds for smooth scroll
       // Dispatch custom event to pre-fill form with service type for pricing
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
@@ -76,14 +103,14 @@ const ServicesSection = () => {
             price: parseInt(price.replace(/[₹,]/g, ''))
           }
         }));
-      }, 500);
+      }, 1300);
     }
   };
 
   const handleBookSlot = () => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
-      contactSection.scrollIntoView({ behavior: "smooth" });
+      smoothScrollTo(contactSection, 1200); // 1.2 seconds for smooth scroll
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { 
@@ -93,7 +120,7 @@ const ServicesSection = () => {
             price: 150
           }
         }));
-      }, 500);
+      }, 1300);
     }
   };
 
