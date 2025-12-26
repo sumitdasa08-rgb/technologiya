@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as hexEncode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,6 +74,63 @@ async function sendTelegramNotification(message: string) {
     }
   } catch (error) {
     console.error('Error sending Telegram notification:', error);
+  }
+}
+
+// Email notification function (backup for payment confirmation)
+async function sendEmailConfirmation(booking: {
+  name: string;
+  phone: string;
+  issue: string;
+  amount: number;
+  bookingRef: string;
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  
+  if (!resendApiKey) {
+    console.log('Resend API key not configured, skipping email notification');
+    return;
+  }
+
+  const resend = new Resend(resendApiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'PC Repair Booking <onboarding@resend.dev>',
+      to: ['pcrepairbynirmalkumar@gmail.com'], // Admin email
+      subject: `✅ Payment Confirmed - ${booking.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #28a745; border-bottom: 2px solid #28a745; padding-bottom: 10px;">
+            ✅ Payment Confirmed!
+          </h2>
+          
+          <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>📋 Reference:</strong> ${booking.bookingRef}</p>
+            <p><strong>👤 Customer:</strong> ${booking.name}</p>
+            <p><strong>📱 Phone:</strong> ${booking.phone}</p>
+            <p><strong>🔧 Service:</strong> ${booking.issue}</p>
+            <p><strong>💰 Amount:</strong> ₹${booking.amount}</p>
+          </div>
+          
+          <p style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px;">
+            🎉 <strong>Status:</strong> Payment Completed Successfully
+          </p>
+          
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            This is a backup notification. Primary notifications are sent via Telegram.
+          </p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Email confirmation failed:', error);
+    } else {
+      console.log('Email confirmation sent successfully');
+    }
+  } catch (error) {
+    console.error('Error sending email confirmation:', error);
   }
 }
 
@@ -207,7 +265,18 @@ serve(async (req) => {
 🎉 *Status:* Payment Completed`;
 
     sendTelegramNotification(confirmationMessage).catch(err => 
-      console.error('Failed to send confirmation notification:', err)
+      console.error('Failed to send Telegram confirmation:', err)
+    );
+    
+    // Send email confirmation as backup (non-blocking)
+    sendEmailConfirmation({
+      name: data.name,
+      phone: data.phone,
+      issue: data.issue,
+      amount: data.amount,
+      bookingRef: razorpay_order_id,
+    }).catch(err => 
+      console.error('Failed to send email confirmation:', err)
     );
 
     return new Response(JSON.stringify({ 

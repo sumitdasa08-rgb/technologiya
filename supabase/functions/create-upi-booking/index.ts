@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -87,6 +88,65 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
     }
   } catch (error) {
     console.error('Error sending Telegram notification:', error);
+  }
+}
+
+// Email notification function (backup)
+async function sendEmailNotification(booking: {
+  name: string;
+  phone: string;
+  issue: string;
+  description?: string;
+  amount: number;
+  bookingRef: string;
+}) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  
+  if (!resendApiKey) {
+    console.log('Resend API key not configured, skipping email notification');
+    return;
+  }
+
+  const resend = new Resend(resendApiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: 'PC Repair Booking <onboarding@resend.dev>',
+      to: ['pcrepairbynirmalkumar@gmail.com'], // Admin email
+      subject: `🔔 New Booking - ${booking.bookingRef}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">
+            🔔 New Booking - Payment Pending
+          </h2>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>📋 Reference:</strong> ${booking.bookingRef}</p>
+            <p><strong>👤 Customer:</strong> ${booking.name}</p>
+            <p><strong>📱 Phone:</strong> ${booking.phone}</p>
+            <p><strong>🔧 Service:</strong> ${booking.issue}</p>
+            ${booking.description ? `<p><strong>📝 Details:</strong> ${booking.description}</p>` : ''}
+            <p><strong>💰 Amount:</strong> ₹${booking.amount}</p>
+          </div>
+          
+          <p style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">
+            ⏳ <strong>Status:</strong> Awaiting UPI Payment Confirmation
+          </p>
+          
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            This is a backup notification. Primary notifications are sent via Telegram.
+          </p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Email notification failed:', error);
+    } else {
+      console.log('Email notification sent successfully');
+    }
+  } catch (error) {
+    console.error('Error sending email notification:', error);
   }
 }
 
@@ -209,14 +269,23 @@ serve(async (req) => {
     console.log('Booking created:', booking.id, 'Reference:', bookingRef);
 
     // Send Telegram notification with Yes/No buttons (non-blocking)
-    sendTelegramNotificationWithButtons({
+    const bookingData = {
       name: name.trim(),
       phone: phone.trim(),
       issue: issue.trim(),
       description: description?.trim(),
       amount,
       bookingRef,
-    }).catch(err => console.error('Failed to send notification:', err));
+    };
+    
+    sendTelegramNotificationWithButtons(bookingData).catch(err => 
+      console.error('Failed to send Telegram notification:', err)
+    );
+    
+    // Send email notification as backup (non-blocking)
+    sendEmailNotification(bookingData).catch(err => 
+      console.error('Failed to send email notification:', err)
+    );
 
     return new Response(
       JSON.stringify({
