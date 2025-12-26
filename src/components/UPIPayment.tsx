@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Copy, Check, Smartphone } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy, Check, Smartphone, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -10,9 +10,32 @@ interface UPIPaymentProps {
 }
 
 const UPI_ID = "sumitdasa99-3@okaxis";
+const COUNTDOWN_SECONDS = 120; // 2 minutes
 
 const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) => {
   const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  const [showConfirmButton, setShowConfirmButton] = useState(false);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (countdown <= 0) {
+      setShowConfirmButton(true);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          setShowConfirmButton(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   const handleCopyUPI = async () => {
     try {
@@ -23,6 +46,13 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
     } catch {
       toast.error("Failed to copy UPI ID");
     }
+  };
+
+  // Format countdown as MM:SS
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Generate UPI deep link for mobile
@@ -85,20 +115,39 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
         </a>
 
         <div className="border-t border-border/50 pt-4 mt-4">
-          <p className="text-xs text-muted-foreground mb-3">
-            After payment, click the button below to confirm your booking
-          </p>
+          {!showConfirmButton ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-2 text-amber-500">
+                <Clock className="w-5 h-5 animate-pulse" />
+                <span className="text-lg font-semibold">{formatCountdown(countdown)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Complete your payment. Confirmation button will appear after the timer.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-3">
+              After payment, click the button below to confirm your booking
+            </p>
+          )}
         </div>
       </div>
 
-      <Button
-        type="button"
-        onClick={onPaymentConfirmed}
-        disabled={isLoading}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-full font-medium transition-all duration-300"
-      >
-        {isLoading ? "Processing..." : "I've Completed Payment ✓"}
-      </Button>
+      {showConfirmButton ? (
+        <Button
+          type="button"
+          onClick={onPaymentConfirmed}
+          disabled={isLoading}
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 rounded-full font-medium transition-all duration-300"
+        >
+          {isLoading ? "Processing..." : "I've Completed Payment ✓"}
+        </Button>
+      ) : (
+        <div className="w-full bg-muted/50 text-muted-foreground h-12 rounded-full font-medium flex items-center justify-center">
+          <Clock className="w-4 h-4 mr-2" />
+          Please wait {formatCountdown(countdown)} to confirm
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground">
         Our team will verify your payment and contact you within 30 minutes
