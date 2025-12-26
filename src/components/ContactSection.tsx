@@ -158,7 +158,7 @@ const ContactSection = () => {
   const contactInfo = [
     { icon: Phone, label: "Phone", value: "8812910655", href: "tel:8812910655" },
     { icon: Mail, label: "Email", value: "techfixpro@service.com", href: "mailto:techfixpro@service.com" },
-    { icon: Clock, label: "Hours", value: "Mon-Sat: 9AM-9PM", href: null },
+    { icon: Clock, label: "Hours", value: "Mon-Sun: 24 hrs", href: null },
     { icon: MapPin, label: "Service", value: "Home Visit Available", href: null },
   ];
 
