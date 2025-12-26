@@ -62,31 +62,29 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const SCROLL_DURATION_MS = 1200;
+
   // Custom smooth scroll with slower duration
-  const smoothScrollTo = (element: HTMLElement, duration: number = 1200) => {
+  const smoothScrollTo = (element: HTMLElement, duration: number = SCROLL_DURATION_MS) => {
     const targetPosition = element.getBoundingClientRect().top + window.scrollY;
     const startPosition = window.scrollY;
     const distance = targetPosition - startPosition;
     let startTime: number | null = null;
 
-    const easeInOutCubic = (t: number): number => {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    };
+    const easeInOutCubic = (t: number): number =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
     const animation = (currentTime: number) => {
       if (startTime === null) startTime = currentTime;
+
       const timeElapsed = currentTime - startTime;
       const progress = Math.min(timeElapsed / duration, 1);
       const ease = easeInOutCubic(progress);
-      
-      window.scrollTo({
-        top: startPosition + distance * ease,
-        behavior: 'instant'
-      });
-      
-      if (progress < 1) {
-        requestAnimationFrame(animation);
-      }
+
+      // Use the numeric overload for maximum browser compatibility
+      window.scrollTo(0, startPosition + distance * ease);
+
+      if (progress < 1) requestAnimationFrame(animation);
     };
 
     requestAnimationFrame(animation);
@@ -95,35 +93,42 @@ const ServicesSection = () => {
   const handleServiceClick = (title: string, description: string, price: string) => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
-      smoothScrollTo(contactSection, 1200); // 1.2 seconds for smooth scroll
+      smoothScrollTo(contactSection, SCROLL_DURATION_MS);
+
       // Dispatch custom event to pre-fill form with service type for pricing
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("prefillContact", {
-          detail: { 
-            issue: title, 
-            message: description,
-            service_type: title,
-            price: parseInt(price.replace(/[₹,]/g, ''))
-          }
-        }));
-      }, 1300);
+        window.dispatchEvent(
+          new CustomEvent("prefillContact", {
+            detail: {
+              issue: title,
+              message: description,
+              service_type: title,
+              price: parseInt(price.replace(/[₹,]/g, "")),
+            },
+          })
+        );
+      }, SCROLL_DURATION_MS + 100);
     }
   };
 
   const handleBookSlot = () => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
-      smoothScrollTo(contactSection, 1200); // 1.2 seconds for smooth scroll
+      smoothScrollTo(contactSection, SCROLL_DURATION_MS);
+
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("prefillContact", {
-          detail: { 
-            issue: "Consultation", 
-            message: "I want to book a slot for computer/mobile software related issue consultation.",
-            service_type: "consultation",
-            price: 150
-          }
-        }));
-      }, 1300);
+        window.dispatchEvent(
+          new CustomEvent("prefillContact", {
+            detail: {
+              issue: "Consultation",
+              message:
+                "I want to book a slot for computer/mobile software related issue consultation.",
+              service_type: "consultation",
+              price: 150,
+            },
+          })
+        );
+      }, SCROLL_DURATION_MS + 100);
     }
   };
 
