@@ -64,8 +64,8 @@ const ServicesSection = () => {
 
   // Custom smooth scroll with slower duration
   const smoothScrollTo = (element: HTMLElement, duration: number = 1200) => {
-    const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
-    const startPosition = window.pageYOffset;
+    const targetPosition = element.getBoundingClientRect().top + window.scrollY;
+    const startPosition = window.scrollY;
     const distance = targetPosition - startPosition;
     let startTime: number | null = null;
 
@@ -79,9 +79,12 @@ const ServicesSection = () => {
       const progress = Math.min(timeElapsed / duration, 1);
       const ease = easeInOutCubic(progress);
       
-      window.scrollTo(0, startPosition + distance * ease);
+      window.scrollTo({
+        top: startPosition + distance * ease,
+        behavior: 'instant'
+      });
       
-      if (timeElapsed < duration) {
+      if (progress < 1) {
         requestAnimationFrame(animation);
       }
     };
