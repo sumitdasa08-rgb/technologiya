@@ -20,20 +20,29 @@ const HeroSection = () => {
           {/* Text Content - Left Side */}
           <div className="flex-1 text-center lg:text-left max-w-2xl">
             <div className="opacity-0 animate-fade-up">
-              <span className="inline-block text-sm font-medium text-muted-foreground tracking-widest uppercase mb-6">
+              <span className="inline-block text-sm font-medium text-muted-foreground tracking-widest uppercase mb-6 font-sans">
                 Professional Tech Support
               </span>
             </div>
 
-            <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-[1.1] tracking-tight">
+            <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-[1.1] tracking-tight font-display">
               TechFix Pro
             </h1>
             
-            <p className="opacity-0 animate-fade-up delay-200 text-xl md:text-2xl text-foreground/80 font-light mb-4 italic">
-              "Your Tech in a Wreck? We Fix it in a Sec!"
-            </p>
+            {/* Multiple rhyming taglines */}
+            <div className="opacity-0 animate-fade-up delay-200 space-y-2 mb-6">
+              <p className="text-xl md:text-2xl text-foreground/90 font-medium italic font-display">
+                "Your Tech in a Wreck? We Fix it in a Sec!"
+              </p>
+              <p className="text-lg md:text-xl text-foreground/70 font-light italic font-sans">
+                "Screen Gone Black? We Bring it Back!"
+              </p>
+              <p className="text-base md:text-lg text-foreground/60 font-light italic font-sans">
+                "Laptop Too Slow? Watch it Go!"
+              </p>
+            </div>
             
-            <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 mb-10 font-light">
+            <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
               Premium repairs. Transparent service. Starting at just ₹250.
             </p>
 
