@@ -96,30 +96,22 @@ export default {
   		},
 		fontFamily: {
 			sans: [
+				'Space Grotesk',
 				'Inter',
 				'-apple-system',
 				'BlinkMacSystemFont',
-				'SF Pro Display',
 				'Segoe UI',
-				'Roboto',
-				'Helvetica Neue',
-				'Arial',
 				'sans-serif'
 			],
-			serif: [
-				'SF Pro Display',
-				'ui-serif',
-				'Georgia',
-				'Cambria',
-				'Times New Roman',
-				'serif'
+			display: [
+				'Poppins',
+				'-apple-system',
+				'BlinkMacSystemFont',
+				'sans-serif'
 			],
 			mono: [
 				'SF Mono',
 				'ui-monospace',
-				'SFMono-Regular',
-				'Menlo',
-				'Monaco',
 				'Consolas',
 				'monospace'
 			]
