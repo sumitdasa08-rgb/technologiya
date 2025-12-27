@@ -289,7 +289,7 @@ const TermsAndConditions = () => {
                   <strong>Phone:</strong> <a href="tel:8812910655" className="text-primary hover:underline">8812910655</a>
                 </p>
                 <p className="text-foreground">
-                  <strong>Email:</strong> <a href="mailto:support@techfixpro.in" className="text-primary hover:underline">support@techfixpro.in</a>
+                  <strong>Email:</strong> <a href="mailto:connect.das@outlook.com" className="text-primary hover:underline">connect.das@outlook.com</a>
                 </p>
                 <p className="text-foreground">
                   <strong>WhatsApp:</strong> <a href="https://wa.me/918812910655" className="text-primary hover:underline">+91 8812910655</a>
