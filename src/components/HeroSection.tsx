@@ -29,21 +29,13 @@ const HeroSection = () => {
               LogicLabs
             </h1>
             
-            {/* Multiple rhyming taglines */}
-            <div className="opacity-0 animate-fade-up delay-200 space-y-2 mb-6">
-              <p className="text-xl md:text-2xl text-foreground/90 font-medium italic font-display">
-                "Your Tech in a Wreck? We Fix it in a Sec!"
-              </p>
-              <p className="text-lg md:text-xl text-foreground/70 font-light italic font-sans">
-                "Screen Gone Black? We Bring it Back!"
-              </p>
-              <p className="text-base md:text-lg text-foreground/60 font-light italic font-sans">
-                "Laptop Too Slow? Watch it Go!"
-              </p>
-            </div>
+            {/* Professional tagline */}
+            <p className="opacity-0 animate-fade-up delay-200 text-xl md:text-2xl text-muted-foreground font-light mb-8 max-w-lg mx-auto lg:mx-0 font-sans">
+              Expert device repairs with transparent pricing and fast turnaround.
+            </p>
             
-            <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
-              Premium repairs. Transparent service. Starting at just ₹250.
+            <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
+              Starting at just ₹250 · Same-day service available
             </p>
 
             <div className="opacity-0 animate-fade-up delay-400 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
