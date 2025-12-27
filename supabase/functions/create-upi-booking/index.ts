@@ -112,7 +112,7 @@ async function sendEmailNotification(booking: {
   try {
     const { error } = await resend.emails.send({
       from: 'PC Repair Booking <onboarding@resend.dev>',
-      to: ['sumitdasa08@gmail.com'], // Admin email (Resend account owner)
+      to: ['connect.das@outlook.com'], // Admin email
       subject: `🔔 New Booking - ${booking.bookingRef}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
