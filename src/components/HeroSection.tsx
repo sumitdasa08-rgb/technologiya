@@ -26,7 +26,7 @@ const HeroSection = () => {
             </div>
 
             <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-[1.1] tracking-tight font-display">
-              TechFix Pro
+              LogicLabs
             </h1>
             
             {/* Multiple rhyming taglines */}
