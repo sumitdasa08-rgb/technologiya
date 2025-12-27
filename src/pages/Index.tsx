@@ -14,7 +14,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>TechFix Pro - Premium Computer & Mobile Repair Services | Starting ₹250</title>
+        <title>LogicLabs - Premium Computer & Mobile Repair Services | Starting ₹250</title>
         <meta name="description" content="Professional tech repair services for computers and mobiles. Windows upgrades, MS Office installation, storage troubleshooting, and more. Starting at just ₹250. Call 8812910655" />
         <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, affordable tech repair, phone repair near me, laptop repair service" />
       </Helmet>

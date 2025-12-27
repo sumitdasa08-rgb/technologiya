@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://techfixpro.lovable.app/sitemap.xml
+Sitemap: https://logiclabs.lovable.app/sitemap.xml

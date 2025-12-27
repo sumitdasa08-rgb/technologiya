@@ -8,10 +8,10 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center">
-              <span className="text-foreground font-bold text-lg">TF</span>
+              <span className="text-foreground font-bold text-lg">LL</span>
             </div>
             <div>
-              <span className="text-xl font-semibold">TechFix Pro</span>
+              <span className="text-xl font-semibold">LogicLabs</span>
               <p className="text-xs text-background/60 mt-1">Your Tech in a Wreck? We Fix it in a Sec!</p>
             </div>
           </div>
@@ -38,7 +38,7 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 border-t border-background/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/40">
-          <p>© 2024 TechFix Pro. All rights reserved.</p>
+          <p>© 2024 LogicLabs. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <Link 
               to="/terms-and-conditions" 

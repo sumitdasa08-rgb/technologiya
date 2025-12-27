@@ -7,7 +7,7 @@ const TermsAndConditions = () => {
   const terms = [
     // General Terms (1-15)
     "By visiting our website or using our services, you agree to be bound by these Terms and Conditions.",
-    "TechFix Pro reserves the right to modify these terms at any time without prior notice.",
+    "LogicLabs reserves the right to modify these terms at any time without prior notice.",
     "Users must be at least 18 years old or have parental/guardian consent to use our services.",
     "All services are provided on an 'as-is' basis without any guarantees unless explicitly stated.",
     "We reserve the right to refuse service to anyone at our discretion.",
@@ -15,7 +15,7 @@ const TermsAndConditions = () => {
     "All prices are in Indian Rupees (INR) and inclusive of applicable taxes.",
     "Service estimates provided are approximate and may vary based on actual diagnosis.",
     "Users are responsible for backing up their data before handing over devices for repair.",
-    "TechFix Pro is not responsible for any data loss during the repair process.",
+    "LogicLabs is not responsible for any data loss during the repair process.",
     "We recommend customers to remove SIM cards and memory cards before submitting devices.",
     "All communication regarding services will be conducted via the phone number provided during booking.",
     "Users must provide accurate contact information for service updates and notifications.",
@@ -47,7 +47,7 @@ const TermsAndConditions = () => {
     "Refunds will be credited to the original payment method used during booking.",
     "If the customer declines the repair after diagnosis, only the ₹150 diagnostic fee is retained.",
     "No refund requests will be entertained after the repair work has been completed.",
-    "Refund eligibility is determined solely by TechFix Pro's technical assessment.",
+    "Refund eligibility is determined solely by LogicLabs' technical assessment.",
     "Partial refunds may be offered at our discretion for partially completed services.",
     "Refund requests must be raised within 48 hours of service completion for consideration.",
     "Chargebacks initiated without prior communication may result in legal action.",
@@ -84,7 +84,7 @@ const TermsAndConditions = () => {
     "We may require device passwords for software repairs with customer consent.",
 
     // Liability Terms (71-85)
-    "TechFix Pro's liability is limited to the service fee paid for the specific repair.",
+    "LogicLabs' liability is limited to the service fee paid for the specific repair.",
     "We are not liable for any indirect, incidental, or consequential damages.",
     "Loss of business, data, or revenue claims are not covered under our liability.",
     "Pre-existing device conditions may affect repair outcomes; we are not liable for such issues.",
@@ -98,7 +98,7 @@ const TermsAndConditions = () => {
     "We advise customers to check manufacturer warranty status before third-party repairs.",
     "Force majeure events (natural disasters, pandemics, etc.) may affect service delivery timelines.",
     "Our maximum liability for any claim will not exceed the amount paid for the service.",
-    "Indemnification: Customers agree to indemnify TechFix Pro against third-party claims.",
+    "Indemnification: Customers agree to indemnify LogicLabs against third-party claims.",
 
     // Privacy & Data (86-95)
     "We collect minimal personal information necessary for service delivery.",
@@ -117,14 +117,14 @@ const TermsAndConditions = () => {
     "Corporate and bulk service contracts are subject to separate terms and conditions.",
     "Disputes will be resolved through arbitration in accordance with Indian Arbitration Act.",
     "If any provision of these terms is found invalid, other provisions remain in full effect.",
-    "These Terms and Conditions constitute the entire agreement between customers and TechFix Pro regarding service use.",
+    "These Terms and Conditions constitute the entire agreement between customers and LogicLabs regarding service use.",
   ];
 
   return (
     <>
       <Helmet>
-        <title>Terms and Conditions - TechFix Pro</title>
-        <meta name="description" content="Read the complete terms and conditions for TechFix Pro services including refund policy, payment terms, and service agreements." />
+        <title>Terms and Conditions - LogicLabs</title>
+        <meta name="description" content="Read the complete terms and conditions for LogicLabs services including refund policy, payment terms, and service agreements." />
       </Helmet>
       
       <main className="min-h-screen bg-background">
@@ -134,9 +134,9 @@ const TermsAndConditions = () => {
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center">
-                  <span className="text-foreground font-bold text-lg">TF</span>
+                  <span className="text-foreground font-bold text-lg">LL</span>
                 </div>
-                <span className="text-xl font-semibold">TechFix Pro</span>
+                <span className="text-xl font-semibold">LogicLabs</span>
               </Link>
               <a 
                 href="tel:8812910655"
@@ -302,7 +302,7 @@ const TermsAndConditions = () => {
         {/* Footer */}
         <footer className="bg-foreground text-background py-8">
           <div className="container mx-auto px-4 text-center">
-            <p className="text-background/60">© 2024 TechFix Pro. All rights reserved.</p>
+            <p className="text-background/60">© 2024 LogicLabs. All rights reserved.</p>
           </div>
         </footer>
       </main>
