@@ -1,0 +1,230 @@
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  AlertCircle, 
+  Phone, 
+  Wrench, 
+  CheckCircle2, 
+  ThumbsUp, 
+  LogOut,
+  RefreshCw,
+  Calendar,
+  IndianRupee
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { CustomerInfo, clearCustomerCookie } from '@/lib/cookies';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+
+interface Booking {
+  id: string;
+  name: string;
+  phone: string;
+  issue: string;
+  description: string | null;
+  amount: number;
+  payment_status: string;
+  repair_status: string;
+  created_at: string;
+  razorpay_order_id: string | null;
+}
+
+interface RepairStatusTrackerProps {
+  customerInfo: CustomerInfo;
+  onLogout: () => void;
+}
+
+const REPAIR_STAGES = [
+  { key: 'problem_raised', label: 'Problem Raised', icon: AlertCircle, description: 'Your repair request has been received' },
+  { key: 'technician_called', label: 'Technician Assigned', icon: Phone, description: 'A technician will contact you soon' },
+  { key: 'technician_fixing', label: 'Repair In Progress', icon: Wrench, description: 'Our technician is working on your device' },
+  { key: 'fixed', label: 'Repair Complete', icon: CheckCircle2, description: 'Your device has been fixed' },
+  { key: 'customer_satisfied', label: 'Completed', icon: ThumbsUp, description: 'Thank you for choosing us!' },
+];
+
+const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProps) => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchBookings = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .ilike('name', customerInfo.name)
+        .eq('phone', customerInfo.phone)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Type assertion since repair_status is now in the table
+      setBookings((data || []) as Booking[]);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast.error('Failed to load your bookings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [customerInfo]);
+
+  const handleLogout = () => {
+    clearCustomerCookie();
+    onLogout();
+    toast.success('Logged out successfully');
+  };
+
+  const getCurrentStageIndex = (status: string) => {
+    return REPAIR_STAGES.findIndex(stage => stage.key === status);
+  };
+
+  const getPaymentBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+      case 'paid':
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Paid</Badge>;
+      case 'pending_verification':
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending Verification</Badge>;
+      default:
+        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Pending</Badge>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Welcome, {customerInfo.name}</h2>
+          <p className="text-muted-foreground">Track your repair status below</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={fetchBookings}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
+
+      {bookings.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">No bookings found</p>
+          </CardContent>
+        </Card>
+      ) : (
+        bookings.map((booking) => {
+          const currentStageIndex = getCurrentStageIndex(booking.repair_status);
+          
+          return (
+            <Card key={booking.id} className="overflow-hidden">
+              <CardHeader className="bg-muted/30">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-lg">{booking.issue}</CardTitle>
+                    <CardDescription className="flex items-center gap-4 mt-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(booking.created_at), 'dd MMM yyyy, hh:mm a')}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <IndianRupee className="h-3 w-3" />
+                        {booking.amount}
+                      </span>
+                    </CardDescription>
+                  </div>
+                  {getPaymentBadge(booking.payment_status)}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {booking.description && (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-4">{booking.description}</p>
+                    <Separator className="mb-6" />
+                  </>
+                )}
+                
+                {/* Status Timeline */}
+                <div className="relative">
+                  {REPAIR_STAGES.map((stage, index) => {
+                    const Icon = stage.icon;
+                    const isCompleted = index <= currentStageIndex;
+                    const isCurrent = index === currentStageIndex;
+                    
+                    return (
+                      <div key={stage.key} className="flex gap-4 pb-6 last:pb-0">
+                        {/* Timeline Line */}
+                        <div className="flex flex-col items-center">
+                          <div 
+                            className={`
+                              w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all
+                              ${isCompleted 
+                                ? 'bg-primary border-primary text-primary-foreground' 
+                                : 'bg-muted border-muted-foreground/30 text-muted-foreground'
+                              }
+                              ${isCurrent ? 'ring-4 ring-primary/20' : ''}
+                            `}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          {index < REPAIR_STAGES.length - 1 && (
+                            <div 
+                              className={`
+                                w-0.5 flex-1 mt-2
+                                ${index < currentStageIndex ? 'bg-primary' : 'bg-muted-foreground/30'}
+                              `}
+                            />
+                          )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="flex-1 pt-1">
+                          <h4 
+                            className={`
+                              font-medium
+                              ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}
+                            `}
+                          >
+                            {stage.label}
+                            {isCurrent && (
+                              <Badge variant="outline" className="ml-2 text-xs">Current</Badge>
+                            )}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {stage.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
+export default RepairStatusTracker;
