@@ -38,12 +38,34 @@ interface RepairStatusTrackerProps {
 }
 
 const REPAIR_STAGES = [
-  { key: 'problem_raised', label: 'Problem Raised', icon: AlertCircle, description: 'Your repair request has been received' },
-  { key: 'technician_called', label: 'Technician Assigned', icon: Phone, description: 'A technician will contact you soon' },
-  { key: 'technician_fixing', label: 'Repair In Progress', icon: Wrench, description: 'Our technician is working on your device' },
-  { key: 'fixed', label: 'Repair Complete', icon: CheckCircle2, description: 'Your device has been fixed' },
-  { key: 'customer_satisfied', label: 'Completed', icon: ThumbsUp, description: 'Thank you for choosing us!' },
+  { key: 'problem_raised', label: 'Problem Raised', icon: AlertCircle, description: 'Your repair request has been received', estimatedHours: 0 },
+  { key: 'technician_called', label: 'Technician Assigned', icon: Phone, description: 'A technician will contact you soon', estimatedHours: 2 },
+  { key: 'technician_fixing', label: 'Repair In Progress', icon: Wrench, description: 'Our technician is working on your device', estimatedHours: 24 },
+  { key: 'fixed', label: 'Repair Complete', icon: CheckCircle2, description: 'Your device has been fixed', estimatedHours: 48 },
+  { key: 'customer_satisfied', label: 'Completed', icon: ThumbsUp, description: 'Thank you for choosing us!', estimatedHours: 72 },
 ];
+
+const getEstimatedTime = (createdAt: string, stageIndex: number, currentStageIndex: number): string => {
+  if (stageIndex <= currentStageIndex) return 'Completed';
+  
+  const stage = REPAIR_STAGES[stageIndex];
+  const bookingDate = new Date(createdAt);
+  const estimatedDate = new Date(bookingDate.getTime() + stage.estimatedHours * 60 * 60 * 1000);
+  
+  const now = new Date();
+  if (estimatedDate < now) {
+    return 'Soon';
+  }
+  
+  const diffMs = estimatedDate.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffDays > 0) {
+    return `~${diffDays}d ${diffHours % 24}h`;
+  }
+  return `~${diffHours}h`;
+};
 
 const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -170,6 +192,7 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                     const Icon = stage.icon;
                     const isCompleted = index <= currentStageIndex;
                     const isCurrent = index === currentStageIndex;
+                    const eta = getEstimatedTime(booking.created_at, index, currentStageIndex);
                     
                     return (
                       <div key={stage.key} className="flex gap-4 pb-6 last:pb-0">
@@ -199,17 +222,29 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                         
                         {/* Content */}
                         <div className="flex-1 pt-1">
-                          <h4 
-                            className={`
-                              font-medium
-                              ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}
-                            `}
-                          >
-                            {stage.label}
-                            {isCurrent && (
-                              <Badge variant="outline" className="ml-2 text-xs">Current</Badge>
+                          <div className="flex items-center justify-between">
+                            <h4 
+                              className={`
+                                font-medium
+                                ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}
+                              `}
+                            >
+                              {stage.label}
+                              {isCurrent && (
+                                <Badge variant="outline" className="ml-2 text-xs">Current</Badge>
+                              )}
+                            </h4>
+                            {!isCompleted && (
+                              <Badge variant="secondary" className="text-xs">
+                                ETA: {eta}
+                              </Badge>
                             )}
-                          </h4>
+                            {isCompleted && index < currentStageIndex && (
+                              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                ✓ Done
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground mt-0.5">
                             {stage.description}
                           </p>
