@@ -74,17 +74,15 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
   const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .ilike('name', customerInfo.name)
-        .eq('phone', customerInfo.phone)
-        .order('created_at', { ascending: false });
+      // Fetch bookings via Edge Function for security
+      const { data: response, error } = await supabase.functions.invoke('get-customer-bookings', {
+        body: { name: customerInfo.name, phone: customerInfo.phone }
+      });
 
       if (error) throw error;
       
       // Type assertion since repair_status is now in the table
-      setBookings((data || []) as Booking[]);
+      setBookings((response?.data || []) as Booking[]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Failed to load your bookings');

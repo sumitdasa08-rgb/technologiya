@@ -35,17 +35,16 @@ const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
     setIsLoading(true);
 
     try {
-      // Check if booking exists with this name and phone
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('*')
-        .ilike('name', name.trim())
-        .eq('phone', phone.trim())
-        .limit(1);
+      // Check if booking exists with this name and phone via Edge Function
+      const { data: response, error } = await supabase.functions.invoke('get-customer-bookings', {
+        body: { name: name.trim(), phone: phone.trim() }
+      });
 
       if (error) {
         throw error;
       }
+
+      const data = response?.data;
 
       if (!data || data.length === 0) {
         toast.error('No booking found with these details. Please check your name and phone number.');
