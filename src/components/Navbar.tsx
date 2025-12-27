@@ -1,4 +1,5 @@
-import { Phone, Menu, X } from "lucide-react";
+import { Phone, Menu, X, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const Navbar = () => {
@@ -36,6 +37,13 @@ const Navbar = () => {
               <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
+          <Link 
+            to="/track-repair"
+            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-300"
+          >
+            <Search className="w-3.5 h-3.5" />
+            Track Repair
+          </Link>
         </div>
 
         <a 
@@ -69,6 +77,14 @@ const Navbar = () => {
               {item}
             </a>
           ))}
+          <Link 
+            to="/track-repair"
+            className="flex items-center gap-2 text-lg text-primary hover:opacity-70 transition-opacity"
+            onClick={() => setIsOpen(false)}
+          >
+            <Search className="w-4 h-4" />
+            Track Repair
+          </Link>
           <div className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
             <Phone className="w-4 h-4" />
             <span className="font-medium">8812910655</span>
