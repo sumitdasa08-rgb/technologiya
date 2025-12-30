@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   AlertCircle, 
   Phone, 
@@ -12,7 +13,9 @@ import {
   LogOut,
   RefreshCw,
   Calendar,
-  IndianRupee
+  IndianRupee,
+  XCircle,
+  CreditCard
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomerInfo, clearCustomerCookie } from '@/lib/cookies';
@@ -112,6 +115,7 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
           
           if (payload.eventType === 'UPDATE') {
             const updatedBooking = payload.new as Booking;
+            const oldBooking = payload.old as Booking;
             
             // Only update if this booking belongs to the current customer
             if (updatedBooking.phone === customerInfo.phone && 
@@ -121,9 +125,23 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                   booking.id === updatedBooking.id ? updatedBooking : booking
                 )
               );
-              toast.success('Repair status updated!', {
-                description: `Your repair is now: ${REPAIR_STAGES.find(s => s.key === updatedBooking.repair_status)?.label || updatedBooking.repair_status}`
-              });
+              
+              // Show appropriate toast based on what changed
+              if (oldBooking.payment_status !== updatedBooking.payment_status) {
+                if (updatedBooking.payment_status === 'payment_failed') {
+                  toast.error('Payment Not Received', {
+                    description: 'We haven\'t received your payment. Please retry or contact support.'
+                  });
+                } else if (updatedBooking.payment_status === 'completed') {
+                  toast.success('Payment Confirmed!', {
+                    description: 'Your payment has been verified successfully.'
+                  });
+                }
+              } else if (oldBooking.repair_status !== updatedBooking.repair_status) {
+                toast.success('Repair status updated!', {
+                  description: `Your repair is now: ${REPAIR_STAGES.find(s => s.key === updatedBooking.repair_status)?.label || updatedBooking.repair_status}`
+                });
+              }
             }
           } else if (payload.eventType === 'INSERT') {
             const newBooking = payload.new as Booking;
@@ -161,9 +179,20 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
         return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Paid</Badge>;
       case 'pending_verification':
         return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending Verification</Badge>;
+      case 'payment_failed':
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Payment Not Received</Badge>;
       default:
         return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Pending</Badge>;
     }
+  };
+
+  const handleRetryPayment = (booking: Booking) => {
+    // Open UPI payment link
+    const upiDeepLink = `upi://pay?pa=sumitdasa99-3@okaxis&pn=LogicLabs&am=${booking.amount}&cu=INR&tn=Retry%20Payment%20${booking.razorpay_order_id}`;
+    window.location.href = upiDeepLink;
+    toast.info('Opening UPI app...', {
+      description: 'After payment, please call us at 8812910655 to confirm.'
+    });
   };
 
   if (isLoading) {
@@ -226,6 +255,48 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
+                {/* Payment Failed Alert */}
+                {booking.payment_status === 'payment_failed' && (
+                  <Alert variant="destructive" className="mb-6 border-red-500/30 bg-red-500/10">
+                    <XCircle className="h-4 w-4" />
+                    <AlertTitle>Payment Not Received</AlertTitle>
+                    <AlertDescription className="mt-2">
+                      <p className="mb-3">We haven't received your payment of ₹{booking.amount} yet. Please complete the payment to proceed with your repair.</p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleRetryPayment(booking)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Pay ₹{booking.amount} Now
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          asChild
+                        >
+                          <a href="tel:8812910655">
+                            <Phone className="mr-2 h-4 w-4" />
+                            Call Support
+                          </a>
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Pending Verification Info */}
+                {booking.payment_status === 'pending_verification' && (
+                  <Alert className="mb-6 border-yellow-500/30 bg-yellow-500/10">
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                    <AlertTitle className="text-yellow-500">Payment Being Verified</AlertTitle>
+                    <AlertDescription className="text-yellow-400/80">
+                      We're verifying your payment. This usually takes 15-30 minutes. We'll update the status once confirmed.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {booking.description && (
                   <>
                     <p className="text-sm text-muted-foreground mb-4">{booking.description}</p>
