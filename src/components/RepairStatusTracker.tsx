@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
-  AlertCircle, 
+  AlertCircle,
+  Plus,
   Phone, 
   Wrench, 
   CheckCircle2, 
@@ -71,6 +73,7 @@ const getEstimatedTime = (createdAt: string, stageIndex: number, currentStageInd
 };
 
 const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProps) => {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -227,7 +230,14 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No bookings found</p>
+            <p className="text-muted-foreground mb-6">No bookings found</p>
+            <Button 
+              onClick={() => navigate('/#contact')}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create New Booking
+            </Button>
           </CardContent>
         </Card>
       ) : (
