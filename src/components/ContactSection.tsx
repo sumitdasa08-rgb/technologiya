@@ -1,13 +1,16 @@
-import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { setCustomerCookie } from "@/lib/cookies";
+import { useNavigate } from "react-router-dom";
 import UPIPayment from "./UPIPayment";
 
 const ContactSection = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -22,6 +25,8 @@ const ContactSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showUPIPayment, setShowUPIPayment] = useState(false);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [confirmedCustomer, setConfirmedCustomer] = useState<{ name: string; phone: string } | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,6 +135,9 @@ const ContactSection = () => {
 
   const handlePaymentConfirmed = async () => {
     setIsLoading(true);
+    const customerName = formData.name.trim();
+    const customerPhone = formData.phone.trim();
+    
     try {
       // Update booking status to payment_confirmed
       const { error } = await supabase.functions.invoke('update-payment-status', {
@@ -142,17 +150,31 @@ const ContactSection = () => {
 
       if (error) throw error;
 
-      toast.success("Thank you! We've received your booking. Our team will verify the payment and contact you within 30 minutes.");
-      setFormData({ name: "", phone: "", issue: "", message: "" });
-      setSelectedService({ service_type: "consultation", price: 150 });
+      // Save customer info for tracking
+      setCustomerCookie({ name: customerName, phone: customerPhone });
+      setConfirmedCustomer({ name: customerName, phone: customerPhone });
+      setBookingConfirmed(true);
       setShowUPIPayment(false);
-      setBookingRef(null);
+      
+      toast.success("Booking confirmed! You can now track your repair status.");
     } catch (error) {
       console.error('Confirmation error:', error);
       toast.error("Failed to confirm. Please call us at 8812910655.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNewBooking = () => {
+    setFormData({ name: "", phone: "", issue: "", message: "" });
+    setSelectedService({ service_type: "consultation", price: 150 });
+    setBookingConfirmed(false);
+    setConfirmedCustomer(null);
+    setBookingRef(null);
+  };
+
+  const handleTrackRepair = () => {
+    navigate('/track-repair');
   };
 
   const contactInfo = [
@@ -210,7 +232,40 @@ const ContactSection = () => {
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
             }`}
           >
-            {showUPIPayment ? (
+            {bookingConfirmed ? (
+              <div className="text-center space-y-6 py-8">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-8 h-8 text-emerald-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Booking Confirmed!</h3>
+                  <p className="text-muted-foreground">
+                    Thank you, {confirmedCustomer?.name}! Our team will verify your payment and contact you within 30 minutes.
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  <Button 
+                    onClick={handleTrackRepair}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-full font-medium transition-all duration-300"
+                  >
+                    Track Your Repair <ExternalLink className="w-4 h-4 ml-2" />
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={handleNewBooking}
+                    className="w-full h-12 rounded-full font-medium transition-all duration-300"
+                  >
+                    Book Another Service
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-muted-foreground">
+                  Your repair status will update in real-time on the tracking page
+                </p>
+              </div>
+            ) : showUPIPayment ? (
               <UPIPayment 
                 amount={selectedService.price} 
                 onPaymentConfirmed={handlePaymentConfirmed}
