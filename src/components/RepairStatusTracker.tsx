@@ -95,6 +95,55 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
     fetchBookings();
   }, [customerInfo]);
 
+  // Real-time subscription for booking updates
+  useEffect(() => {
+    // Subscribe to changes on the bookings table
+    const channel = supabase
+      .channel('booking-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings'
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          
+          if (payload.eventType === 'UPDATE') {
+            const updatedBooking = payload.new as Booking;
+            
+            // Only update if this booking belongs to the current customer
+            if (updatedBooking.phone === customerInfo.phone && 
+                updatedBooking.name === customerInfo.name) {
+              setBookings(prev => 
+                prev.map(booking => 
+                  booking.id === updatedBooking.id ? updatedBooking : booking
+                )
+              );
+              toast.success('Repair status updated!', {
+                description: `Your repair is now: ${REPAIR_STAGES.find(s => s.key === updatedBooking.repair_status)?.label || updatedBooking.repair_status}`
+              });
+            }
+          } else if (payload.eventType === 'INSERT') {
+            const newBooking = payload.new as Booking;
+            
+            // Only add if this booking belongs to the current customer
+            if (newBooking.phone === customerInfo.phone && 
+                newBooking.name === customerInfo.name) {
+              setBookings(prev => [newBooking, ...prev]);
+              toast.success('New booking added!');
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [customerInfo]);
+
   const handleLogout = () => {
     clearCustomerCookie();
     onLogout();
