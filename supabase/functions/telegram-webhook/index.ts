@@ -167,7 +167,7 @@ serve(async (req) => {
       // Parse callback data - new format: py:shortRef or pn:shortRef
       // Also support old format: payment_yes:bookingRef:phone:encodedName
       let action: string;
-      let bookingRef: string;
+      let bookingRef: string = '';
       let phone: string | null = null;
       let customerName: string | null = null;
 
@@ -176,24 +176,34 @@ serve(async (req) => {
         const parts = callbackData.split(':');
         action = parts[0] === 'py' ? 'payment_yes' : 'payment_no';
         const shortRef = parts[1];
-        bookingRef = `UPI-${shortRef}`;
         
-        // Look up booking details from database
+        // Look up booking details from database using LIKE to find the full reference
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         
         if (supabaseUrl && supabaseKey) {
           const supabase = createClient(supabaseUrl, supabaseKey);
-          const { data: booking } = await supabase
+          const { data: booking, error: lookupError } = await supabase
             .from('bookings')
-            .select('name, phone')
-            .like('razorpay_order_id', `%${shortRef}%`)
+            .select('name, phone, razorpay_order_id')
+            .like('razorpay_order_id', `UPI-${shortRef}%`)
             .single();
+          
+          if (lookupError) {
+            console.error('Error looking up booking:', lookupError);
+          }
           
           if (booking) {
             phone = booking.phone;
             customerName = booking.name;
-            console.log('Found booking:', customerName, phone);
+            bookingRef = booking.razorpay_order_id; // Use the FULL reference from DB
+            console.log('Found booking:', customerName, phone, 'Full ref:', bookingRef);
+          } else {
+            console.error('Booking not found for shortRef:', shortRef);
+            await answerCallbackQuery(botToken, callbackQueryId, '❌ Booking not found');
+            return new Response(JSON.stringify({ ok: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
           }
         }
       } else {
