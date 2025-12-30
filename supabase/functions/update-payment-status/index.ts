@@ -235,14 +235,50 @@ serve(async (req) => {
 
     console.log('Updating payment status for order:', razorpay_order_id);
 
-    // Update booking with payment details
+    // First, check current payment status - don't allow override if already rejected
+    const { data: existingBooking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('id, payment_status')
+      .eq('razorpay_order_id', razorpay_order_id)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error fetching booking:', fetchError);
+      throw new Error('Failed to fetch booking');
+    }
+
+    if (!existingBooking) {
+      console.error('Booking not found for order:', razorpay_order_id);
+      throw new Error('Booking not found');
+    }
+
+    // Prevent customer from overriding admin's rejection
+    if (existingBooking.payment_status === 'payment_failed') {
+      console.log('Payment was already rejected by admin, cannot override');
+      throw new Error('Payment was rejected. Please contact support or try a new booking.');
+    }
+
+    // Don't update if already completed
+    if (existingBooking.payment_status === 'completed') {
+      console.log('Payment already completed, skipping update');
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Payment already confirmed',
+        booking: existingBooking,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Update booking with payment details - only if pending or pending_verification
     const { data, error } = await supabase
       .from('bookings')
       .update({
         razorpay_payment_id,
-        payment_status: 'completed',
+        payment_status: 'pending_verification',
       })
       .eq('razorpay_order_id', razorpay_order_id)
+      .eq('payment_status', 'pending') // Only update if still pending
       .select()
       .single();
 
@@ -251,10 +287,10 @@ serve(async (req) => {
       throw new Error('Failed to update payment status');
     }
 
-    console.log('Payment status updated for booking:', data.id);
+    console.log('Payment status updated to pending_verification for booking:', data.id);
 
-    // Send Telegram notification for payment confirmation
-    const confirmationMessage = `✅ *Payment Confirmed!*
+    // Send Telegram notification for payment pending verification
+    const confirmationMessage = `⏳ *Payment Confirmation Pending*
 
 📋 *Reference:* \`${razorpay_order_id}\`
 👤 *Name:* ${data.name}
@@ -262,7 +298,8 @@ serve(async (req) => {
 🔧 *Issue:* ${data.issue}
 💰 *Amount:* ₹${data.amount}
 
-🎉 *Status:* Payment Completed`;
+🔔 *Status:* Customer clicked "I've Completed Payment"
+👆 *Action:* Check your bank and confirm via the original message buttons`;
 
     sendTelegramNotification(confirmationMessage).catch(err => 
       console.error('Failed to send Telegram confirmation:', err)
