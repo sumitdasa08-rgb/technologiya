@@ -59,8 +59,10 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
 
   // Create inline keyboard with Yes/No buttons
   // Telegram limits callback_data to 64 bytes, so we use a short reference
-  // Format: action:shortRef (we'll store full details in DB and look up by ref)
-  const shortRef = booking.bookingRef.replace('UPI-', '').substring(0, 20);
+  // Format: action:timestamp-randomId (we use LIKE query to find the booking)
+  // Extract just the timestamp part for shorter callback data (first 13 chars after UPI-)
+  const refWithoutPrefix = booking.bookingRef.replace('UPI-', '');
+  const shortRef = refWithoutPrefix.substring(0, 19); // timestamp-XXXXXX format
   
   const inlineKeyboard = {
     inline_keyboard: [
