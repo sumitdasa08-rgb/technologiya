@@ -58,13 +58,17 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
 👇 *Did you receive the payment?*`;
 
   // Create inline keyboard with Yes/No buttons
+  // Telegram limits callback_data to 64 bytes, so we use a short reference
+  // Format: action:shortRef (we'll store full details in DB and look up by ref)
+  const shortRef = booking.bookingRef.replace('UPI-', '').substring(0, 20);
+  
   const inlineKeyboard = {
     inline_keyboard: [
       [
-        { text: '✅ Yes - Payment Received', callback_data: `payment_yes:${booking.bookingRef}:${booking.phone}:${encodeURIComponent(booking.name)}` },
+        { text: '✅ Yes - Payment Received', callback_data: `py:${shortRef}` },
       ],
       [
-        { text: '❌ No - Payment Not Received', callback_data: `payment_no:${booking.bookingRef}:${booking.phone}:${encodeURIComponent(booking.name)}` },
+        { text: '❌ No - Payment Not Received', callback_data: `pn:${shortRef}` },
       ]
     ]
   };
