@@ -162,20 +162,57 @@ serve(async (req) => {
         });
       }
 
-      // Parse callback data: payment_yes:bookingRef:phone:encodedName or payment_no:...
-      const parts = callbackData.split(':');
-      if (parts.length < 4) {
-        console.error('Invalid callback data format:', callbackData);
-        await answerCallbackQuery(botToken, callbackQueryId, 'Invalid action');
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      console.log('Processing callback data:', callbackData);
+
+      // Parse callback data - new format: py:shortRef or pn:shortRef
+      // Also support old format: payment_yes:bookingRef:phone:encodedName
+      let action: string;
+      let bookingRef: string;
+      let phone: string | null = null;
+      let customerName: string | null = null;
+
+      if (callbackData.startsWith('py:') || callbackData.startsWith('pn:')) {
+        // New short format
+        const parts = callbackData.split(':');
+        action = parts[0] === 'py' ? 'payment_yes' : 'payment_no';
+        const shortRef = parts[1];
+        bookingRef = `UPI-${shortRef}`;
+        
+        // Look up booking details from database
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (supabaseUrl && supabaseKey) {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const { data: booking } = await supabase
+            .from('bookings')
+            .select('name, phone')
+            .like('razorpay_order_id', `%${shortRef}%`)
+            .single();
+          
+          if (booking) {
+            phone = booking.phone;
+            customerName = booking.name;
+            console.log('Found booking:', customerName, phone);
+          }
+        }
+      } else {
+        // Old format: payment_yes:bookingRef:phone:encodedName
+        const parts = callbackData.split(':');
+        if (parts.length < 4) {
+          console.error('Invalid callback data format:', callbackData);
+          await answerCallbackQuery(botToken, callbackQueryId, 'Invalid action');
+          return new Response(JSON.stringify({ ok: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        action = parts[0];
+        bookingRef = parts[1];
+        phone = parts[2];
+        customerName = decodeURIComponent(parts[3]);
       }
 
-      const [action, bookingRef, phone, encodedName] = parts;
-      const customerName = decodeURIComponent(encodedName);
       const isPaymentReceived = action === 'payment_yes';
-
       console.log(`Processing ${action} for booking ${bookingRef}, customer: ${customerName}, phone: ${phone}`);
 
       // Update booking status
@@ -189,15 +226,17 @@ serve(async (req) => {
         isPaymentReceived ? '✅ Payment marked as received!' : '❌ Payment marked as not received'
       );
 
-      // Send WhatsApp link message
-      await sendWhatsAppLink(
-        botToken,
-        chatId.toString(),
-        phone,
-        customerName,
-        isPaymentReceived,
-        bookingRef
-      );
+      // Send WhatsApp link message if we have phone and name
+      if (phone && customerName) {
+        await sendWhatsAppLink(
+          botToken,
+          chatId.toString(),
+          phone,
+          customerName,
+          isPaymentReceived,
+          bookingRef
+        );
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), {
