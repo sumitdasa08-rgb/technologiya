@@ -33,12 +33,13 @@ async function sendTelegramNotificationWithButtons(booking: {
   const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')?.trim();
   const chatId = Deno.env.get('TELEGRAM_CHAT_ID')?.trim();
 
-  console.log('Telegram config - Bot token exists:', !!botToken, 'Token length:', botToken?.length);
-  console.log('Telegram config - Chat ID:', chatId);
+  console.log('=== Telegram Notification Debug ===');
+  console.log('Bot token exists:', !!botToken, 'Token length:', botToken?.length);
+  console.log('Chat ID:', chatId);
 
   if (!botToken || !chatId) {
-    console.log('Telegram credentials not configured, skipping notification');
-    return;
+    console.error('❌ Telegram credentials not configured! Please set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID');
+    return { success: false, error: 'Credentials not configured' };
   }
 
   const message = `🔔 *NEW BOOKING - PAYMENT PENDING*
@@ -69,6 +70,7 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
   };
 
   try {
+    console.log('Sending Telegram notification to chat:', chatId);
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,14 +82,19 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
       }),
     });
 
+    const responseData = await response.json();
+    
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Telegram notification failed:', error);
-    } else {
-      console.log('Telegram notification with buttons sent successfully');
+      console.error('❌ Telegram API error:', JSON.stringify(responseData));
+      return { success: false, error: responseData };
     }
+    
+    console.log('✅ Telegram notification sent successfully!');
+    console.log('Response:', JSON.stringify(responseData));
+    return { success: true, data: responseData };
   } catch (error) {
-    console.error('Error sending Telegram notification:', error);
+    console.error('❌ Error sending Telegram notification:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -102,17 +109,21 @@ async function sendEmailNotification(booking: {
 }) {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   
+  console.log('=== Email Notification Debug ===');
+  console.log('Resend API key exists:', !!resendApiKey, 'Key length:', resendApiKey?.length);
+  
   if (!resendApiKey) {
-    console.log('Resend API key not configured, skipping email notification');
-    return;
+    console.error('❌ Resend API key not configured! Please set RESEND_API_KEY');
+    return { success: false, error: 'API key not configured' };
   }
 
   const resend = new Resend(resendApiKey);
 
   try {
-    const { error } = await resend.emails.send({
-      from: 'PC Repair Booking <onboarding@resend.dev>',
-      to: ['sumitdasa08@gmail.com'], // Admin email (Resend account owner)
+    console.log('Sending email notification...');
+    const { data, error } = await resend.emails.send({
+      from: 'LogicLabs Booking <onboarding@resend.dev>',
+      to: ['sumitdasa08@gmail.com'], // Admin email (must be Resend account owner for sandbox)
       subject: `🔔 New Booking - ${booking.bookingRef}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -141,12 +152,16 @@ async function sendEmailNotification(booking: {
     });
 
     if (error) {
-      console.error('Email notification failed:', error);
-    } else {
-      console.log('Email notification sent successfully');
+      console.error('❌ Email notification failed:', JSON.stringify(error));
+      return { success: false, error };
     }
+    
+    console.log('✅ Email notification sent successfully!');
+    console.log('Email ID:', data?.id);
+    return { success: true, data };
   } catch (error) {
-    console.error('Error sending email notification:', error);
+    console.error('❌ Error sending email notification:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -266,9 +281,9 @@ serve(async (req) => {
       throw new Error('Failed to create booking');
     }
 
-    console.log('Booking created:', booking.id, 'Reference:', bookingRef);
+    console.log('✅ Booking created successfully:', booking.id, 'Reference:', bookingRef);
 
-    // Send Telegram notification with Yes/No buttons (non-blocking)
+    // Send Telegram notification with Yes/No buttons
     const bookingData = {
       name: name.trim(),
       phone: phone.trim(),
@@ -278,13 +293,19 @@ serve(async (req) => {
       bookingRef,
     };
     
-    sendTelegramNotificationWithButtons(bookingData).catch(err => 
-      console.error('Failed to send Telegram notification:', err)
-    );
+    console.log('=== Sending Notifications ===');
     
-    // Send email notification as backup (non-blocking)
-    sendEmailNotification(bookingData).catch(err => 
-      console.error('Failed to send email notification:', err)
+    // Send notifications and log results (use Promise.allSettled to not block on errors)
+    const [telegramResult, emailResult] = await Promise.allSettled([
+      sendTelegramNotificationWithButtons(bookingData),
+      sendEmailNotification(bookingData)
+    ]);
+    
+    console.log('Telegram notification result:', 
+      telegramResult.status === 'fulfilled' ? JSON.stringify(telegramResult.value) : telegramResult.reason
+    );
+    console.log('Email notification result:', 
+      emailResult.status === 'fulfilled' ? JSON.stringify(emailResult.value) : emailResult.reason
     );
 
     return new Response(
