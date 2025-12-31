@@ -143,11 +143,10 @@ const BookingSection = () => {
       if (error) throw error;
 
       setCustomerCookie({ name: customerName, phone: customerPhone });
-      setConfirmedCustomer({ name: customerName, phone: customerPhone });
-      setBookingConfirmed(true);
-      setShowUPIPayment(false);
+      toast.success("Booking confirmed! Redirecting to track your repair...");
       
-      toast.success("Booking confirmed! You can now track your repair status.");
+      // Navigate directly to track repair page
+      navigate('/track-repair');
     } catch (error) {
       console.error('Confirmation error:', error);
       toast.error("Failed to confirm. Please call us at 8812910655.");
