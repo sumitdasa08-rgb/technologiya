@@ -7,15 +7,10 @@ const HeroSection = () => {
     e.preventDefault();
     const bookingSection = document.getElementById('booking');
     if (bookingSection) {
-      // On mobile, scroll with offset to center the LogicLabs name
-      const isMobile = window.innerWidth < 768;
-      if (isMobile) {
-        const offset = 80; // Offset to position name in middle
-        const elementPosition = bookingSection.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-      } else {
-        bookingSection.scrollIntoView({ behavior: 'smooth' });
-      }
+      // Scroll to show the section at the top with a small padding
+      const offset = 20;
+      const elementPosition = bookingSection.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
     }
   };
 
