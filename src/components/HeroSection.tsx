@@ -5,12 +5,23 @@ import heroCharacter from "@/assets/hero-character.png";
 const HeroSection = () => {
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
+    const isMobile = window.innerWidth < 768;
+    
+    if (isMobile) {
+      // On mobile, scroll to the LogicLabs header card
+      const mobileHeader = document.getElementById('booking-mobile-header');
+      if (mobileHeader) {
+        const offset = 20;
+        const elementPosition = mobileHeader.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+        return;
+      }
+    }
+    
+    // Desktop - scroll to booking section
     const bookingSection = document.getElementById('booking');
     if (bookingSection) {
-      // Scroll to show the section at the top with a small padding
-      const offset = 20;
-      const elementPosition = bookingSection.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+      bookingSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
