@@ -189,11 +189,59 @@ const BookingSection = () => {
             </p>
           </div>
 
+          {/* Mobile Only - Name and Why Choose Us */}
+          <div className="md:hidden bg-primary rounded-2xl p-6 mb-6 text-primary-foreground">
+            <h3 className="text-2xl font-bold text-center mb-4">LogicLabs</h3>
+            <div className="text-center mb-4">
+              <span className="text-sm opacity-90">Why Choose Us?</span>
+            </div>
+            <ul className="grid grid-cols-2 gap-3">
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">24/7 Support</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Home Visit</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Transparent Pricing</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Money-Back</span>
+              </li>
+            </ul>
+            <div className="flex gap-3 mt-4">
+              <Button
+                onClick={handleWhatsAppClick}
+                variant="secondary"
+                size="sm"
+                className="flex-1 gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </Button>
+              <Button
+                asChild
+                variant="secondary"
+                size="sm"
+                className="flex-1 gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+              >
+                <a href="tel:8812910655">
+                  <Phone className="w-4 h-4" />
+                  Call
+                </a>
+              </Button>
+            </div>
+          </div>
+
           {/* Main Card */}
           <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
             <div className="grid md:grid-cols-5">
-              {/* Left Side - Info Panel */}
-              <div className="md:col-span-2 bg-primary p-8 text-primary-foreground">
+              {/* Left Side - Info Panel (hidden on mobile) */}
+              <div className="hidden md:block md:col-span-2 bg-primary p-8 text-primary-foreground">
                 <h3 className="text-xl font-semibold mb-6">Why Choose Us?</h3>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
