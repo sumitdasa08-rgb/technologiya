@@ -190,7 +190,7 @@ const BookingSection = () => {
           </div>
 
           {/* Mobile Only - Name and Why Choose Us */}
-          <div className="md:hidden bg-primary rounded-2xl p-6 mb-6 text-primary-foreground">
+          <div id="booking-mobile-header" className="md:hidden bg-primary rounded-2xl p-6 mb-6 text-primary-foreground">
             <h3 className="text-2xl font-bold text-center mb-4">LogicLabs</h3>
             <div className="text-center mb-4">
               <span className="text-sm opacity-90">Why Choose Us?</span>
