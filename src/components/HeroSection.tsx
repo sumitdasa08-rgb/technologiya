@@ -3,6 +3,22 @@ import { Button } from "@/components/ui/button";
 import heroCharacter from "@/assets/hero-character.png";
 
 const HeroSection = () => {
+  const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const bookingSection = document.getElementById('booking');
+    if (bookingSection) {
+      bookingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const scrollToServices = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Clean monochrome gradient background */}
@@ -44,7 +60,7 @@ const HeroSection = () => {
                 className="bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-full hover:scale-105"
                 asChild
               >
-                <a href="#contact">
+                <a href="#booking" onClick={scrollToBooking}>
                   Book Now <ArrowRight className="ml-2 w-4 h-4" />
                 </a>
               </Button>
@@ -54,7 +70,7 @@ const HeroSection = () => {
                 className="border-foreground/20 text-foreground hover:bg-foreground/5 px-8 py-6 text-base font-medium rounded-full transition-all duration-300 hover:scale-105"
                 asChild
               >
-                <a href="#services">Explore Services</a>
+                <a href="#services" onClick={scrollToServices}>Explore Services</a>
               </Button>
             </div>
 
