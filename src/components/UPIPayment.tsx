@@ -121,6 +121,13 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
                 <Clock className="w-5 h-5 animate-pulse" />
                 <span className="text-lg font-semibold">{formatCountdown(countdown)}</span>
               </div>
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${((COUNTDOWN_SECONDS - countdown) / COUNTDOWN_SECONDS) * 100}%` }}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
                 Complete your payment. Confirmation button will appear after the timer.
               </p>
