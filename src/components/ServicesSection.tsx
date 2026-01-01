@@ -124,7 +124,7 @@ const ServicesSection = () => {
               message:
                 "I want to book a slot for computer/mobile software related issue consultation.",
               service_type: "consultation",
-              price: 150,
+              price: 10,
             },
           })
         );
@@ -200,8 +200,11 @@ const ServicesSection = () => {
                 <p className="text-muted-foreground font-light">For any type of computer/mobile software related issue</p>
               </div>
             </div>
-            <div className="flex items-center gap-6">
-              <span className="text-3xl md:text-4xl font-semibold text-foreground">₹150</span>
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+              <div className="text-center md:text-right">
+                <span className="text-3xl md:text-4xl font-semibold text-foreground">₹10</span>
+                <p className="text-sm text-primary font-medium">Only for limited time!</p>
+              </div>
               <Button 
                 onClick={handleBookSlot}
                 className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-105 hover:shadow-lg"
