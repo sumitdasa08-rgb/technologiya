@@ -1,10 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to allowed origins
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://ryehkycxyhdpufigcotc.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 };
+
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(req),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
 
 // Server-side pricing - client cannot modify these values
 const SERVICE_PRICING: Record<string, number> = {
@@ -39,7 +50,6 @@ const checkRateLimit = (clientIP: string): boolean => {
   const record = requestCounts.get(clientIP);
 
   if (!record || now > record.resetTime) {
-    // New window or expired window
     requestCounts.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
@@ -70,7 +80,6 @@ const getClientIP = (req: Request): string => {
 const validateInput = (data: { service_type?: string; name: string; phone: string; issue: string }) => {
   const errors: string[] = [];
 
-  // Validate name (required, max 100 chars, no HTML)
   if (!data.name || typeof data.name !== 'string') {
     errors.push('Name is required');
   } else if (data.name.trim().length === 0) {
@@ -81,7 +90,6 @@ const validateInput = (data: { service_type?: string; name: string; phone: strin
     errors.push('Name contains invalid characters');
   }
 
-  // Validate phone (required, 10-15 digits)
   if (!data.phone || typeof data.phone !== 'string') {
     errors.push('Phone is required');
   } else {
@@ -91,7 +99,6 @@ const validateInput = (data: { service_type?: string; name: string; phone: strin
     }
   }
 
-  // Validate issue (required, max 500 chars)
   if (!data.issue || typeof data.issue !== 'string') {
     errors.push('Issue description is required');
   } else if (data.issue.trim().length === 0) {
@@ -100,10 +107,8 @@ const validateInput = (data: { service_type?: string; name: string; phone: strin
     errors.push('Issue description must be less than 500 characters');
   }
 
-  // Validate service_type if provided
   if (data.service_type && typeof data.service_type === 'string') {
     if (!SERVICE_PRICING[data.service_type]) {
-      // Don't error, just use default
       console.log('Unknown service type, using default pricing:', data.service_type);
     }
   }
@@ -112,11 +117,12 @@ const validateInput = (data: { service_type?: string; name: string; phone: strin
 };
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Rate limiting check
   const clientIP = getClientIP(req);
   if (!checkRateLimit(clientIP)) {
     console.log('Rate limit exceeded, returning 429');
@@ -136,7 +142,6 @@ serve(async (req) => {
     const requestData = await req.json();
     const { service_type, name, phone, issue, description } = requestData;
     
-    // Server-side input validation
     const validationErrors = validateInput({ service_type, name, phone, issue });
     if (validationErrors.length > 0) {
       console.error('Validation errors:', validationErrors);
@@ -149,7 +154,6 @@ serve(async (req) => {
       });
     }
 
-    // Server-side amount calculation - client cannot override
     const amount = SERVICE_PRICING[service_type] || DEFAULT_SERVICE_AMOUNT;
     
     const keyId = Deno.env.get('RAZORPAY_KEY_ID');
@@ -186,7 +190,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amount * 100, // Razorpay expects amount in paise
+        amount: amount * 100,
         currency: 'INR',
         receipt: `receipt_${Date.now()}`,
         notes: {
@@ -202,7 +206,6 @@ serve(async (req) => {
     
     if (!response.ok) {
       console.error('Razorpay error:', order);
-      // Return generic error to client
       return new Response(JSON.stringify({ error: 'Failed to create payment order' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -211,7 +214,6 @@ serve(async (req) => {
 
     console.log('Order created successfully:', order.id);
 
-    // Save booking to database with sanitized inputs
     const { data: booking, error: dbError } = await supabase
       .from('bookings')
       .insert({
@@ -228,7 +230,6 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      // Don't expose database errors to client
     } else {
       console.log('Booking saved:', booking.id);
     }
@@ -245,7 +246,6 @@ serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error creating order:', errorMessage);
-    // Return generic error to client
     return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

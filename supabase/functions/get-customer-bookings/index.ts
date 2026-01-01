@@ -1,15 +1,75 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+// CORS configuration - restrict to allowed origins
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://ryehkycxyhdpufigcotc.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+};
+
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(req),
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per IP
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+
+// Check rate limit for an IP
+const checkRateLimit = (clientIP: string): boolean => {
+  const now = Date.now();
+  const record = requestCounts.get(clientIP);
+
+  if (!record || now > record.resetTime) {
+    requestCounts.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    console.log('Rate limit exceeded for IP:', clientIP);
+    return false;
+  }
+
+  record.count++;
+  return true;
+};
+
+// Get client IP from request headers
+const getClientIP = (req: Request): string => {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  return 'unknown';
 };
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting check
+  const clientIP = getClientIP(req);
+  if (!checkRateLimit(clientIP)) {
+    console.log('Rate limit exceeded for customer lookup');
+    return new Response(
+      JSON.stringify({ error: 'Too many requests. Please try again in a minute.' }),
+      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
+    );
   }
 
   try {
