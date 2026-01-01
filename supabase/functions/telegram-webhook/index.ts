@@ -220,22 +220,60 @@ async function sendTelegramMessage(botToken: string, chatId: string, text: strin
 }
 
 // Send status menu with inline buttons for a specific phone
-async function sendStatusMenu(botToken: string, chatId: string, phone: string, customerName: string) {
+async function sendStatusMenu(botToken: string, chatId: string, phone: string, customerName: string, currentStatus?: string) {
+  const statuses = [
+    { key: 'technician_called', label: 'Technician Assigned', icon: '📞' },
+    { key: 'technician_fixing', label: 'Technician Fixing', icon: '🔧' },
+    { key: 'fixed', label: 'Device Fixed', icon: '✅' },
+    { key: 'customer_satisfied', label: 'Customer Satisfied', icon: '🎉' },
+  ];
+
   const keyboard = {
-    inline_keyboard: [
-      [{ text: '📞 Technician Assigned', callback_data: `rs:${phone}:technician_called` }],
-      [{ text: '🔧 Technician Fixing', callback_data: `rs:${phone}:technician_fixing` }],
-      [{ text: '✅ Device Fixed', callback_data: `rs:${phone}:fixed` }],
-      [{ text: '🎉 Customer Satisfied', callback_data: `rs:${phone}:customer_satisfied` }],
-    ],
+    inline_keyboard: statuses.map(s => [{
+      text: currentStatus === s.key ? `${s.icon} ${s.label} ✓` : `${s.icon} ${s.label}`,
+      callback_data: `rs:${phone}:${s.key}:${customerName.substring(0, 10)}`
+    }]),
   };
 
   await sendTelegramMessage(
     botToken,
     chatId,
-    `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n👇 Select new status:`,
+    `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n${currentStatus ? `✅ Current: \`${currentStatus}\`\n\n` : ''}👇 Select new status:`,
     keyboard
   );
+}
+
+// Edit existing message with updated keyboard
+async function editMessageWithStatus(botToken: string, chatId: string, messageId: number, phone: string, customerName: string, selectedStatus: string) {
+  const statuses = [
+    { key: 'technician_called', label: 'Technician Assigned', icon: '📞' },
+    { key: 'technician_fixing', label: 'Technician Fixing', icon: '🔧' },
+    { key: 'fixed', label: 'Device Fixed', icon: '✅' },
+    { key: 'customer_satisfied', label: 'Customer Satisfied', icon: '🎉' },
+  ];
+
+  const keyboard = {
+    inline_keyboard: statuses.map(s => [{
+      text: selectedStatus === s.key ? `${s.icon} ${s.label} ✓` : `${s.icon} ${s.label}`,
+      callback_data: `rs:${phone}:${s.key}:${customerName.substring(0, 10)}`
+    }]),
+  };
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text: `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${selectedStatus}*\n\n👇 Select to change:`,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard,
+      }),
+    });
+  } catch (error) {
+    console.error('Error editing message:', error);
+  }
 }
 
 serve(async (req) => {
@@ -302,6 +340,9 @@ serve(async (req) => {
         if (parts.length >= 3) {
           const phoneNumber = parts[1];
           const newStatus = parts[2];
+          const custName = parts[3] || 'Customer';
+          const messageId = callbackQuery.message?.message_id;
+          
           const result = await updateRepairStatus(phoneNumber, newStatus);
           
           await answerCallbackQuery(
@@ -310,8 +351,9 @@ serve(async (req) => {
             result.success ? `✅ Updated to ${newStatus}` : result.message
           );
           
-          if (result.success) {
-            await sendTelegramMessage(botToken, chatId.toString(), result.message);
+          if (result.success && messageId) {
+            // Edit the message to show the selected status with checkmark
+            await editMessageWithStatus(botToken, chatId.toString(), messageId, phoneNumber, custName, newStatus);
           }
         }
         return new Response(JSON.stringify({ ok: true }), {
