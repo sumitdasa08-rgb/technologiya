@@ -319,10 +319,10 @@ const BookingSection = () => {
                     isLoading={isLoading}
                   />
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4 text-left">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-foreground">Your Name *</label>
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-foreground text-left">Your Name *</label>
                         <Input
                           ref={nameInputRef}
                           placeholder="Enter your name"
@@ -332,8 +332,8 @@ const BookingSection = () => {
                           className="h-11 rounded-lg w-full"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-foreground">Phone Number *</label>
+                      <div className="space-y-1.5">
+                        <label className="block text-sm font-medium text-foreground text-left">Phone Number *</label>
                         <Input
                           placeholder="Enter your phone number"
                           value={formData.phone}
@@ -344,8 +344,8 @@ const BookingSection = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-foreground">Issue Type *</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-foreground text-left">Issue Type *</label>
                       <Input
                         placeholder="e.g., Windows upgrade, Sound issue, Screen repair"
                         value={formData.issue}
@@ -355,8 +355,8 @@ const BookingSection = () => {
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-foreground">Additional Details</label>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-foreground text-left">Additional Details</label>
                       <Textarea
                         placeholder="Tell us more about the problem (optional)"
                         value={formData.message}
