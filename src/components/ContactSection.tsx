@@ -19,7 +19,7 @@ const ContactSection = () => {
   });
   const [selectedService, setSelectedService] = useState({
     service_type: "consultation",
-    price: 150
+    price: 10
   });
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -167,7 +167,7 @@ const ContactSection = () => {
 
   const handleNewBooking = () => {
     setFormData({ name: "", phone: "", issue: "", message: "" });
-    setSelectedService({ service_type: "consultation", price: 150 });
+    setSelectedService({ service_type: "consultation", price: 10 });
     setBookingConfirmed(false);
     setConfirmedCustomer(null);
     setBookingRef(null);
@@ -336,7 +336,7 @@ const ContactSection = () => {
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-500" />
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">₹150 service fee non-refundable</span> | Extra amount refundable if unfixable
+                      <span className="font-medium text-foreground">₹10 service fee non-refundable</span> | Extra amount refundable if unfixable
                     </p>
                   </div>
                 </div>
