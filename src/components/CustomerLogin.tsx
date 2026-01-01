@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Phone, LogIn } from 'lucide-react';
+import { User, Phone, LogIn, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { setCustomerCookie, CustomerInfo } from '@/lib/cookies';
@@ -15,13 +15,14 @@ interface CustomerLoginProps {
 const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [bookingRef, setBookingRef] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !phone.trim()) {
-      toast.error('Please enter both name and phone number');
+    if (!name.trim() || !phone.trim() || !bookingRef.trim()) {
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -32,12 +33,22 @@ const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
       return;
     }
 
+    // Validate booking reference format (basic validation)
+    if (bookingRef.trim().length < 5) {
+      toast.error('Please enter a valid booking reference');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Check if booking exists with this name and phone via Edge Function
+      // Check if booking exists with this name, phone and booking reference via Edge Function
       const { data: response, error } = await supabase.functions.invoke('get-customer-bookings', {
-        body: { name: name.trim(), phone: phone.trim() }
+        body: { 
+          name: name.trim(), 
+          phone: phone.trim(),
+          bookingRef: bookingRef.trim()
+        }
       });
 
       if (error) {
@@ -47,7 +58,7 @@ const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
       const data = response?.data;
 
       if (!data || data.length === 0) {
-        toast.error('No booking found with these details. Please check your name and phone number.');
+        toast.error('No booking found. Please verify your name, phone number, and booking reference.');
         return;
       }
 
@@ -56,7 +67,7 @@ const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
       // Save to cookie
       setCustomerCookie(customerInfo);
       
-      toast.success('Login successful!');
+      toast.success('Verification successful!');
       onLoginSuccess(customerInfo);
     } catch (error) {
       console.error('Login error:', error);
@@ -108,13 +119,32 @@ const CustomerLogin = ({ onLoginSuccess }: CustomerLoginProps) => {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="bookingRef" className="flex items-center gap-2">
+              <Hash className="h-4 w-4" />
+              Booking Reference
+            </Label>
+            <Input
+              id="bookingRef"
+              type="text"
+              placeholder="e.g., UPI-ABC123 or order_xxx"
+              value={bookingRef}
+              onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+              maxLength={50}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Found in your booking confirmation message
+            </p>
+          </div>
+
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
-              'Checking...'
+              'Verifying...'
             ) : (
               <>
                 <LogIn className="mr-2 h-4 w-4" />
-                Check Status
+                Verify & Check Status
               </>
             )}
           </Button>
