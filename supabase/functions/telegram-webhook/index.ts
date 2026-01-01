@@ -84,8 +84,11 @@ async function sendWhatsAppLink(botToken: string, chatId: string, phone: string,
   }
 }
 
-// Update booking status in database
-async function updateBookingStatus(bookingRef: string, status: string) {
+// Repair status stages
+const REPAIR_STAGES = ['problem_raised', 'technician_called', 'technician_fixing', 'fixed', 'customer_satisfied'];
+
+// Update booking payment status in database
+async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -106,11 +109,109 @@ async function updateBookingStatus(bookingRef: string, status: string) {
       console.error('Database update error:', error);
       return false;
     }
-    console.log(`Booking ${bookingRef} status updated to ${status}`);
+    console.log(`Booking ${bookingRef} payment status updated to ${status}`);
     return true;
   } catch (error) {
     console.error('Error updating booking:', error);
     return false;
+  }
+}
+
+// Update booking repair status in database
+async function updateRepairStatus(bookingRef: string, status: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase not configured');
+    return { success: false, message: 'Supabase not configured' };
+  }
+
+  if (!REPAIR_STAGES.includes(status)) {
+    return { success: false, message: `Invalid status. Use: ${REPAIR_STAGES.join(', ')}` };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    // Find booking by reference or phone
+    const { data: booking, error: findError } = await supabase
+      .from('bookings')
+      .select('id, name, phone, issue, repair_status')
+      .or(`razorpay_order_id.ilike.%${bookingRef}%,phone.eq.${bookingRef}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (findError || !booking) {
+      console.error('Booking not found:', findError);
+      return { success: false, message: 'Booking not found' };
+    }
+
+    const { error } = await supabase
+      .from('bookings')
+      .update({ repair_status: status })
+      .eq('id', booking.id);
+
+    if (error) {
+      console.error('Database update error:', error);
+      return { success: false, message: 'Database update failed' };
+    }
+
+    console.log(`Booking ${booking.id} repair status updated to ${status}`);
+    return { 
+      success: true, 
+      message: `✅ Updated repair status to "${status}" for ${booking.name} (${booking.phone})`,
+      booking 
+    };
+  } catch (error) {
+    console.error('Error updating repair status:', error);
+    return { success: false, message: 'Error updating status' };
+  }
+}
+
+// List recent bookings
+async function listRecentBookings() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseKey) {
+    return { success: false, message: 'Supabase not configured' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('id, name, phone, issue, repair_status, payment_status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      return { success: false, message: 'Failed to fetch bookings' };
+    }
+
+    return { success: true, bookings };
+  } catch (error) {
+    return { success: false, message: 'Error fetching bookings' };
+  }
+}
+
+// Send message to Telegram chat
+async function sendTelegramMessage(botToken: string, chatId: string, text: string) {
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'Markdown',
+      }),
+    });
+  } catch (error) {
+    console.error('Error sending Telegram message:', error);
   }
 }
 
@@ -227,7 +328,7 @@ serve(async (req) => {
 
       // Update booking status
       const newStatus = isPaymentReceived ? 'completed' : 'payment_failed';
-      await updateBookingStatus(bookingRef, newStatus);
+      await updateBookingPaymentStatus(bookingRef, newStatus);
 
       // Answer callback to remove loading state
       await answerCallbackQuery(
@@ -246,6 +347,84 @@ serve(async (req) => {
           isPaymentReceived,
           bookingRef
         );
+      }
+    }
+
+    // Handle text message commands
+    if (update.message?.text) {
+      const messageText = update.message.text.trim();
+      const chatId = update.message.chat.id.toString();
+
+      // /status command - update repair status
+      // Format: /status PHONE_OR_REF STATUS
+      if (messageText.startsWith('/status')) {
+        const parts = messageText.split(/\s+/);
+        if (parts.length < 3) {
+          await sendTelegramMessage(botToken, chatId, 
+            `❌ *Usage:* \`/status PHONE_OR_REF STATUS\`\n\n` +
+            `*Available statuses:*\n` +
+            `• \`problem_raised\` - Problem Raised\n` +
+            `• \`technician_called\` - Technician Assigned\n` +
+            `• \`technician_fixing\` - Repair In Progress\n` +
+            `• \`fixed\` - Repair Complete\n` +
+            `• \`customer_satisfied\` - Completed\n\n` +
+            `*Example:*\n\`/status 8812910655 technician_called\``
+          );
+        } else {
+          const identifier = parts[1];
+          const status = parts[2];
+          const result = await updateRepairStatus(identifier, status);
+          await sendTelegramMessage(botToken, chatId, result.message);
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // /bookings command - list recent bookings
+      if (messageText.startsWith('/bookings')) {
+        const result = await listRecentBookings();
+        if (result.success && result.bookings) {
+          let message = '📋 *Recent Bookings:*\n\n';
+          result.bookings.forEach((b: any, i: number) => {
+            const statusEmoji = b.repair_status === 'customer_satisfied' ? '✅' : 
+                               b.repair_status === 'fixed' ? '🔧' :
+                               b.repair_status === 'technician_fixing' ? '⚙️' :
+                               b.repair_status === 'technician_called' ? '📞' : '🆕';
+            message += `${i + 1}. ${statusEmoji} *${b.name}*\n`;
+            message += `   📱 \`${b.phone}\`\n`;
+            message += `   🔧 ${b.issue}\n`;
+            message += `   📊 Status: \`${b.repair_status}\`\n\n`;
+          });
+          message += `_Use /status PHONE STATUS to update_`;
+          await sendTelegramMessage(botToken, chatId, message);
+        } else {
+          await sendTelegramMessage(botToken, chatId, '❌ Failed to fetch bookings');
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // /help command
+      if (messageText.startsWith('/help')) {
+        await sendTelegramMessage(botToken, chatId,
+          `🤖 *LogicLabs Admin Bot*\n\n` +
+          `*Available Commands:*\n\n` +
+          `📋 \`/bookings\` - List recent bookings\n\n` +
+          `🔄 \`/status PHONE STATUS\` - Update repair status\n` +
+          `   Example: \`/status 8812910655 fixed\`\n\n` +
+          `*Repair Statuses:*\n` +
+          `• \`problem_raised\`\n` +
+          `• \`technician_called\`\n` +
+          `• \`technician_fixing\`\n` +
+          `• \`fixed\`\n` +
+          `• \`customer_satisfied\`\n\n` +
+          `💡 _Customers will see real-time updates!_`
+        );
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     }
 
