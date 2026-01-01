@@ -179,9 +179,10 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
     switch (status) {
       case 'completed':
       case 'paid':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Paid</Badge>;
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Paid ✓</Badge>;
       case 'pending_verification':
-        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending Verification</Badge>;
+      case 'pending':
+        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">Payment Processing</Badge>;
       case 'payment_failed':
         return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Payment Not Received</Badge>;
       default:
@@ -296,13 +297,13 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                   </Alert>
                 )}
 
-                {/* Pending Verification Info */}
-                {booking.payment_status === 'pending_verification' && (
-                  <Alert className="mb-6 border-yellow-500/30 bg-yellow-500/10">
-                    <AlertCircle className="h-4 w-4 text-yellow-500" />
-                    <AlertTitle className="text-yellow-500">Payment Being Verified</AlertTitle>
-                    <AlertDescription className="text-yellow-400/80">
-                      We're verifying your payment. This usually takes 15-30 minutes. We'll update the status once confirmed.
+                {/* Payment Processing Info */}
+                {(booking.payment_status === 'pending_verification' || booking.payment_status === 'pending') && (
+                  <Alert className="mb-6 border-amber-500/30 bg-amber-500/10">
+                    <RefreshCw className="h-4 w-4 text-amber-500 animate-spin" />
+                    <AlertTitle className="text-amber-500">Payment Processing</AlertTitle>
+                    <AlertDescription className="text-amber-400/80">
+                      Your payment is being verified. This usually takes 15-30 minutes. You'll see a notification once confirmed.
                     </AlertDescription>
                   </Alert>
                 )}
