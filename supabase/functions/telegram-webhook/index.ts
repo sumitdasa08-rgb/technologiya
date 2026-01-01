@@ -441,10 +441,11 @@ serve(async (req) => {
         
         if (supabaseUrl && supabaseKey) {
           const supabase = createClient(supabaseUrl, supabaseKey);
+          const sanitizedRef = escapeLikePattern(shortRef);
           const { data: booking, error: lookupError } = await supabase
             .from('bookings')
             .select('name, phone, razorpay_order_id')
-            .like('razorpay_order_id', `UPI-${shortRef}%`)
+            .like('razorpay_order_id', `UPI-${sanitizedRef}%`)
             .single();
           
           if (lookupError) {
