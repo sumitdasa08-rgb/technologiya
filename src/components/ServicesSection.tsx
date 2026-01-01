@@ -148,22 +148,28 @@ const ServicesSection = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
           {services.map((service, index) => (
             <div 
               key={index}
               onClick={() => handleServiceClick(service.title, service.description, service.price)}
-              className={`group glass-card p-8 rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
+              className={`group glass-card p-4 md:p-8 rounded-2xl md:rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
               style={{ transitionDelay: `${index * 100}ms` }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center mb-6 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
-                <service.icon className="w-6 h-6 text-foreground group-hover:text-background transition-colors duration-300" />
+              <div className="flex items-center gap-3 md:block">
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-foreground/5 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
+                  <service.icon className="w-5 h-5 md:w-6 md:h-6 text-foreground group-hover:text-background transition-colors duration-300" />
+                </div>
+                <div className="flex-1 md:hidden">
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
+                  <span className="text-base font-semibold text-foreground">{service.price}</span>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
-              <p className="text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
-              <div className="flex items-center justify-between">
+              <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
+              <p className="hidden md:block text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
+              <div className="hidden md:flex items-center justify-between">
                 <span className="text-2xl font-semibold text-foreground">{service.price}</span>
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Starting price</span>
               </div>
