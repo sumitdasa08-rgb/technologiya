@@ -17,9 +17,14 @@ const getCorsHeaders = (req: Request) => ({
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 });
 
+// Escape LIKE pattern special characters to prevent injection
+const escapeLikePattern = (pattern: string): string => {
+  return pattern.replace(/[%_\\]/g, '\\$&');
+};
+
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per minute per IP
+const RATE_LIMIT_MAX_REQUESTS = 5; // Reduced to 5 requests per minute per IP for security
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 // Check rate limit for an IP
@@ -73,9 +78,13 @@ serve(async (req) => {
   }
 
   try {
-    const { name, phone } = await req.json();
+    const { name, phone, bookingRef } = await req.json();
 
-    console.log('Received request for customer bookings:', { name, phone: phone ? '***' + phone.slice(-4) : 'missing' });
+    console.log('Received request for customer bookings:', { 
+      name, 
+      phone: phone ? '***' + phone.slice(-4) : 'missing',
+      bookingRef: bookingRef ? bookingRef.slice(0, 4) + '***' : 'missing'
+    });
 
     // Validate inputs
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -90,6 +99,15 @@ serve(async (req) => {
       console.error('Invalid phone provided');
       return new Response(
         JSON.stringify({ error: 'Phone number is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate booking reference (required for security)
+    if (!bookingRef || typeof bookingRef !== 'string' || bookingRef.trim().length < 5) {
+      console.error('Invalid booking reference provided');
+      return new Response(
+        JSON.stringify({ error: 'Valid booking reference is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -114,17 +132,33 @@ serve(async (req) => {
       );
     }
 
+    // Validate booking reference length
+    if (bookingRef.trim().length > 50) {
+      console.error('Booking reference too long');
+      return new Response(
+        JSON.stringify({ error: 'Invalid booking reference' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Server-side filtering with case-insensitive name match and exact phone match
+    // Sanitize booking reference for LIKE pattern
+    const sanitizedBookingRef = escapeLikePattern(bookingRef.trim());
+
+    // Server-side filtering with:
+    // 1. Case-insensitive name match
+    // 2. Exact phone match
+    // 3. Booking reference match (checks razorpay_order_id or id)
     const { data, error } = await supabase
       .from('bookings')
       .select('*')
       .ilike('name', name.trim())
       .eq('phone', cleanPhone)
+      .or(`razorpay_order_id.ilike.%${sanitizedBookingRef}%,id.ilike.%${sanitizedBookingRef}%`)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -135,7 +169,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${data?.length || 0} bookings for customer`);
+    console.log(`Found ${data?.length || 0} bookings for verified customer`);
 
     return new Response(
       JSON.stringify({ data: data || [] }),
