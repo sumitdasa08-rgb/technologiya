@@ -282,9 +282,9 @@ const BookingSection = () => {
               </div>
 
               {/* Right Side - Form */}
-              <div className="md:col-span-3 p-8">
+              <div className="md:col-span-3 p-5 sm:p-6 md:p-8">
                 {bookingConfirmed ? (
-                  <div className="text-center space-y-6 py-8">
+                  <div className="text-center space-y-6 py-6 md:py-8 max-w-md mx-auto">
                     <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
                       <ShieldCheck className="w-8 h-8 text-emerald-500" />
                     </div>
@@ -298,7 +298,7 @@ const BookingSection = () => {
                     <div className="space-y-3">
                       <Button 
                         onClick={handleTrackRepair}
-                        className="w-full h-12 rounded-xl font-medium"
+                        className="w-full h-12 sm:h-14 rounded-xl font-medium text-base"
                       >
                         Track Your Repair <ExternalLink className="w-4 h-4 ml-2" />
                       </Button>
@@ -306,7 +306,7 @@ const BookingSection = () => {
                       <Button 
                         variant="outline"
                         onClick={handleNewBooking}
-                        className="w-full h-12 rounded-xl font-medium"
+                        className="w-full h-12 sm:h-14 rounded-xl font-medium text-base"
                       >
                         Book Another Service
                       </Button>
@@ -319,9 +319,9 @@ const BookingSection = () => {
                     isLoading={isLoading}
                   />
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                  <form onSubmit={handleSubmit} className="space-y-5 text-left max-w-md mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+                      <div className="space-y-2">
                         <label className="block text-sm font-medium text-foreground text-left">Your Name *</label>
                         <Input
                           ref={nameInputRef}
@@ -329,77 +329,77 @@ const BookingSection = () => {
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
-                          className="h-11 rounded-lg w-full"
+                          className="h-12 sm:h-14 rounded-xl w-full text-base"
                         />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         <label className="block text-sm font-medium text-foreground text-left">Phone Number *</label>
                         <Input
                           placeholder="Enter your phone number"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           required
-                          className="h-11 rounded-lg w-full"
+                          className="h-12 sm:h-14 rounded-xl w-full text-base"
                         />
                       </div>
                     </div>
                     
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="block text-sm font-medium text-foreground text-left">Issue Type *</label>
                       <Input
                         placeholder="e.g., Windows upgrade, Sound issue, Screen repair"
                         value={formData.issue}
                         onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                         required
-                        className="h-11 rounded-lg w-full"
+                        className="h-12 sm:h-14 rounded-xl w-full text-base"
                       />
                     </div>
                     
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="block text-sm font-medium text-foreground text-left">Additional Details</label>
                       <Textarea
                         placeholder="Tell us more about the problem (optional)"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         rows={3}
-                        className="resize-none rounded-lg w-full"
+                        className="resize-none rounded-xl w-full text-base min-h-[100px]"
                       />
                     </div>
 
                     <Button 
                       type="submit" 
                       disabled={isLoading}
-                      className="w-full h-12 rounded-xl font-medium text-base mt-2"
+                      className="w-full h-14 rounded-xl font-medium text-base mt-3"
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                           Processing...
                         </>
                       ) : (
                         <>
-                          Book & Pay <span className="line-through text-muted-foreground">₹150</span> ₹{selectedService.price} via UPI <ArrowRight className="w-4 h-4 ml-2" />
+                          Book & Pay <span className="line-through text-muted-foreground">₹150</span> ₹{selectedService.price} via UPI <ArrowRight className="w-5 h-5 ml-2" />
                         </>
                       )}
                     </Button>
 
                     {/* WhatsApp Alternative */}
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-1">
                       <span>or</span>
                       <button
                         type="button"
                         onClick={handleWhatsAppClick}
-                        className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium"
+                        className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium min-h-[44px] px-2"
                       >
-                        <MessageCircle className="w-4 h-4" />
+                        <MessageCircle className="w-5 h-5" />
                         Book via WhatsApp
                       </button>
                     </div>
                     
                     {/* Guarantee */}
-                    <div className="flex items-center justify-center gap-2 pt-1">
+                    <div className="flex items-center justify-center gap-2 pt-1 pb-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <p className="text-xs text-muted-foreground text-center">
+                      <p className="text-xs sm:text-sm text-muted-foreground text-center">
                         <span className="font-medium text-foreground">₹10 service fee non-refundable</span> | Extra amount refundable if unfixable
                       </p>
                     </div>
