@@ -127,31 +127,30 @@ const BookingSection = () => {
   };
 
   const handlePaymentConfirmed = async () => {
-    setIsLoading(true);
     const customerName = formData.name.trim();
     const customerPhone = formData.phone.trim();
     
+    // Set cookie and redirect immediately - don't wait for API
+    setCustomerCookie({ name: customerName, phone: customerPhone });
+    toast.success("Payment submitted! Redirecting to track your repair...", {
+      description: "We're verifying your payment. This usually takes 15-30 minutes."
+    });
+    
+    // Navigate immediately - customer will see "Payment Processing" status
+    navigate('/track-repair');
+    
+    // Update payment status in background (don't block the user)
     try {
-      const { error } = await supabase.functions.invoke('update-payment-status', {
+      await supabase.functions.invoke('update-payment-status', {
         body: {
           razorpay_order_id: bookingRef,
           razorpay_payment_id: `UPI-CONFIRMED-${Date.now()}`,
           razorpay_signature: 'upi-manual-confirmation',
         },
       });
-
-      if (error) throw error;
-
-      setCustomerCookie({ name: customerName, phone: customerPhone });
-      toast.success("Booking confirmed! Redirecting to track your repair...");
-      
-      // Navigate directly to track repair page
-      navigate('/track-repair');
     } catch (error) {
-      console.error('Confirmation error:', error);
-      toast.error("Failed to confirm. Please call us at 8812910655.");
-    } finally {
-      setIsLoading(false);
+      console.error('Background payment update error:', error);
+      // Don't show error to user - they're already on track page
     }
   };
 
