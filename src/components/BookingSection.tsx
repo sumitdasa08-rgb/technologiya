@@ -319,57 +319,57 @@ const BookingSection = () => {
                     isLoading={isLoading}
                   />
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">Your Name *</label>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-foreground">Your Name *</label>
                         <Input
                           ref={nameInputRef}
                           placeholder="Enter your name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
-                          className="h-11 rounded-lg"
+                          className="h-11 rounded-lg w-full"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">Phone Number *</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-foreground">Phone Number *</label>
                         <Input
                           placeholder="Enter your phone number"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           required
-                          className="h-11 rounded-lg"
+                          className="h-11 rounded-lg w-full"
                         />
                       </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Issue Type *</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-foreground">Issue Type *</label>
                       <Input
                         placeholder="e.g., Windows upgrade, Sound issue, Screen repair"
                         value={formData.issue}
                         onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                         required
-                        className="h-11 rounded-lg"
+                        className="h-11 rounded-lg w-full"
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Additional Details</label>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-foreground">Additional Details</label>
                       <Textarea
                         placeholder="Tell us more about the problem (optional)"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         rows={3}
-                        className="resize-none rounded-lg"
+                        className="resize-none rounded-lg w-full"
                       />
                     </div>
 
                     <Button 
                       type="submit" 
                       disabled={isLoading}
-                      className="w-full h-12 rounded-xl font-medium text-base"
+                      className="w-full h-12 rounded-xl font-medium text-base mt-2"
                     >
                       {isLoading ? (
                         <>
@@ -397,9 +397,9 @@ const BookingSection = () => {
                     </div>
                     
                     {/* Guarantee */}
-                    <div className="flex items-center justify-center gap-2 pt-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                      <p className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <p className="text-xs text-muted-foreground text-center">
                         <span className="font-medium text-foreground">₹10 service fee non-refundable</span> | Extra amount refundable if unfixable
                       </p>
                     </div>
