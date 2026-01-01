@@ -3,10 +3,21 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as hexEncode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to allowed origins
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://ryehkycxyhdpufigcotc.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 };
+
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(req),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
@@ -97,7 +108,7 @@ async function sendEmailConfirmation(booking: {
   try {
     const { error } = await resend.emails.send({
       from: 'PC Repair Booking <onboarding@resend.dev>',
-      to: ['sumitdasa08@gmail.com'], // Admin email (Resend account owner)
+      to: ['sumitdasa08@gmail.com'],
       subject: `✅ Payment Confirmed - ${booking.bookingRef}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -161,6 +172,8 @@ async function verifyRazorpaySignature(
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -193,10 +206,8 @@ serve(async (req) => {
     const isUPIPayment = razorpay_order_id.startsWith('UPI-');
 
     if (isUPIPayment) {
-      // UPI payments use manual confirmation - no signature verification needed
       console.log('Processing UPI payment confirmation for order:', razorpay_order_id);
     } else {
-      // Razorpay payments require signature verification
       if (!razorpay_signature) {
         console.error('Missing signature for Razorpay payment');
         throw new Error('Missing required payment parameters');
@@ -235,7 +246,7 @@ serve(async (req) => {
 
     console.log('Updating payment status for order:', razorpay_order_id);
 
-    // First, check current payment status - don't allow override if already rejected
+    // First, check current payment status
     const { data: existingBooking, error: fetchError } = await supabase
       .from('bookings')
       .select('id, payment_status')
@@ -270,7 +281,7 @@ serve(async (req) => {
       });
     }
 
-    // Update booking with payment details - only if pending or pending_verification
+    // Update booking with payment details
     const { data, error } = await supabase
       .from('bookings')
       .update({
@@ -278,7 +289,7 @@ serve(async (req) => {
         payment_status: 'pending_verification',
       })
       .eq('razorpay_order_id', razorpay_order_id)
-      .eq('payment_status', 'pending') // Only update if still pending
+      .eq('payment_status', 'pending')
       .select()
       .single();
 
@@ -289,7 +300,7 @@ serve(async (req) => {
 
     console.log('Payment status updated to pending_verification for booking:', data.id);
 
-    // Send Telegram notification for payment pending verification
+    // Send Telegram notification
     const confirmationMessage = `⏳ *Payment Confirmation Pending*
 
 📋 *Reference:* \`${razorpay_order_id}\`

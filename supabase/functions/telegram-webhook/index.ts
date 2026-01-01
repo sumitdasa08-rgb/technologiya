@@ -1,10 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to allowed origins
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://ryehkycxyhdpufigcotc.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  // For Telegram webhook calls (no origin), allow the request
+  if (!origin) return '*';
+  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 };
+
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(req),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
+
+// Helper function to escape LIKE pattern special characters
+function escapeLikePattern(str: string): string {
+  return str.replace(/[%_\\]/g, '\\$&');
+}
 
 // Answer callback query to remove loading state on button
 async function answerCallbackQuery(botToken: string, callbackQueryId: string, text: string) {
@@ -277,6 +295,8 @@ async function editMessageWithStatus(botToken: string, chatId: string, messageId
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

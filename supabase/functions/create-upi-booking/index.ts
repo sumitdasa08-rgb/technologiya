@@ -2,10 +2,21 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// CORS configuration - restrict to allowed origins
+const getAllowedOrigin = (req: Request): string => {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://ryehkycxyhdpufigcotc.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
 };
+
+const getCorsHeaders = (req: Request) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(req),
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+});
 
 // Service pricing map
 const SERVICE_PRICING: Record<string, number> = {
@@ -58,11 +69,8 @@ ${booking.description ? `📝 *Details:* ${booking.description}` : ''}
 👇 *Did you receive the payment?*`;
 
   // Create inline keyboard with Yes/No buttons
-  // Telegram limits callback_data to 64 bytes, so we use a short reference
-  // Format: action:timestamp-randomId (we use LIKE query to find the booking)
-  // Extract just the timestamp part for shorter callback data (first 13 chars after UPI-)
   const refWithoutPrefix = booking.bookingRef.replace('UPI-', '');
-  const shortRef = refWithoutPrefix.substring(0, 19); // timestamp-XXXXXX format
+  const shortRef = refWithoutPrefix.substring(0, 19);
   
   const inlineKeyboard = {
     inline_keyboard: [
@@ -129,7 +137,7 @@ async function sendEmailNotification(booking: {
     console.log('Sending email notification...');
     const { data, error } = await resend.emails.send({
       from: 'LogicLabs Booking <onboarding@resend.dev>',
-      to: ['sumitdasa08@gmail.com'], // Admin email (must be Resend account owner for sandbox)
+      to: ['sumitdasa08@gmail.com'],
       subject: `🔔 New Booking - ${booking.bookingRef}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -227,6 +235,8 @@ function validateInput(data: { service_type?: string; name: string; phone: strin
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -277,7 +287,7 @@ serve(async (req) => {
         amount,
         currency: 'INR',
         payment_status: 'pending_verification',
-        razorpay_order_id: bookingRef, // Reusing this field for UPI reference
+        razorpay_order_id: bookingRef,
       })
       .select()
       .single();
@@ -301,7 +311,7 @@ serve(async (req) => {
     
     console.log('=== Sending Notifications ===');
     
-    // Send notifications and log results (use Promise.allSettled to not block on errors)
+    // Send notifications
     const [telegramResult, emailResult] = await Promise.allSettled([
       sendTelegramNotificationWithButtons(bookingData),
       sendEmailNotification(bookingData)
