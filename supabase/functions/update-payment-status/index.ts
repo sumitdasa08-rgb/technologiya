@@ -281,7 +281,7 @@ serve(async (req) => {
       });
     }
 
-    // Update booking with payment details
+    // Update booking with payment details - match both 'pending' and 'pending_verification' statuses
     const { data, error } = await supabase
       .from('bookings')
       .update({
@@ -289,7 +289,7 @@ serve(async (req) => {
         payment_status: 'pending_verification',
       })
       .eq('razorpay_order_id', razorpay_order_id)
-      .eq('payment_status', 'pending')
+      .in('payment_status', ['pending', 'pending_verification'])
       .select()
       .single();
 
