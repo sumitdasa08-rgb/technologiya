@@ -18,19 +18,19 @@ const getCorsHeaders = (req: Request) => ({
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 });
 
-// Service pricing map
+// Service pricing map - promotional pricing
 const SERVICE_PRICING: Record<string, number> = {
-  'windows_upgrade': 150,
-  'software_repair': 150,
-  'sound_issues': 150,
-  'network_setup': 150,
-  'virus_removal': 150,
-  'pc_optimization': 150,
-  'data_recovery': 150,
-  'consultation': 150,
+  'windows_upgrade': 10,
+  'software_repair': 10,
+  'sound_issues': 10,
+  'network_setup': 10,
+  'virus_removal': 10,
+  'pc_optimization': 10,
+  'data_recovery': 10,
+  'consultation': 10,
 };
 
-const DEFAULT_SERVICE_AMOUNT = 150;
+const DEFAULT_SERVICE_AMOUNT = 10;
 
 // Telegram notification function with inline buttons
 async function sendTelegramNotificationWithButtons(booking: {
