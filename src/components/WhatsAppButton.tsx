@@ -20,8 +20,6 @@ const WhatsAppButton = () => {
         Chat with us
       </span>
       
-      {/* Pulse animation */}
-      <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-25" />
     </a>
   );
 };
