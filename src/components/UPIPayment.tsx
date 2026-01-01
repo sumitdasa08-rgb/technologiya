@@ -55,8 +55,10 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Generate UPI deep link for mobile
-  const upiDeepLink = `upi://pay?pa=${UPI_ID}&pn=TechFix%20Pro&am=${amount}&cu=INR&tn=Service%20Booking`;
+  // Generate UPI deep link for mobile - BHIM and other apps require specific format
+  const payeeName = encodeURIComponent("TechFixPro");
+  const transactionNote = encodeURIComponent("Service Booking");
+  const upiDeepLink = `upi://pay?pa=${UPI_ID}&pn=${payeeName}&am=${amount}&cu=INR&tn=${transactionNote}&mode=02&purpose=00`;
 
   // QR code URL using a free API
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiDeepLink)}`;
