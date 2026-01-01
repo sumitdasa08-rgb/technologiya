@@ -10,7 +10,7 @@ interface UPIPaymentProps {
 }
 
 const UPI_ID = "sumitdasa99-3@okaxis";
-const COUNTDOWN_SECONDS = 120; // 2 minutes
+const COUNTDOWN_SECONDS = 20; // 20 seconds
 
 const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) => {
   const [copied, setCopied] = useState(false);
