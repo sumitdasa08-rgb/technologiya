@@ -202,7 +202,10 @@ const ServicesSection = () => {
             </div>
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
               <div className="text-center md:text-right">
-                <span className="text-3xl md:text-4xl font-semibold text-foreground">₹10</span>
+                <div className="flex items-center justify-center md:justify-end gap-2">
+                  <span className="text-xl md:text-2xl text-muted-foreground line-through">₹150</span>
+                  <span className="text-3xl md:text-4xl font-semibold text-foreground">₹10</span>
+                </div>
                 <p className="text-sm text-primary font-medium">Only for limited time!</p>
               </div>
               <Button 
