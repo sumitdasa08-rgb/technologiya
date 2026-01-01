@@ -199,20 +199,43 @@ async function listRecentBookings() {
 }
 
 // Send message to Telegram chat
-async function sendTelegramMessage(botToken: string, chatId: string, text: string) {
+async function sendTelegramMessage(botToken: string, chatId: string, text: string, replyMarkup?: any) {
   try {
+    const body: any = {
+      chat_id: chatId,
+      text: text,
+      parse_mode: 'Markdown',
+    };
+    if (replyMarkup) {
+      body.reply_markup = replyMarkup;
+    }
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-        parse_mode: 'Markdown',
-      }),
+      body: JSON.stringify(body),
     });
   } catch (error) {
     console.error('Error sending Telegram message:', error);
   }
+}
+
+// Send status menu with inline buttons for a specific phone
+async function sendStatusMenu(botToken: string, chatId: string, phone: string, customerName: string) {
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '📞 Technician Assigned', callback_data: `rs:${phone}:technician_called` }],
+      [{ text: '🔧 Technician Fixing', callback_data: `rs:${phone}:technician_fixing` }],
+      [{ text: '✅ Device Fixed', callback_data: `rs:${phone}:fixed` }],
+      [{ text: '🎉 Customer Satisfied', callback_data: `rs:${phone}:customer_satisfied` }],
+    ],
+  };
+
+  await sendTelegramMessage(
+    botToken,
+    chatId,
+    `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n👇 Select new status:`,
+    keyboard
+  );
 }
 
 serve(async (req) => {
@@ -265,12 +288,84 @@ serve(async (req) => {
 
       console.log('Processing callback data:', callbackData);
 
-      // Parse callback data - new format: py:shortRef or pn:shortRef
-      // Also support old format: payment_yes:bookingRef:phone:encodedName
+      // Parse callback data - formats:
+      // py:shortRef or pn:shortRef - payment confirmation
+      // rs:phone:status - repair status update
       let action: string;
       let bookingRef: string = '';
       let phone: string | null = null;
       let customerName: string | null = null;
+
+      // Handle repair status update callback
+      if (callbackData.startsWith('rs:')) {
+        const parts = callbackData.split(':');
+        if (parts.length >= 3) {
+          const phoneNumber = parts[1];
+          const newStatus = parts[2];
+          const result = await updateRepairStatus(phoneNumber, newStatus);
+          
+          await answerCallbackQuery(
+            botToken, 
+            callbackQueryId, 
+            result.success ? `✅ Updated to ${newStatus}` : result.message
+          );
+          
+          if (result.success) {
+            await sendTelegramMessage(botToken, chatId.toString(), result.message);
+          }
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Handle cmd: callback - execute commands from buttons
+      if (callbackData.startsWith('cmd:')) {
+        const command = callbackData.substring(4);
+        if (command === 'bookings') {
+          await answerCallbackQuery(botToken, callbackQueryId, 'Loading bookings...');
+          const result = await listRecentBookings();
+          if (result.success && result.bookings) {
+            let message = '📋 *Recent Bookings:*\n\n';
+            const inlineButtons: any[] = [];
+            
+            result.bookings.forEach((b: any, i: number) => {
+              const statusEmoji = b.repair_status === 'customer_satisfied' ? '✅' : 
+                                 b.repair_status === 'fixed' ? '🔧' :
+                                 b.repair_status === 'technician_fixing' ? '⚙️' :
+                                 b.repair_status === 'technician_called' ? '📞' : '🆕';
+              message += `${i + 1}. ${statusEmoji} *${b.name}*\n`;
+              message += `   📱 \`${b.phone}\`\n`;
+              message += `   📊 Status: \`${b.repair_status}\`\n\n`;
+              
+              if (b.repair_status !== 'customer_satisfied') {
+                inlineButtons.push([{ text: `📝 Update ${b.name}`, callback_data: `menu:${b.phone}:${b.name.substring(0, 10)}` }]);
+              }
+            });
+            
+            message += `_👇 Tap to update status_`;
+            const keyboard = inlineButtons.length > 0 ? { inline_keyboard: inlineButtons } : undefined;
+            await sendTelegramMessage(botToken, chatId.toString(), message, keyboard);
+          }
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Handle menu callback - show status buttons for a customer
+      if (callbackData.startsWith('menu:')) {
+        const parts = callbackData.split(':');
+        if (parts.length >= 3) {
+          const phoneNumber = parts[1];
+          const customerName = parts[2];
+          await answerCallbackQuery(botToken, callbackQueryId, `Loading menu for ${customerName}...`);
+          await sendStatusMenu(botToken, chatId.toString(), phoneNumber, customerName);
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
       if (callbackData.startsWith('py:') || callbackData.startsWith('pn:')) {
         // New short format
@@ -347,6 +442,11 @@ serve(async (req) => {
           isPaymentReceived,
           bookingRef
         );
+
+        // If payment received, show repair status menu
+        if (isPaymentReceived) {
+          await sendStatusMenu(botToken, chatId.toString(), phone, customerName);
+        }
       }
     }
 
@@ -381,11 +481,13 @@ serve(async (req) => {
         });
       }
 
-      // /bookings command - list recent bookings
+      // /bookings command - list recent bookings with status buttons
       if (messageText.startsWith('/bookings')) {
         const result = await listRecentBookings();
         if (result.success && result.bookings) {
           let message = '📋 *Recent Bookings:*\n\n';
+          const inlineButtons: any[] = [];
+          
           result.bookings.forEach((b: any, i: number) => {
             const statusEmoji = b.repair_status === 'customer_satisfied' ? '✅' : 
                                b.repair_status === 'fixed' ? '🔧' :
@@ -393,11 +495,19 @@ serve(async (req) => {
                                b.repair_status === 'technician_called' ? '📞' : '🆕';
             message += `${i + 1}. ${statusEmoji} *${b.name}*\n`;
             message += `   📱 \`${b.phone}\`\n`;
-            message += `   🔧 ${b.issue}\n`;
+            message += `   🔧 ${b.issue?.substring(0, 30)}...\n`;
             message += `   📊 Status: \`${b.repair_status}\`\n\n`;
+            
+            // Add button for each booking (only incomplete ones)
+            if (b.repair_status !== 'customer_satisfied') {
+              inlineButtons.push([{ text: `📝 Update ${b.name} (${b.phone})`, callback_data: `menu:${b.phone}:${b.name.substring(0, 10)}` }]);
+            }
           });
-          message += `_Use /status PHONE STATUS to update_`;
-          await sendTelegramMessage(botToken, chatId, message);
+          
+          message += `_👇 Tap a button to update status_`;
+          
+          const keyboard = inlineButtons.length > 0 ? { inline_keyboard: inlineButtons } : undefined;
+          await sendTelegramMessage(botToken, chatId, message, keyboard);
         } else {
           await sendTelegramMessage(botToken, chatId, '❌ Failed to fetch bookings');
         }
@@ -406,25 +516,74 @@ serve(async (req) => {
         });
       }
 
+      // /menu command - show status menu for a phone number
+      if (messageText.startsWith('/menu')) {
+        const parts = messageText.split(/\s+/);
+        if (parts.length < 2) {
+          await sendTelegramMessage(botToken, chatId, 
+            `❌ *Usage:* \`/menu PHONE\`\n\n` +
+            `*Example:*\n\`/menu 9988776655\`\n\n` +
+            `Or use /bookings to see all bookings with buttons.`
+          );
+        } else {
+          const phoneNumber = parts[1];
+          // Look up customer name
+          const supabaseUrl = Deno.env.get('SUPABASE_URL');
+          const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+          
+          if (supabaseUrl && supabaseKey) {
+            const supabase = createClient(supabaseUrl, supabaseKey);
+            const { data: booking } = await supabase
+              .from('bookings')
+              .select('name')
+              .eq('phone', phoneNumber)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            
+            if (booking) {
+              await sendStatusMenu(botToken, chatId, phoneNumber, booking.name);
+            } else {
+              await sendTelegramMessage(botToken, chatId, `❌ No booking found for phone: ${phoneNumber}`);
+            }
+          }
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // /help command
       if (messageText.startsWith('/help')) {
+        const keyboard = {
+          inline_keyboard: [
+            [{ text: '📋 View Bookings', callback_data: 'cmd:bookings' }],
+          ],
+        };
         await sendTelegramMessage(botToken, chatId,
-          `🤖 *LogicLabs Admin Bot*\n\n` +
-          `*Available Commands:*\n\n` +
-          `📋 \`/bookings\` - List recent bookings\n\n` +
-          `🔄 \`/status PHONE STATUS\` - Update repair status\n` +
-          `   Example: \`/status 8812910655 fixed\`\n\n` +
-          `*Repair Statuses:*\n` +
-          `• \`problem_raised\`\n` +
-          `• \`technician_called\`\n` +
-          `• \`technician_fixing\`\n` +
-          `• \`fixed\`\n` +
-          `• \`customer_satisfied\`\n\n` +
-          `💡 _Customers will see real-time updates!_`
+          `🤖 *TechFix Pro Admin Bot*\n\n` +
+          `*Commands:*\n\n` +
+          `📋 \`/bookings\` - List bookings with quick buttons\n\n` +
+          `📝 \`/menu PHONE\` - Status menu for a customer\n` +
+          `   Example: \`/menu 9988776655\`\n\n` +
+          `🔄 \`/status PHONE STATUS\` - Direct status update\n` +
+          `   Example: \`/status 9988776655 fixed\`\n\n` +
+          `*Status Steps:*\n` +
+          `📞 technician\\_called → Technician Assigned\n` +
+          `🔧 technician\\_fixing → Repair In Progress\n` +
+          `✅ fixed → Device Fixed\n` +
+          `🎉 customer\\_satisfied → Completed\n\n` +
+          `💡 _Use /bookings for easy one-tap updates!_`,
+          keyboard
         );
         return new Response(JSON.stringify({ ok: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Handle cmd: callbacks from help menu
+      if (messageText === 'cmd:bookings') {
+        // This shouldn't happen as it's a callback, but just in case
       }
     }
 
