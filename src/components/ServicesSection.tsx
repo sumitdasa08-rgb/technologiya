@@ -171,6 +171,14 @@ const ServicesSection = () => {
           ))}
         </div>
 
+        {/* And many more text */}
+        <p 
+          className={`text-center text-lg md:text-xl text-muted-foreground mt-8 font-light transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+          style={{ transitionDelay: '500ms' }}
+        >
+          ...and many more, just book your slot now!
+        </p>
+
         {/* Book Slot Section */}
         <div 
           className={`mt-16 glass-card p-8 md:p-12 rounded-3xl transition-all duration-700 ease-apple hover-lift ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} 
