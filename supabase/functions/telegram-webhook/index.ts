@@ -106,6 +106,7 @@ async function sendWhatsAppLink(botToken: string, chatId: string, phone: string,
 const REPAIR_STAGES = ['problem_raised', 'technician_called', 'technician_fixing', 'fixed', 'customer_satisfied'];
 
 // Update booking payment status in database
+// This is the AUTHORITATIVE update - Telegram confirmation always takes precedence
 async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -118,9 +119,33 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
+    // First check current status
+    const { data: existingBooking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('payment_status')
+      .eq('razorpay_order_id', bookingRef)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error fetching booking:', fetchError);
+      return false;
+    }
+
+    // Log the status change for debugging
+    console.log(`Updating booking ${bookingRef} from ${existingBooking?.payment_status} to ${status}`);
+
+    // Telegram confirmation is authoritative - can update from any status except already same
+    if (existingBooking?.payment_status === status) {
+      console.log(`Booking ${bookingRef} already has status ${status}, skipping update`);
+      return true;
+    }
+
     const { error } = await supabase
       .from('bookings')
-      .update({ payment_status: status })
+      .update({ 
+        payment_status: status,
+        updated_at: new Date().toISOString()
+      })
       .eq('razorpay_order_id', bookingRef);
 
     if (error) {
