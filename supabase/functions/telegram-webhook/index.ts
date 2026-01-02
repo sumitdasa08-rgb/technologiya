@@ -311,6 +311,20 @@ serve(async (req) => {
     });
   }
 
+  // Validate Telegram webhook secret token for POST requests
+  // This ensures only legitimate Telegram webhook calls can access admin functions
+  const webhookSecret = Deno.env.get('TELEGRAM_WEBHOOK_SECRET');
+  if (req.method === 'POST' && webhookSecret) {
+    const secretToken = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    if (!secretToken || secretToken !== webhookSecret) {
+      console.error('Invalid or missing webhook secret token');
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     // Handle GET requests (Telegram webhook verification)
     if (req.method === 'GET') {
