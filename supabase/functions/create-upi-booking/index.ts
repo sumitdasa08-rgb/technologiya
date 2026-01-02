@@ -8,25 +8,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 } as const;
 
-
-/**
- * Service pricing map - MUST MATCH src/config/pricing.ts
- * 
- * When updating prices, also update the frontend config file:
- * src/config/pricing.ts (SERVICE_PRICING constant)
- */
-const SERVICE_PRICING: Record<string, number> = {
-  'windows_upgrade': 10,
-  'software_repair': 10,
-  'sound_issues': 10,
-  'network_setup': 10,
-  'virus_removal': 10,
-  'pc_optimization': 10,
-  'data_recovery': 10,
-  'consultation': 10,
-};
-
 const DEFAULT_SERVICE_AMOUNT = 10;
+
+// Function to get price from database
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getServicePriceFromDB(
+  supabase: any,
+  serviceId: string
+): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from('service_pricing')
+      .select('price')
+      .eq('id', serviceId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching price from DB:', error);
+      return DEFAULT_SERVICE_AMOUNT;
+    }
+
+    return data?.price ?? DEFAULT_SERVICE_AMOUNT;
+  } catch (err) {
+    console.error('Exception fetching price:', err);
+    return DEFAULT_SERVICE_AMOUNT;
+  }
+}
 
 // Telegram notification function with inline buttons
 async function sendTelegramNotificationWithButtons(booking: {
@@ -260,13 +268,13 @@ serve(async (req) => {
       );
     }
 
-    // Get amount based on service type
-    const amount = SERVICE_PRICING[service_type] || DEFAULT_SERVICE_AMOUNT;
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get amount based on service type from database
+    const amount = await getServicePriceFromDB(supabase, service_type);
 
     // Generate a unique booking reference
     const bookingRef = `UPI-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
