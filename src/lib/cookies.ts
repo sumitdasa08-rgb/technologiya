@@ -3,6 +3,7 @@
 export interface CustomerInfo {
   name: string;
   phone: string;
+  bookingRef?: string;
 }
 
 const COOKIE_NAME = 'pc_repair_customer';

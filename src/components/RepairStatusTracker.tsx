@@ -82,7 +82,11 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
     try {
       // Fetch bookings via Edge Function for security
       const { data: response, error } = await supabase.functions.invoke('get-customer-bookings', {
-        body: { name: customerInfo.name, phone: customerInfo.phone }
+        body: { 
+          name: customerInfo.name, 
+          phone: customerInfo.phone,
+          bookingRef: customerInfo.bookingRef 
+        }
       });
 
       if (error) throw error;
