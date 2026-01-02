@@ -1,45 +1,56 @@
-import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar } from "lucide-react";
+import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SERVICE_PRICING, DEFAULT_SERVICE_FEE, formatPrice } from "@/config/pricing";
 
-const services = [
+interface ServiceItem {
+  icon: LucideIcon;
+  id: string;
+  title: string;
+  description: string;
+}
+
+const services: ServiceItem[] = [
   {
     icon: Monitor,
+    id: "windows_upgrade",
     title: "Windows OS Upgrade",
     description: "Upgrade to the latest Windows version for enhanced security and performance.",
-    price: "₹250",
   },
   {
     icon: Settings,
+    id: "software_repair",
     title: "OS Changes & Updates",
     description: "System updates, driver installations, and performance optimization.",
-    price: "₹300",
   },
   {
     icon: FileText,
+    id: "consultation",
     title: "Microsoft Office",
     description: "Complete MS Office suite installation with activation.",
-    price: "₹350",
   },
   {
     icon: HardDrive,
+    id: "data_recovery",
     title: "Storage Solutions",
     description: "Mobile storage issues, cleanup, and data management solutions.",
-    price: "₹250",
   },
   {
     icon: Smartphone,
+    id: "pc_optimization",
     title: "Software Fixes",
     description: "Fix app crashes, system errors, and performance problems.",
-    price: "₹300",
   },
   {
     icon: Volume2,
+    id: "sound_issues",
     title: "Audio Repair",
     description: "Audio driver fixes, speaker problems, and sound optimization.",
-    price: "₹250",
   },
 ];
+
+// Get price for a service (uses centralized config)
+const getPrice = (id: string): number => SERVICE_PRICING[id] ?? DEFAULT_SERVICE_FEE;
 
 const ServicesSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -90,20 +101,19 @@ const ServicesSection = () => {
     requestAnimationFrame(animation);
   };
 
-  const handleServiceClick = (title: string, description: string, price: string) => {
+  const handleServiceClick = (service: ServiceItem) => {
     const contactSection = document.getElementById("contact");
     if (contactSection) {
       smoothScrollTo(contactSection, SCROLL_DURATION_MS);
 
-      // Dispatch custom event to pre-fill form with service type for pricing
       setTimeout(() => {
         window.dispatchEvent(
           new CustomEvent("prefillContact", {
             detail: {
-              issue: title,
-              message: description,
-              service_type: title,
-              price: parseInt(price.replace(/[₹,]/g, "")),
+              issue: service.title,
+              message: service.description,
+              service_type: service.id,
+              price: getPrice(service.id),
             },
           })
         );
@@ -124,13 +134,14 @@ const ServicesSection = () => {
               message:
                 "I want to book a slot for computer/mobile software related issue consultation.",
               service_type: "consultation",
-              price: 10,
+              price: getPrice("consultation"),
             },
           })
         );
       }, SCROLL_DURATION_MS + 100);
     }
   };
+
 
   return (
     <section id="services" ref={sectionRef} className="py-32 bg-background relative overflow-hidden">
@@ -149,32 +160,35 @@ const ServicesSection = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-          {services.map((service, index) => (
-            <div 
-              key={index}
-              onClick={() => handleServiceClick(service.title, service.description, service.price)}
-              className={`group glass-card p-4 md:p-8 rounded-2xl md:rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-              }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <div className="flex items-center gap-3 md:block">
-                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-foreground/5 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
-                  <service.icon className="w-5 h-5 md:w-6 md:h-6 text-foreground group-hover:text-background transition-colors duration-300" />
+          {services.map((service, index) => {
+            const price = getPrice(service.id);
+            return (
+              <div 
+                key={index}
+                onClick={() => handleServiceClick(service)}
+                className={`group glass-card p-4 md:p-8 rounded-2xl md:rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-center gap-3 md:block">
+                  <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-foreground/5 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
+                    <service.icon className="w-5 h-5 md:w-6 md:h-6 text-foreground group-hover:text-background transition-colors duration-300" />
+                  </div>
+                  <div className="flex-1 md:hidden">
+                    <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
+                    <span className="text-base font-semibold text-foreground">{formatPrice(price)}</span>
+                  </div>
                 </div>
-                <div className="flex-1 md:hidden">
-                  <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
-                  <span className="text-base font-semibold text-foreground">{service.price}</span>
+                <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
+                <p className="hidden md:block text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
+                <div className="hidden md:flex items-center justify-between">
+                  <span className="text-2xl font-semibold text-foreground">{formatPrice(price)}</span>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Starting price</span>
                 </div>
               </div>
-              <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
-              <p className="hidden md:block text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
-              <div className="hidden md:flex items-center justify-between">
-                <span className="text-2xl font-semibold text-foreground">{service.price}</span>
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Starting price</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* And many more text */}
@@ -204,7 +218,7 @@ const ServicesSection = () => {
               <div className="text-center md:text-right">
                 <div className="flex items-center justify-center md:justify-end gap-2">
                   <span className="text-xl md:text-2xl text-muted-foreground line-through">₹150</span>
-                  <span className="text-3xl md:text-4xl font-semibold text-foreground">₹10</span>
+                  <span className="text-3xl md:text-4xl font-semibold text-foreground">{formatPrice(getPrice("consultation"))}</span>
                 </div>
                 <p className="text-sm text-primary font-medium">Only for limited time!</p>
               </div>

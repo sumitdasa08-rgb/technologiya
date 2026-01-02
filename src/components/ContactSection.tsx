@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { setCustomerCookie } from "@/lib/cookies";
 import { useNavigate } from "react-router-dom";
 import UPIPayment from "./UPIPayment";
+import { DEFAULT_SERVICE_FEE, formatPrice } from "@/config/pricing";
 
 const ContactSection = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const ContactSection = () => {
   });
   const [selectedService, setSelectedService] = useState({
     service_type: "consultation",
-    price: 10
+    price: DEFAULT_SERVICE_FEE
   });
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -167,7 +168,7 @@ const ContactSection = () => {
 
   const handleNewBooking = () => {
     setFormData({ name: "", phone: "", issue: "", message: "" });
-    setSelectedService({ service_type: "consultation", price: 10 });
+    setSelectedService({ service_type: "consultation", price: DEFAULT_SERVICE_FEE });
     setBookingConfirmed(false);
     setConfirmedCustomer(null);
     setBookingRef(null);
@@ -328,7 +329,7 @@ const ContactSection = () => {
                       </>
                     ) : (
                       <>
-                        Book & Pay ₹{selectedService.price} via UPI <ArrowRight className="w-4 h-4 ml-2" />
+                        Book & Pay {formatPrice(selectedService.price)} via UPI <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </Button>
@@ -337,7 +338,7 @@ const ContactSection = () => {
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-500" />
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">₹10 service fee non-refundable</span> | Extra amount refundable if unfixable
+                      <span className="font-medium text-foreground">{formatPrice(DEFAULT_SERVICE_FEE)} service fee non-refundable</span> | Extra amount refundable if unfixable
                     </p>
                   </div>
                 </div>
