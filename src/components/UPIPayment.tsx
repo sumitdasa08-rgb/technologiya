@@ -20,11 +20,46 @@ interface UPIPaymentEnhancedProps {
 const UPI_ID = "sumitdasa99-3@okaxis";
 const COUNTDOWN_SECONDS = 20;
 
+// UPI app configurations with package names for Android intents
+const UPI_APPS = [
+  {
+    name: "Google Pay",
+    shortName: "GPay",
+    package: "com.google.android.apps.nbu.paisa.user",
+    color: "bg-[#4285F4]",
+    textColor: "text-white",
+  },
+  {
+    name: "PhonePe",
+    shortName: "PhonePe",
+    package: "com.phonepe.app",
+    color: "bg-[#5f259f]",
+    textColor: "text-white",
+  },
+  {
+    name: "Paytm",
+    shortName: "Paytm",
+    package: "net.one97.paytm",
+    color: "bg-[#00BAF2]",
+    textColor: "text-white",
+  },
+  {
+    name: "BHIM",
+    shortName: "BHIM",
+    package: "in.org.npci.upiapp",
+    color: "bg-[#00529B]",
+    textColor: "text-white",
+  },
+];
 
 function toMMSS(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
 }
 
 export default function UPIPaymentEnhanced({
@@ -36,6 +71,7 @@ export default function UPIPaymentEnhanced({
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [showConfirmButton, setShowConfirmButton] = useState(false);
+  const [showAllApps, setShowAllApps] = useState(false);
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -58,14 +94,11 @@ export default function UPIPaymentEnhanced({
 
   const txnRef = useMemo(() => bookingRef ?? `TXN-${Date.now()}`, [bookingRef]);
 
-  // Some UPI apps are strict about URI parsing.
-  // To maximize compatibility (BHIM/Paytm), keep the “pay” link minimal and avoid over-encoding.
   const payeeName = "TechFixPro";
-
   const displayAmount = Number.isFinite(amount) ? amount : 0;
   const isAmountValid = displayAmount > 0;
 
-  // Minimal pay link WITH amount (most compatible across UPI apps)
+  // Base UPI link with amount
   const upiFullLink = useMemo(() => {
     const formattedAmount = displayAmount.toFixed(2);
     return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&am=${formattedAmount}&cu=INR`;
@@ -76,6 +109,13 @@ export default function UPIPaymentEnhanced({
     return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&cu=INR&tr=${txnRef}`;
   }, [txnRef]);
 
+  // Generate app-specific intent for Android
+  const getAppSpecificIntent = (packageName: string, withAmount: boolean) => {
+    const baseParams = `pa=${UPI_ID}&pn=${payeeName}&cu=INR`;
+    const amountParam = withAmount ? `&am=${displayAmount.toFixed(2)}` : "";
+    const refParam = !withAmount ? `&tr=${txnRef}` : "";
+    return `intent://pay?${baseParams}${amountParam}${refParam}#Intent;scheme=upi;package=${packageName};end`;
+  };
 
   const qrFullUrl = useMemo(() => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiFullLink)}`;
@@ -96,8 +136,28 @@ export default function UPIPaymentEnhanced({
     }
   };
 
+  const handleCopyAmount = async () => {
+    try {
+      await navigator.clipboard.writeText(displayAmount.toString());
+      toast.success("Amount copied");
+    } catch {
+      toast.error("Failed to copy amount");
+    }
+  };
+
   const handleOpenUpi = (href: string) => {
     window.location.href = href;
+  };
+
+  const handleOpenApp = (app: typeof UPI_APPS[0], withAmount: boolean) => {
+    if (isAndroid()) {
+      // Use Android intent for specific app
+      const intent = getAppSpecificIntent(app.package, withAmount);
+      window.location.href = intent;
+    } else {
+      // Fallback to generic UPI link for iOS/desktop
+      window.location.href = withAmount ? upiFullLink : upiMinimalLink;
+    }
   };
 
   return (
@@ -107,17 +167,71 @@ export default function UPIPaymentEnhanced({
           Pay ₹{displayAmount} via UPI
         </h3>
         <p className="text-sm text-muted-foreground mb-4">
-          If your UPI app shows ₹0 or an unsupported request, use “Scan & enter
-          amount”.
+          Choose your UPI app or scan the QR code to pay.
         </p>
 
-        <Tabs defaultValue="full" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="full">Pay ₹{displayAmount}</TabsTrigger>
-            <TabsTrigger value="manual">Scan & enter amount</TabsTrigger>
+        <Tabs defaultValue="apps" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="apps">Choose App</TabsTrigger>
+            <TabsTrigger value="qr">Scan QR</TabsTrigger>
+            <TabsTrigger value="manual">Manual</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="full" className="mt-4 space-y-4">
+          {/* App Chooser Tab */}
+          <TabsContent value="apps" className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {(showAllApps ? UPI_APPS : UPI_APPS.slice(0, 2)).map((app) => (
+                <Button
+                  key={app.package}
+                  type="button"
+                  variant="outline"
+                  className={`h-12 rounded-xl border-2 hover:scale-[1.02] transition-transform ${app.color} ${app.textColor} border-transparent hover:opacity-90`}
+                  onClick={() => handleOpenApp(app, true)}
+                  disabled={!isAmountValid}
+                >
+                  {app.shortName}
+                </Button>
+              ))}
+            </div>
+            
+            {!showAllApps && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllApps(true)}
+                className="text-xs text-muted-foreground"
+              >
+                Show more apps
+              </Button>
+            )}
+
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full rounded-full"
+                onClick={() => handleOpenUpi(upiFullLink)}
+                disabled={!isAmountValid}
+              >
+                <Smartphone className="w-4 h-4 mr-2" />
+                Open Any UPI App
+              </Button>
+            </div>
+
+            {!isAmountValid && (
+              <p className="text-xs text-destructive">
+                Invalid amount. Please select a service and try again.
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground pt-2">
+              If an app shows "request not supported", try another app or use the QR/Manual tab.
+            </p>
+          </TabsContent>
+
+          {/* QR Code Tab */}
+          <TabsContent value="qr" className="mt-4 space-y-4">
             <div className="flex justify-center">
               <div className="bg-background rounded-xl border border-border p-3">
                 <img
@@ -128,48 +242,71 @@ export default function UPIPaymentEnhanced({
                 />
               </div>
             </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="rounded-full"
-              onClick={() => handleOpenUpi(upiFullLink)}
-              disabled={!isAmountValid}
-            >
-              <Smartphone className="w-4 h-4 mr-2" />
-              Open UPI App
-            </Button>
-
-            {!isAmountValid ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Invalid amount. Please select a service and try again.
-              </p>
-            ) : null}
+            <p className="text-xs text-muted-foreground">
+              Scan with any UPI app to pay ₹{displayAmount}
+            </p>
           </TabsContent>
 
+          {/* Manual Entry Tab */}
           <TabsContent value="manual" className="mt-4 space-y-4">
             <div className="flex justify-center">
               <div className="bg-background rounded-xl border border-border p-3">
                 <img
                   src={qrMinimalUrl}
                   alt="UPI QR code for manual amount entry"
-                  className="w-52 h-52"
+                  className="w-44 h-44"
                   loading="lazy"
                 />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Scan this QR, then enter ₹{displayAmount} in your UPI app.
-            </p>
+            
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                Enter amount manually in your app:
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl font-bold text-primary">₹{displayAmount}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyAmount}
+                  className="h-8"
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {UPI_APPS.slice(0, 2).map((app) => (
+                <Button
+                  key={app.package}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={`rounded-lg ${app.color} ${app.textColor} border-transparent`}
+                  onClick={() => handleOpenApp(app, false)}
+                >
+                  {app.shortName}
+                </Button>
+              ))}
+            </div>
+
             <Button
               type="button"
               variant="secondary"
-              className="rounded-full"
+              className="w-full rounded-full"
               onClick={() => handleOpenUpi(upiMinimalLink)}
             >
               <Smartphone className="w-4 h-4 mr-2" />
-              Open UPI (manual)
+              Open Any UPI App
             </Button>
+
+            <p className="text-xs text-muted-foreground">
+              Open app → Enter ₹{displayAmount} → Complete payment
+            </p>
           </TabsContent>
         </Tabs>
 
