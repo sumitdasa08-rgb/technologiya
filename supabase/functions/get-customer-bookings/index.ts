@@ -103,12 +103,13 @@ serve(async (req) => {
       );
     }
 
-    // Validate booking reference (required for security)
+    // If no booking reference provided, return empty - user needs to re-authenticate
+    // This is a security measure to prevent enumeration of all bookings
     if (!bookingRef || typeof bookingRef !== 'string' || bookingRef.trim().length < 5) {
-      console.error('Invalid booking reference provided');
+      console.log('No valid booking reference - returning empty for security');
       return new Response(
-        JSON.stringify({ error: 'Valid booking reference is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ data: [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
