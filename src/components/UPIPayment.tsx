@@ -20,9 +20,6 @@ interface UPIPaymentEnhancedProps {
 const UPI_ID = "sumitdasa99-3@okaxis";
 const COUNTDOWN_SECONDS = 20;
 
-function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
-}
 
 function toMMSS(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -61,27 +58,24 @@ export default function UPIPaymentEnhanced({
 
   const txnRef = useMemo(() => bookingRef ?? `TXN-${Date.now()}`, [bookingRef]);
 
-  const payeeName = useMemo(() => encodeURIComponent("TechFixPro"), []);
-  const transactionNote = useMemo(
-    () => encodeURIComponent("Service Booking"),
-    []
-  );
+  // Some UPI apps are strict about URI parsing.
+  // To maximize compatibility (BHIM/Paytm), keep the “pay” link minimal and avoid over-encoding.
+  const payeeName = "TechFixPro";
 
-  // Full intent: may be blocked by some apps due to their risk policy.
+  const displayAmount = Number.isFinite(amount) ? amount : 0;
+  const isAmountValid = displayAmount > 0;
+
+  // Minimal pay link WITH amount (most compatible across UPI apps)
   const upiFullLink = useMemo(() => {
-    const formattedAmount = encodeURIComponent(amount.toFixed(2));
-    return `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${payeeName}&am=${formattedAmount}&cu=INR&tn=${transactionNote}&tr=${encodeURIComponent(txnRef)}`;
-  }, [amount, payeeName, transactionNote, txnRef]);
+    const formattedAmount = displayAmount.toFixed(2);
+    return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&am=${formattedAmount}&cu=INR`;
+  }, [displayAmount]);
 
-  // Minimal intent: user enters amount manually in the app (often more compatible).
+  // Manual pay link (user enters amount inside the UPI app)
   const upiMinimalLink = useMemo(() => {
-    return `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${payeeName}&cu=INR&tr=${encodeURIComponent(txnRef)}`;
-  }, [payeeName, txnRef]);
+    return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&cu=INR&tr=${txnRef}`;
+  }, [txnRef]);
 
-  const upiFullIntentLink = useMemo(() => {
-    // Android intent fallback (opens UPI chooser more reliably on some devices)
-    return `intent://pay?${upiFullLink.replace("upi://pay?", "")}#Intent;scheme=upi;end`;
-  }, [upiFullLink]);
 
   const qrFullUrl = useMemo(() => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiFullLink)}`;
@@ -110,16 +104,16 @@ export default function UPIPaymentEnhanced({
     <div className="space-y-6 text-center">
       <div className="bg-background/80 border border-border/50 rounded-2xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          Pay ₹{amount} via UPI
+          Pay ₹{displayAmount} via UPI
         </h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Some apps (BHIM/Paytm) may warn due to their own risk policy—try “Scan &
-          enter amount” if “Pay ₹{amount}” is blocked.
+          If your UPI app shows ₹0 or an unsupported request, use “Scan & enter
+          amount”.
         </p>
 
         <Tabs defaultValue="full" className="w-full">
           <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="full">Pay ₹{amount}</TabsTrigger>
+            <TabsTrigger value="full">Pay ₹{displayAmount}</TabsTrigger>
             <TabsTrigger value="manual">Scan & enter amount</TabsTrigger>
           </TabsList>
 
@@ -139,11 +133,18 @@ export default function UPIPaymentEnhanced({
               type="button"
               variant="secondary"
               className="rounded-full"
-              onClick={() => handleOpenUpi(isAndroid() ? upiFullIntentLink : upiFullLink)}
+              onClick={() => handleOpenUpi(upiFullLink)}
+              disabled={!isAmountValid}
             >
               <Smartphone className="w-4 h-4 mr-2" />
               Open UPI App
             </Button>
+
+            {!isAmountValid ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Invalid amount. Please select a service and try again.
+              </p>
+            ) : null}
           </TabsContent>
 
           <TabsContent value="manual" className="mt-4 space-y-4">
@@ -158,7 +159,7 @@ export default function UPIPaymentEnhanced({
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Scan this QR, then enter ₹{amount} in your UPI app.
+              Scan this QR, then enter ₹{displayAmount} in your UPI app.
             </p>
             <Button
               type="button"
