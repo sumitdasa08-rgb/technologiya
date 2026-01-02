@@ -17,10 +17,10 @@ interface UPIPaymentEnhancedProps {
   isLoading: boolean;
 }
 
-const UPI_ID = "8812910655@upi";
+const DEFAULT_UPI_ID = "8812910655@ptyes";
 const COUNTDOWN_SECONDS = 20;
 
-// UPI app configurations with package names for Android intents
+// UPI app configurations with package names and app-specific UPI IDs
 const UPI_APPS = [
   {
     name: "Google Pay",
@@ -28,6 +28,7 @@ const UPI_APPS = [
     package: "com.google.android.apps.nbu.paisa.user",
     color: "bg-[#4285F4]",
     textColor: "text-white",
+    upiId: "sumitdasa99-2@okicici",
   },
   {
     name: "PhonePe",
@@ -35,6 +36,7 @@ const UPI_APPS = [
     package: "com.phonepe.app",
     color: "bg-[#5f259f]",
     textColor: "text-white",
+    upiId: "sumitdasa99-1@okhdfcbank",
   },
   {
     name: "Paytm",
@@ -42,13 +44,15 @@ const UPI_APPS = [
     package: "net.one97.paytm",
     color: "bg-[#00BAF2]",
     textColor: "text-white",
+    upiId: "sumit8812@ptyes",
   },
   {
-    name: "BHIM",
-    shortName: "BHIM",
-    package: "in.org.npci.upiapp",
-    color: "bg-[#00529B]",
+    name: "BHIM SBI",
+    shortName: "SBI",
+    package: "com.sbi.upi",
+    color: "bg-[#0066B3]",
     textColor: "text-white",
+    upiId: "sumitdasa99-3@oksbi",
   },
 ];
 
@@ -98,23 +102,24 @@ export default function UPIPaymentEnhanced({
   const displayAmount = Number.isFinite(amount) ? amount : 0;
   const isAmountValid = displayAmount > 0;
 
-  // Base UPI link with amount
+  // Base UPI link with amount (uses default UPI ID)
   const upiFullLink = useMemo(() => {
     const formattedAmount = displayAmount.toFixed(2);
-    return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&am=${formattedAmount}&cu=INR`;
+    return `upi://pay?pa=${DEFAULT_UPI_ID}&pn=${payeeName}&am=${formattedAmount}&cu=INR`;
   }, [displayAmount]);
 
   // Manual pay link (user enters amount inside the UPI app)
   const upiMinimalLink = useMemo(() => {
-    return `upi://pay?pa=${UPI_ID}&pn=${payeeName}&cu=INR&tr=${txnRef}`;
+    return `upi://pay?pa=${DEFAULT_UPI_ID}&pn=${payeeName}&cu=INR&tr=${txnRef}`;
   }, [txnRef]);
 
-  // Generate app-specific intent for Android
-  const getAppSpecificIntent = (packageName: string, withAmount: boolean) => {
-    const baseParams = `pa=${UPI_ID}&pn=${payeeName}&cu=INR`;
+  // Generate app-specific intent for Android with app-specific UPI ID
+  const getAppSpecificIntent = (app: typeof UPI_APPS[0], withAmount: boolean) => {
+    const upiId = app.upiId;
+    const baseParams = `pa=${upiId}&pn=${payeeName}&cu=INR`;
     const amountParam = withAmount ? `&am=${displayAmount.toFixed(2)}` : "";
     const refParam = !withAmount ? `&tr=${txnRef}` : "";
-    return `intent://pay?${baseParams}${amountParam}${refParam}#Intent;scheme=upi;package=${packageName};end`;
+    return `intent://pay?${baseParams}${amountParam}${refParam}#Intent;scheme=upi;package=${app.package};end`;
   };
 
   const qrFullUrl = useMemo(() => {
@@ -127,7 +132,7 @@ export default function UPIPaymentEnhanced({
 
   const handleCopyUPI = async () => {
     try {
-      await navigator.clipboard.writeText(UPI_ID);
+      await navigator.clipboard.writeText(DEFAULT_UPI_ID);
       setCopied(true);
       toast.success("UPI ID copied");
       setTimeout(() => setCopied(false), 1500);
@@ -151,8 +156,8 @@ export default function UPIPaymentEnhanced({
 
   const handleOpenApp = (app: typeof UPI_APPS[0], withAmount: boolean) => {
     if (isAndroid()) {
-      // Use Android intent for specific app
-      const intent = getAppSpecificIntent(app.package, withAmount);
+      // Use Android intent for specific app with app-specific UPI ID
+      const intent = getAppSpecificIntent(app, withAmount);
       window.location.href = intent;
     } else {
       // Fallback to generic UPI link for iOS/desktop
@@ -314,7 +319,7 @@ export default function UPIPaymentEnhanced({
         <div className="flex items-center justify-center gap-2 mt-5">
           <span className="text-sm text-muted-foreground">UPI ID:</span>
           <code className="bg-muted px-3 py-1 rounded-lg text-foreground font-mono text-sm">
-            {UPI_ID}
+            {DEFAULT_UPI_ID}
           </code>
           <Button
             type="button"
