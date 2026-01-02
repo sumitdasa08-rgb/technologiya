@@ -151,8 +151,8 @@ const ContactSection = () => {
 
       if (error) throw error;
 
-      // Save customer info for tracking
-      setCustomerCookie({ name: customerName, phone: customerPhone });
+      // Save customer info with booking reference for tracking
+      setCustomerCookie({ name: customerName, phone: customerPhone, bookingRef: bookingRef ?? undefined });
       setConfirmedCustomer({ name: customerName, phone: customerPhone });
       setBookingConfirmed(true);
       setShowUPIPayment(false);

@@ -131,8 +131,8 @@ const BookingSection = () => {
     const customerName = formData.name.trim();
     const customerPhone = formData.phone.trim();
     
-    // Set cookie and redirect immediately - don't wait for API
-    setCustomerCookie({ name: customerName, phone: customerPhone });
+    // Set cookie with booking reference and redirect immediately - don't wait for API
+    setCustomerCookie({ name: customerName, phone: customerPhone, bookingRef: bookingRef ?? undefined });
     toast.success("Payment submitted! Redirecting to track your repair...", {
       description: "We're verifying your payment. This usually takes 15-30 minutes."
     });
