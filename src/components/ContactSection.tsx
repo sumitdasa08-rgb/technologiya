@@ -57,10 +57,10 @@ const ContactSection = () => {
         issue: e.detail.issue,
         message: e.detail.message,
       }));
-      if (e.detail.service_type && e.detail.price) {
+      if (e.detail.service_type && typeof e.detail.price === "number" && Number.isFinite(e.detail.price)) {
         setSelectedService({
           service_type: e.detail.service_type,
-          price: e.detail.price
+          price: e.detail.price,
         });
       }
       // Reset UPI payment view when prefilling
