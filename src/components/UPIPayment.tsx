@@ -17,7 +17,7 @@ interface UPIPaymentEnhancedProps {
   isLoading: boolean;
 }
 
-const UPI_ID = "sumitdasa99-3@okaxis";
+const UPI_ID = "8812910655@upi";
 const COUNTDOWN_SECONDS = 20;
 
 // UPI app configurations with package names for Android intents

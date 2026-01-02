@@ -192,7 +192,7 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
 
   const handleRetryPayment = (booking: Booking) => {
     // Open UPI payment link
-    const upiDeepLink = `upi://pay?pa=sumitdasa99-3@okaxis&pn=LogicLabs&am=${booking.amount}&cu=INR&tn=Retry%20Payment%20${booking.razorpay_order_id}`;
+    const upiDeepLink = `upi://pay?pa=8812910655@upi&pn=LogicLabs&am=${booking.amount}&cu=INR&tn=Retry%20Payment%20${booking.razorpay_order_id}`;
     window.location.href = upiDeepLink;
     toast.info('Opening UPI app...', {
       description: 'After payment, please call us at 8812910655 to confirm.'
