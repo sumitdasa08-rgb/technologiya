@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setCustomerCookie } from "@/lib/cookies";
 import { useNavigate } from "react-router-dom";
-import UPIPayment from "./UPIPaymentEnhanced";
+import UPIPayment from "./UPIPayment";
 
 const BookingSection = () => {
   const navigate = useNavigate();

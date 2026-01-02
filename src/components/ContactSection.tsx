@@ -267,7 +267,8 @@ const ContactSection = () => {
               </div>
             ) : showUPIPayment ? (
               <UPIPayment 
-                amount={selectedService.price} 
+                amount={selectedService.price}
+                bookingRef={bookingRef ?? undefined}
                 onPaymentConfirmed={handlePaymentConfirmed}
                 isLoading={isLoading}
               />
