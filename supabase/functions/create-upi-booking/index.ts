@@ -9,7 +9,12 @@ const corsHeaders = {
 } as const;
 
 
-// Service pricing map - promotional pricing
+/**
+ * Service pricing map - MUST MATCH src/config/pricing.ts
+ * 
+ * When updating prices, also update the frontend config file:
+ * src/config/pricing.ts (SERVICE_PRICING constant)
+ */
 const SERVICE_PRICING: Record<string, number> = {
   'windows_upgrade': 10,
   'software_repair': 10,
