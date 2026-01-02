@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { setCustomerCookie } from "@/lib/cookies";
 import { useNavigate } from "react-router-dom";
-import UPIPayment from "./UPIPayment";
+import UPIPayment from "./UPIPaymentEnhanced";
 
 const BookingSection = () => {
   const navigate = useNavigate();
@@ -314,7 +314,8 @@ const BookingSection = () => {
                   </div>
                 ) : showUPIPayment ? (
                   <UPIPayment 
-                    amount={selectedService.price} 
+                    amount={selectedService.price}
+                    bookingRef={bookingRef ?? undefined}
                     onPaymentConfirmed={handlePaymentConfirmed}
                     isLoading={isLoading}
                   />
