@@ -5,14 +5,16 @@ import { toast } from "sonner";
 
 interface UPIPaymentProps {
   amount: number;
+  bookingRef?: string;
   onPaymentConfirmed: () => void;
   isLoading: boolean;
 }
 
+
 const UPI_ID = "sumitdasa99-3@okaxis";
 const COUNTDOWN_SECONDS = 20; // 20 seconds
 
-const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) => {
+const UPIPayment = ({ amount, bookingRef, onPaymentConfirmed, isLoading }: UPIPaymentProps) => {
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [showConfirmButton, setShowConfirmButton] = useState(false);
@@ -55,13 +57,17 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Generate UPI deep link for mobile - BHIM and other apps require specific format
+  // Generate UPI deep link for mobile (keep it minimal for max app compatibility)
   const payeeName = encodeURIComponent("TechFixPro");
   const transactionNote = encodeURIComponent("Service Booking");
-  const upiDeepLink = `upi://pay?pa=${UPI_ID}&pn=${payeeName}&am=${amount}&cu=INR&tn=${transactionNote}&mode=02&purpose=00`;
+  const transactionRef = encodeURIComponent(bookingRef ?? `TXN-${Date.now()}`);
+  const formattedAmount = encodeURIComponent(amount.toFixed(2));
+
+  const upiDeepLink = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${payeeName}&am=${formattedAmount}&cu=INR&tn=${transactionNote}&tr=${transactionRef}`;
 
   // QR code URL using a free API
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiDeepLink)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiDeepLink)}`;
+
 
   return (
     <div className="space-y-6 text-center">
@@ -75,16 +81,16 @@ const UPIPayment = ({ amount, onPaymentConfirmed, isLoading }: UPIPaymentProps) 
           <div className="bg-white p-3 rounded-xl">
             <img 
               src={qrCodeUrl} 
-              alt="UPI QR Code" 
-              className="w-48 h-48"
+               alt="UPI payment QR code for TechFixPro booking"
+               className="w-52 h-52"
               loading="lazy"
             />
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4">
-          Scan with Google Pay, PhonePe, Paytm or any UPI app
-        </p>
+         <p className="text-sm text-muted-foreground mb-4">
+           If BHIM/Paytm blocks the link, use the QR scan or copy the UPI ID below.
+         </p>
 
         {/* UPI ID */}
         <div className="flex items-center justify-center gap-2 mb-4">
