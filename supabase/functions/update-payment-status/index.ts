@@ -3,21 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as hexEncode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
-// CORS configuration - restrict to allowed origins
-const getAllowedOrigin = (req: Request): string => {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigins = [
-    'https://ryehkycxyhdpufigcotc.lovableproject.com',
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ];
-  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-};
-
-const getCorsHeaders = (req: Request) => ({
-  'Access-Control-Allow-Origin': getAllowedOrigin(req),
+// CORS configuration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-});
+} as const;
+
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
@@ -172,9 +163,8 @@ async function verifyRazorpaySignature(
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
   if (req.method === 'OPTIONS') {
+
     return new Response(null, { headers: corsHeaders });
   }
 
