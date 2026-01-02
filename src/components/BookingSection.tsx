@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { setCustomerCookie } from "@/lib/cookies";
 import { useNavigate } from "react-router-dom";
 import UPIPayment from "./UPIPayment";
-import { DEFAULT_SERVICE_FEE, formatPrice } from "@/config/pricing";
+import { usePricing, getServicePrice, formatPrice, DEFAULT_SERVICE_FEE } from "@/hooks/usePricing";
 
 const BookingSection = () => {
   const navigate = useNavigate();

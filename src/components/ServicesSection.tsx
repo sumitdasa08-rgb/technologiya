@@ -1,7 +1,7 @@
-import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon } from "lucide-react";
+import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SERVICE_PRICING, DEFAULT_SERVICE_FEE, formatPrice } from "@/config/pricing";
+import { usePricing, getServicePrice, formatPrice, DEFAULT_SERVICE_FEE } from "@/hooks/usePricing";
 
 interface ServiceItem {
   icon: LucideIcon;
@@ -49,12 +49,15 @@ const services: ServiceItem[] = [
   },
 ];
 
-// Get price for a service (uses centralized config)
-const getPrice = (id: string): number => SERVICE_PRICING[id] ?? DEFAULT_SERVICE_FEE;
-
 const ServicesSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch pricing from database
+  const { data: pricingData = [], isLoading: isPricingLoading } = usePricing();
+
+  // Get price for a service (uses database data with fallback)
+  const getPrice = (id: string): number => getServicePrice(pricingData, id);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -177,13 +180,17 @@ const ServicesSection = () => {
                   </div>
                   <div className="flex-1 md:hidden">
                     <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
-                    <span className="text-base font-semibold text-foreground">{formatPrice(price)}</span>
+                    <span className="text-base font-semibold text-foreground">
+                      {isPricingLoading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : formatPrice(price)}
+                    </span>
                   </div>
                 </div>
                 <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
                 <p className="hidden md:block text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
                 <div className="hidden md:flex items-center justify-between">
-                  <span className="text-2xl font-semibold text-foreground">{formatPrice(price)}</span>
+                  <span className="text-2xl font-semibold text-foreground">
+                    {isPricingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : formatPrice(price)}
+                  </span>
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">Starting price</span>
                 </div>
               </div>
@@ -218,7 +225,9 @@ const ServicesSection = () => {
               <div className="text-center md:text-right">
                 <div className="flex items-center justify-center md:justify-end gap-2">
                   <span className="text-xl md:text-2xl text-muted-foreground line-through">₹150</span>
-                  <span className="text-3xl md:text-4xl font-semibold text-foreground">{formatPrice(getPrice("consultation"))}</span>
+                  <span className="text-3xl md:text-4xl font-semibold text-foreground">
+                    {isPricingLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : formatPrice(getPrice("consultation"))}
+                  </span>
                 </div>
                 <p className="text-sm text-primary font-medium">Only for limited time!</p>
               </div>
