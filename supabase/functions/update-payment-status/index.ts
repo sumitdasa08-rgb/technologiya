@@ -259,19 +259,28 @@ serve(async (req) => {
       throw new Error('Payment was rejected. Please contact support or try a new booking.');
     }
 
-    // Don't update if already completed
+    // Don't update if already completed by Telegram confirmation
     if (existingBooking.payment_status === 'completed') {
-      console.log('Payment already completed, skipping update');
+      console.log('Payment already confirmed by admin, returning success');
+      // Fetch full booking data
+      const { data: fullBooking } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('razorpay_order_id', razorpay_order_id)
+        .single();
+        
       return new Response(JSON.stringify({ 
         success: true,
         message: 'Payment already confirmed',
-        booking: existingBooking,
+        booking: fullBooking || existingBooking,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Update booking with payment details - match both 'pending' and 'pending_verification' statuses
+    // Update booking with payment details
+    // Only update if status is 'pending' - customer is confirming they made payment
+    // This sets it to 'pending_verification' until admin confirms on Telegram
     const { data, error } = await supabase
       .from('bookings')
       .update({
