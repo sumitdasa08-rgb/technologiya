@@ -1,7 +1,6 @@
-import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon, Loader2 } from "lucide-react";
+import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { usePricing, getServicePrice, formatPrice, DEFAULT_SERVICE_FEE } from "@/hooks/usePricing";
 
 interface ServiceItem {
   icon: LucideIcon;
@@ -52,12 +51,6 @@ const services: ServiceItem[] = [
 const ServicesSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  
-  // Fetch pricing from database
-  const { data: pricingData = [], isLoading: isPricingLoading } = usePricing();
-
-  // Get price for a service (uses database data with fallback)
-  const getPrice = (id: string): number => getServicePrice(pricingData, id);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -78,7 +71,6 @@ const ServicesSection = () => {
 
   const SCROLL_DURATION_MS = 1200;
 
-  // Custom smooth scroll with slower duration
   const smoothScrollTo = (element: HTMLElement, duration: number = SCROLL_DURATION_MS) => {
     const targetPosition = element.getBoundingClientRect().top + window.scrollY;
     const startPosition = window.scrollY;
@@ -95,7 +87,6 @@ const ServicesSection = () => {
       const progress = Math.min(timeElapsed / duration, 1);
       const ease = easeInOutCubic(progress);
 
-      // Use the numeric overload for maximum browser compatibility
       window.scrollTo(0, startPosition + distance * ease);
 
       if (progress < 1) requestAnimationFrame(animation);
@@ -115,8 +106,6 @@ const ServicesSection = () => {
             detail: {
               issue: service.title,
               message: service.description,
-              service_type: service.id,
-              price: getPrice(service.id),
             },
           })
         );
@@ -134,10 +123,7 @@ const ServicesSection = () => {
           new CustomEvent("prefillContact", {
             detail: {
               issue: "Consultation",
-              message:
-                "I want to book a slot for computer/mobile software related issue consultation.",
-              service_type: "consultation",
-              price: getPrice("consultation"),
+              message: "I want to book a slot for computer/mobile software related issue consultation.",
             },
           })
         );
@@ -145,10 +131,8 @@ const ServicesSection = () => {
     }
   };
 
-
   return (
     <section id="services" ref={sectionRef} className="py-32 bg-background relative overflow-hidden">
-      {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-transparent to-muted/30 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative">
@@ -158,55 +142,42 @@ const ServicesSection = () => {
             What we offer.
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light">
-            Professional solutions for all your tech needs, with transparent pricing.
+            Professional solutions for all your tech needs.
           </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-          {services.map((service, index) => {
-            const price = getPrice(service.id);
-            return (
-              <div 
-                key={index}
-                onClick={() => handleServiceClick(service)}
-                className={`group glass-card p-4 md:p-8 rounded-2xl md:rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
-                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center gap-3 md:block">
-                  <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-foreground/5 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
-                    <service.icon className="w-5 h-5 md:w-6 md:h-6 text-foreground group-hover:text-background transition-colors duration-300" />
-                  </div>
-                  <div className="flex-1 md:hidden">
-                    <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
-                    <span className="text-base font-semibold text-foreground">
-                      {isPricingLoading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : formatPrice(price)}
-                    </span>
-                  </div>
+          {services.map((service, index) => (
+            <div 
+              key={index}
+              onClick={() => handleServiceClick(service)}
+              className={`group glass-card p-4 md:p-8 rounded-2xl md:rounded-3xl hover-lift cursor-pointer transition-all duration-500 ease-apple ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              }`}
+              style={{ transitionDelay: `${index * 100}ms` }}
+            >
+              <div className="flex items-center gap-3 md:block">
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-foreground/5 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-foreground group-hover:scale-110 group-hover:rotate-3">
+                  <service.icon className="w-5 h-5 md:w-6 md:h-6 text-foreground group-hover:text-background transition-colors duration-300" />
                 </div>
-                <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
-                <p className="hidden md:block text-muted-foreground text-sm mb-6 font-light leading-relaxed">{service.description}</p>
-                <div className="hidden md:flex items-center justify-between">
-                  <span className="text-2xl font-semibold text-foreground">
-                    {isPricingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : formatPrice(price)}
-                  </span>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Starting price</span>
+                <div className="flex-1 md:hidden">
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
                 </div>
               </div>
-            );
-          })}
+              <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight">{service.title}</h3>
+              <p className="hidden md:block text-muted-foreground text-sm font-light leading-relaxed">{service.description}</p>
+            </div>
+          ))}
         </div>
 
-        {/* And many more text */}
         <p 
           className={`text-center text-lg md:text-xl text-muted-foreground mt-8 font-light transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
           style={{ transitionDelay: '500ms' }}
         >
-          ...and many more, just book your slot now!
+          ...and many more, just contact us!
         </p>
 
-        {/* Book Slot Section */}
+        {/* Contact CTA */}
         <div 
           className={`mt-16 glass-card p-8 md:p-12 rounded-3xl transition-all duration-700 ease-apple hover-lift ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} 
           style={{ transitionDelay: '600ms' }}
@@ -217,27 +188,16 @@ const ServicesSection = () => {
                 <Calendar className="w-8 h-8 text-background" />
               </div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-2 tracking-tight">Book Your Slot Now</h3>
+                <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-2 tracking-tight">Need Help?</h3>
                 <p className="text-muted-foreground font-light">For any type of computer/mobile software related issue</p>
               </div>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-              <div className="text-center md:text-right">
-                <div className="flex items-center justify-center md:justify-end gap-2">
-                  <span className="text-xl md:text-2xl text-muted-foreground line-through">₹150</span>
-                  <span className="text-3xl md:text-4xl font-semibold text-foreground">
-                    {isPricingLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : formatPrice(getPrice("consultation"))}
-                  </span>
-                </div>
-                <p className="text-sm text-primary font-medium">Only for limited time!</p>
-              </div>
-              <Button 
-                onClick={handleBookSlot}
-                className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-105 hover:shadow-lg"
-              >
-                Book Now
-              </Button>
-            </div>
+            <Button 
+              onClick={handleBookSlot}
+              className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-105 hover:shadow-lg"
+            >
+              Contact Us Now
+            </Button>
           </div>
         </div>
       </div>

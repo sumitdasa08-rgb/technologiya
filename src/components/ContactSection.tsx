@@ -1,34 +1,23 @@
-import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Loader2, ExternalLink } from "lucide-react";
+import { Phone, Mail, Clock, MapPin, ArrowRight, ShieldCheck, Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { setCustomerCookie } from "@/lib/cookies";
-import { useNavigate } from "react-router-dom";
-import UPIPayment from "./UPIPayment";
-import { usePricing, getServicePrice, formatPrice, DEFAULT_SERVICE_FEE } from "@/hooks/usePricing";
 
 const ContactSection = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     issue: "",
     message: "",
   });
-  const [selectedService, setSelectedService] = useState({
-    service_type: "consultation",
-    price: DEFAULT_SERVICE_FEE
-  });
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showUPIPayment, setShowUPIPayment] = useState(false);
-  const [bookingRef, setBookingRef] = useState<string | null>(null);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [confirmedCustomer, setConfirmedCustomer] = useState<{ name: string; phone: string } | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -47,26 +36,15 @@ const ContactSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
   // Listen for prefill events from services section
   useEffect(() => {
-    const handlePrefill = (e: CustomEvent<{ issue: string; message: string; service_type?: string; price?: number }>) => {
+    const handlePrefill = (e: CustomEvent<{ issue: string; message: string }>) => {
       setFormData(prev => ({
         ...prev,
         issue: e.detail.issue,
         message: e.detail.message,
       }));
-      if (e.detail.service_type && typeof e.detail.price === "number" && Number.isFinite(e.detail.price)) {
-        setSelectedService({
-          service_type: e.detail.service_type,
-          price: e.detail.price,
-        });
-      }
-      // Reset UPI payment view when prefilling
-      setShowUPIPayment(false);
-      setBookingRef(null);
-      // Focus on name input after form is prefilled
+      setIsSubmitted(false);
       setTimeout(() => {
         nameInputRef.current?.focus();
       }, 100);
@@ -79,7 +57,6 @@ const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation
     const trimmedName = formData.name.trim();
     const trimmedPhone = formData.phone.trim();
     const trimmedIssue = formData.issue.trim();
@@ -89,14 +66,12 @@ const ContactSection = () => {
       return;
     }
 
-    // Validate phone format (10-15 digits)
     const phoneDigits = trimmedPhone.replace(/[\s\-\(\)]/g, '');
     if (!/^\d{10,15}$/.test(phoneDigits)) {
       toast.error("Please enter a valid phone number (10-15 digits)");
       return;
     }
 
-    // Validate input lengths
     if (trimmedName.length > 100) {
       toast.error("Name must be less than 100 characters");
       return;
@@ -110,68 +85,35 @@ const ContactSection = () => {
     setIsLoading(true);
 
     try {
-      // Create UPI booking
-      const { data, error } = await supabase.functions.invoke('create-upi-booking', {
+      const { data, error } = await supabase.functions.invoke('send-contact-telegram', {
         body: {
-          service_type: selectedService.service_type,
           name: trimmedName,
           phone: trimmedPhone,
           issue: trimmedIssue,
-          description: formData.message.trim(),
+          message: formData.message.trim(),
         },
       });
 
       if (error) throw error;
 
-      setBookingRef(data.bookingRef);
-      setShowUPIPayment(true);
-      toast.success("Booking created! Please complete payment via UPI.");
+      setIsSubmitted(true);
+      toast.success("Request sent! We'll call you back shortly.");
     } catch (error) {
-      console.error('Booking error:', error);
-      toast.error("Failed to create booking. Please try again.");
+      console.error('Contact error:', error);
+      toast.error("Failed to send. Please call us directly at 8812910655");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePaymentConfirmed = async () => {
-    const customerName = formData.name.trim();
-    const customerPhone = formData.phone.trim();
-    
-    // Set cookie with booking reference and redirect immediately - don't wait for API
-    setCustomerCookie({ name: customerName, phone: customerPhone, bookingRef: bookingRef ?? undefined });
-    toast.success("Payment submitted! Redirecting to track your repair...", {
-      description: "We're verifying your payment. This usually takes 15-30 minutes."
-    });
-    
-    // Navigate immediately - customer will see "Payment Processing" status
-    navigate('/track-repair');
-    
-    // Update payment status in background (don't block the user)
-    try {
-      await supabase.functions.invoke('update-payment-status', {
-        body: {
-          razorpay_order_id: bookingRef,
-          razorpay_payment_id: `UPI-CONFIRMED-${Date.now()}`,
-          razorpay_signature: 'upi-manual-confirmation',
-        },
-      });
-    } catch (error) {
-      console.error('Background payment update error:', error);
-      // Don't show error to user - they're already on track page
-    }
-  };
-
-  const handleNewBooking = () => {
+  const handleNewRequest = () => {
     setFormData({ name: "", phone: "", issue: "", message: "" });
-    setSelectedService({ service_type: "consultation", price: DEFAULT_SERVICE_FEE });
-    setBookingConfirmed(false);
-    setConfirmedCustomer(null);
-    setBookingRef(null);
+    setIsSubmitted(false);
   };
 
-  const handleTrackRepair = () => {
-    navigate('/track-repair');
+  const handleWhatsAppClick = () => {
+    const message = encodeURIComponent("Hi! I need tech support. Can you help me?");
+    window.open(`https://wa.me/918812910655?text=${message}`, '_blank');
   };
 
   const contactInfo = [
@@ -218,62 +160,62 @@ const ContactSection = () => {
             <div className="glass-card p-6 rounded-2xl mt-8">
               <p className="text-foreground font-medium mb-2">Quick Tip</p>
               <p className="text-sm text-muted-foreground font-light">
-                Call us directly at <span className="text-foreground font-medium">8812910655</span> for faster response and immediate booking!
+                Call us directly at <span className="text-foreground font-medium">8812910655</span> for faster response!
               </p>
             </div>
+
+            {/* WhatsApp Button */}
+            <Button
+              onClick={handleWhatsAppClick}
+              variant="outline"
+              className="w-full h-12 rounded-full gap-2"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Chat on WhatsApp
+            </Button>
           </div>
 
-          {/* Contact Form / UPI Payment */}
+          {/* Contact Form */}
           <div 
             className={`glass-card p-8 rounded-3xl transition-all duration-700 ease-apple ${
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
             }`}
           >
-            {bookingConfirmed ? (
+            {isSubmitted ? (
               <div className="text-center space-y-6 py-8">
                 <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto">
                   <ShieldCheck className="w-8 h-8 text-emerald-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Booking Confirmed!</h3>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Request Received!</h3>
                   <p className="text-muted-foreground">
-                    Thank you, {confirmedCustomer?.name}! Our team will verify your payment and contact you within 30 minutes.
+                    Thank you! Our team will call you back within 30 minutes.
                   </p>
                 </div>
                 
                 <div className="space-y-3">
                   <Button 
-                    onClick={handleTrackRepair}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-full font-medium transition-all duration-300"
+                    onClick={handleNewRequest}
+                    variant="outline"
+                    className="w-full h-12 rounded-full font-medium"
                   >
-                    Track Your Repair <ExternalLink className="w-4 h-4 ml-2" />
+                    Submit Another Request
                   </Button>
                   
                   <Button 
-                    variant="outline"
-                    onClick={handleNewBooking}
-                    className="w-full h-12 rounded-full font-medium transition-all duration-300"
+                    onClick={handleWhatsAppClick}
+                    className="w-full h-12 rounded-full font-medium gap-2"
                   >
-                    Book Another Service
+                    <MessageCircle className="w-4 h-4" />
+                    Chat on WhatsApp
                   </Button>
                 </div>
-                
-                <p className="text-xs text-muted-foreground">
-                  Your repair status will update in real-time on the tracking page
-                </p>
               </div>
-            ) : showUPIPayment ? (
-              <UPIPayment 
-                amount={selectedService.price}
-                bookingRef={bookingRef ?? undefined}
-                onPaymentConfirmed={handlePaymentConfirmed}
-                isLoading={isLoading}
-              />
             ) : (
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Your Name</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Your Name *</label>
                     <Input
                       ref={nameInputRef}
                       placeholder="Enter your name"
@@ -284,7 +226,7 @@ const ContactSection = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Phone Number</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Phone Number *</label>
                     <Input
                       placeholder="Enter your phone number"
                       value={formData.phone}
@@ -294,7 +236,7 @@ const ContactSection = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Issue Type</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Issue Type *</label>
                     <Input
                       placeholder="e.g., Windows upgrade, Sound issue"
                       value={formData.issue}
@@ -304,9 +246,9 @@ const ContactSection = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Describe Your Issue</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">Additional Details</label>
                     <Textarea
-                      placeholder="Tell us more about the problem..."
+                      placeholder="Tell us more about the problem (optional)"
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       rows={4}
@@ -321,22 +263,18 @@ const ContactSection = () => {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
+                        Sending...
                       </>
                     ) : (
                       <>
-                        Book & Pay {formatPrice(selectedService.price)} via UPI <ArrowRight className="w-4 h-4 ml-2" />
+                        Send Request <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </Button>
                   
-                  {/* Money Back Guarantee */}
-                  <div className="flex items-center justify-center gap-2 pt-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{formatPrice(DEFAULT_SERVICE_FEE)} service fee non-refundable</span> | Extra amount refundable if unfixable
-                    </p>
-                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    We'll call you back within 30 minutes
+                  </p>
                 </div>
               </form>
             )}
