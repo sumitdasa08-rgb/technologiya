@@ -17,7 +17,9 @@ import {
   Calendar,
   IndianRupee,
   XCircle,
-  CreditCard
+  CreditCard,
+  Clock,
+  Home
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomerInfo, clearCustomerCookie } from '@/lib/cookies';
@@ -179,30 +181,6 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
     return REPAIR_STAGES.findIndex(stage => stage.key === status);
   };
 
-  const getPaymentBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'paid':
-        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Paid ✓</Badge>;
-      case 'pending_verification':
-      case 'pending':
-        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">Payment Processing</Badge>;
-      case 'payment_failed':
-        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Payment Not Received</Badge>;
-      default:
-        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">Pending</Badge>;
-    }
-  };
-
-  const handleRetryPayment = (booking: Booking) => {
-    // Open UPI payment link
-    const upiDeepLink = `upi://pay?pa=8812910655@upi&pn=LogicLabs&am=${booking.amount}&cu=INR&tn=Retry%20Payment%20${booking.razorpay_order_id}`;
-    window.location.href = upiDeepLink;
-    toast.info('Opening UPI app...', {
-      description: 'After payment, please call us at 8812910655 to confirm.'
-    });
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -248,7 +226,132 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
       ) : (
         bookings.map((booking) => {
           const currentStageIndex = getCurrentStageIndex(booking.repair_status);
+          const isPaymentPending = booking.payment_status === 'pending_verification' || booking.payment_status === 'pending';
+          const isPaymentFailed = booking.payment_status === 'payment_failed';
+          const isPaymentConfirmed = booking.payment_status === 'completed' || booking.payment_status === 'paid';
           
+          // If payment failed, show rebook option prominently
+          if (isPaymentFailed) {
+            return (
+              <Card key={booking.id} className="overflow-hidden border-red-500/30">
+                <CardHeader className="bg-red-500/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-lg text-red-400">{booking.issue}</CardTitle>
+                      <CardDescription className="flex items-center gap-4 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(booking.created_at), 'dd MMM yyyy, hh:mm a')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <IndianRupee className="h-3 w-3" />
+                          {booking.amount}
+                        </span>
+                      </CardDescription>
+                    </div>
+                    <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Payment Not Received
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-6">
+                    <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <XCircle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">Payment Not Received</h3>
+                      <p className="text-muted-foreground">
+                        We haven't received your payment of ₹{booking.amount}. Please create a new booking to proceed with your repair.
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button 
+                        onClick={() => navigate('/#booking')}
+                        className="gap-2"
+                      >
+                        <Home className="h-4 w-4" />
+                        Create New Booking
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        asChild
+                      >
+                        <a href="tel:8812910655" className="gap-2">
+                          <Phone className="h-4 w-4" />
+                          Call Support
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+
+          // If payment is pending verification, show processing status
+          if (isPaymentPending) {
+            return (
+              <Card key={booking.id} className="overflow-hidden border-amber-500/30">
+                <CardHeader className="bg-amber-500/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-lg">{booking.issue}</CardTitle>
+                      <CardDescription className="flex items-center gap-4 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(booking.created_at), 'dd MMM yyyy, hh:mm a')}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <IndianRupee className="h-3 w-3" />
+                          {booking.amount}
+                        </span>
+                      </CardDescription>
+                    </div>
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">
+                      <Clock className="h-3 w-3 mr-1 animate-spin" />
+                      Payment Processing
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-6">
+                    <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <RefreshCw className="w-10 h-10 text-amber-500 animate-spin" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">Verifying Your Payment</h3>
+                      <p className="text-muted-foreground">
+                        Please wait while we verify your payment. This usually takes 15-30 minutes.
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        You'll receive a notification once your payment is confirmed.
+                      </p>
+                    </div>
+                    
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Booking Reference:</strong> {booking.razorpay_order_id}
+                      </p>
+                    </div>
+
+                    <Button 
+                      variant="outline"
+                      onClick={fetchBookings}
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Check Status
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+          
+          // Payment confirmed - show repair tracking
           return (
             <Card key={booking.id} className="overflow-hidden">
               <CardHeader className="bg-muted/30">
@@ -266,52 +369,13 @@ const RepairStatusTracker = ({ customerInfo, onLogout }: RepairStatusTrackerProp
                       </span>
                     </CardDescription>
                   </div>
-                  {getPaymentBadge(booking.payment_status)}
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Payment Confirmed
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                {/* Payment Failed Alert */}
-                {booking.payment_status === 'payment_failed' && (
-                  <Alert variant="destructive" className="mb-6 border-red-500/30 bg-red-500/10">
-                    <XCircle className="h-4 w-4" />
-                    <AlertTitle>Payment Not Received</AlertTitle>
-                    <AlertDescription className="mt-2">
-                      <p className="mb-3">We haven't received your payment of ₹{booking.amount} yet. Please complete the payment to proceed with your repair.</p>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleRetryPayment(booking)}
-                          className="bg-red-500 hover:bg-red-600"
-                        >
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Pay ₹{booking.amount} Now
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          asChild
-                        >
-                          <a href="tel:8812910655">
-                            <Phone className="mr-2 h-4 w-4" />
-                            Call Support
-                          </a>
-                        </Button>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Payment Processing Info */}
-                {(booking.payment_status === 'pending_verification' || booking.payment_status === 'pending') && (
-                  <Alert className="mb-6 border-amber-500/30 bg-amber-500/10">
-                    <RefreshCw className="h-4 w-4 text-amber-500 animate-spin" />
-                    <AlertTitle className="text-amber-500">Payment Processing</AlertTitle>
-                    <AlertDescription className="text-amber-400/80">
-                      Your payment is being verified. This usually takes 15-30 minutes. You'll see a notification once confirmed.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
                 {booking.description && (
                   <>
                     <p className="text-sm text-muted-foreground mb-4">{booking.description}</p>
