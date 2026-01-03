@@ -1,18 +1,9 @@
 project_id = "ryehkycxyhdpufigcotc"
 
-[functions.create-upi-booking]
-verify_jwt = false
-
-[functions.create-razorpay-order]
-verify_jwt = false
-
-[functions.update-payment-status]
+[functions.send-contact-telegram]
 verify_jwt = false
 
 [functions.telegram-webhook]
-verify_jwt = false
-
-[functions.get-customer-bookings]
 verify_jwt = false
 
 [functions.setup-telegram-webhook]

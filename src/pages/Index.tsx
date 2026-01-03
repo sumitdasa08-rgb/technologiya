@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import BookingSection from "@/components/BookingSection";
 import ServicesSection from "@/components/ServicesSection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import TeamSection from "@/components/TeamSection";
@@ -15,14 +14,13 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>LogicLabs - Premium Computer & Mobile Repair Services | Starting ₹250</title>
-        <meta name="description" content="Professional tech repair services for computers and mobiles. Windows upgrades, MS Office installation, storage troubleshooting, and more. Starting at just ₹250. Call 8812910655" />
-        <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, affordable tech repair, phone repair near me, laptop repair service" />
+        <title>LogicLabs - Premium Computer & Mobile Repair Services</title>
+        <meta name="description" content="Professional tech repair services for computers and mobiles. Windows upgrades, MS Office installation, storage troubleshooting, and more. Call 8812910655" />
+        <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, phone repair near me, laptop repair service" />
       </Helmet>
       <main className="min-h-screen bg-background">
         <Navbar />
         <HeroSection />
-        <BookingSection />
         <ServicesSection />
         <TestimonialsSection />
         <TeamSection />
@@ -30,7 +28,6 @@ const Index = () => {
         <ContactSection />
         <FAQSection />
         <Footer />
-        
       </main>
     </>
   );
