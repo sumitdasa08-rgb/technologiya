@@ -19,11 +19,11 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // Find booking by ID starting with shortRef
+    // Find booking by ID starting with shortRef - cast UUID to text for pattern matching
     const { data: bookings, error: findError } = await supabase
       .from("bookings")
       .select("id, payment_status")
-      .ilike("id", `${bookingRef}%`)
+      .filter("id::text", "ilike", `${bookingRef}%`)
       .limit(1);
 
     if (findError || !bookings || bookings.length === 0) {
@@ -69,10 +69,11 @@ async function updateRepairStatus(bookingRef: string, status: string) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
+    // Search by phone only since UUID pattern matching is complex
     const { data: bookings, error: findError } = await supabase
       .from("bookings")
       .select("id, customer_name, phone, repair_status")
-      .or(`id.ilike.${bookingRef}%,phone.eq.${bookingRef}`)
+      .eq("phone", bookingRef)
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -257,7 +258,7 @@ serve(async (req) => {
           const { data: bookings } = await supabase
             .from("bookings")
             .select("customer_name, phone")
-            .ilike("id", `${shortRef}%`)
+            .filter("id::text", "ilike", `${shortRef}%`)
             .limit(1);
 
           if (bookings && bookings.length > 0) {
