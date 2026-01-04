@@ -26,7 +26,7 @@ const Navbar = () => {
         </a>
 
         <div className="hidden md:flex items-center gap-8">
-          {["Services", "Reviews", "Team", "Privacy", "Contact"].map((item) => (
+          {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
             <a 
               key={item}
               href={`#${item.toLowerCase()}`} 
@@ -59,7 +59,7 @@ const Navbar = () => {
         isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
       }`}>
         <div className="container mx-auto px-4 py-6 space-y-4">
-          {["Services", "Reviews", "Team", "Privacy", "Contact"].map((item) => (
+          {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
             <a 
               key={item}
               href={`#${item.toLowerCase()}`}

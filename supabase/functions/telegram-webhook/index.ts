@@ -1,35 +1,140 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// CORS configuration - restrict to allowed origins
-const getAllowedOrigin = (req: Request): string => {
-  const origin = req.headers.get('origin') || '';
-  const allowedOrigins = [
-    'https://ryehkycxyhdpufigcotc.lovableproject.com',
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ];
-  // For Telegram webhook calls (no origin), allow the request
-  if (!origin) return '*';
-  return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const getCorsHeaders = (req: Request) => ({
-  'Access-Control-Allow-Origin': getAllowedOrigin(req),
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-});
+// Update booking payment status
+async function updateBookingPaymentStatus(bookingRef: string, status: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-// Helper function to escape LIKE pattern special characters
-function escapeLikePattern(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&');
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase not configured");
+    return false;
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    // Find booking by ID starting with shortRef
+    const { data: bookings, error: findError } = await supabase
+      .from("bookings")
+      .select("id, payment_status")
+      .ilike("id", `${bookingRef}%`)
+      .limit(1);
+
+    if (findError || !bookings || bookings.length === 0) {
+      console.error("Booking not found:", findError);
+      return false;
+    }
+
+    const booking = bookings[0];
+    console.log(`Updating booking ${booking.id} from ${booking.payment_status} to ${status}`);
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({ payment_status: status })
+      .eq("id", booking.id);
+
+    if (error) {
+      console.error("Database update error:", error);
+      return false;
+    }
+
+    console.log(`Booking ${booking.id} payment status updated to ${status}`);
+    return true;
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return false;
+  }
 }
 
-// Answer callback query to remove loading state on button
+// Update booking repair status
+async function updateRepairStatus(bookingRef: string, status: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseKey) {
+    return { success: false, message: "Supabase not configured" };
+  }
+
+  const validStatuses = ["pending", "technician_called", "technician_fixing", "fixed", "customer_satisfied"];
+  if (!validStatuses.includes(status)) {
+    return { success: false, message: `Invalid status. Use: ${validStatuses.join(", ")}` };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: bookings, error: findError } = await supabase
+      .from("bookings")
+      .select("id, customer_name, phone, repair_status")
+      .or(`id.ilike.${bookingRef}%,phone.eq.${bookingRef}`)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (findError || !bookings || bookings.length === 0) {
+      return { success: false, message: "Booking not found" };
+    }
+
+    const booking = bookings[0];
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({ repair_status: status })
+      .eq("id", booking.id);
+
+    if (error) {
+      return { success: false, message: "Database update failed" };
+    }
+
+    return {
+      success: true,
+      message: `✅ Updated to "${status}" for ${booking.customer_name}`,
+      booking,
+    };
+  } catch (error) {
+    return { success: false, message: "Error updating status" };
+  }
+}
+
+// List recent bookings
+async function listRecentBookings() {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseKey) {
+    return { success: false, message: "Supabase not configured" };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: bookings, error } = await supabase
+      .from("bookings")
+      .select("id, customer_name, phone, repair_status, payment_status, amount, created_at")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      return { success: false, message: "Failed to fetch bookings" };
+    }
+
+    return { success: true, bookings };
+  } catch (error) {
+    return { success: false, message: "Error fetching bookings" };
+  }
+}
+
+// Answer callback query
 async function answerCallbackQuery(botToken: string, callbackQueryId: string, text: string) {
   try {
     await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         callback_query_id: callbackQueryId,
         text: text,
@@ -37,337 +142,79 @@ async function answerCallbackQuery(botToken: string, callbackQueryId: string, te
       }),
     });
   } catch (error) {
-    console.error('Error answering callback query:', error);
+    console.error("Error answering callback:", error);
   }
 }
 
-// Send a follow-up message with WhatsApp link
-async function sendWhatsAppLink(botToken: string, chatId: string, phone: string, customerName: string, isPaymentReceived: boolean, bookingRef: string) {
-  // Format phone number for WhatsApp (remove any non-digits and add country code if needed)
-  let formattedPhone = phone.replace(/\D/g, '');
-  if (formattedPhone.length === 10) {
-    formattedPhone = '91' + formattedPhone; // Add India country code
-  }
-
-  let whatsappMessage: string;
-  let telegramMessage: string;
-
-  if (isPaymentReceived) {
-    whatsappMessage = encodeURIComponent(
-      `Hi ${customerName}! 🎉\n\n` +
-      `Your payment for booking *${bookingRef}* has been confirmed! ✅\n\n` +
-      `Our technician will contact you shortly to schedule the service.\n\n` +
-      `Thank you for choosing TechnoLogiya! 🙏`
-    );
-    telegramMessage = `✅ *Payment Confirmed for ${customerName}*
-
-📋 Reference: \`${bookingRef}\`
-
-👇 *Click below to send confirmation on WhatsApp:*
-[Send WhatsApp Message](https://wa.me/${formattedPhone}?text=${whatsappMessage})`;
-  } else {
-    whatsappMessage = encodeURIComponent(
-      `Hi ${customerName},\n\n` +
-      `We noticed that we haven't received the payment for your booking *${bookingRef}* yet.\n\n` +
-      `Our assistant will call you shortly to help complete the booking.\n\n` +
-      `If you've already made the payment, please share the screenshot.\n\n` +
-      `Thank you! 🙏`
-    );
-    telegramMessage = `❌ *Payment Not Received for ${customerName}*
-
-📋 Reference: \`${bookingRef}\`
-
-👇 *Click below to send follow-up on WhatsApp:*
-[Send WhatsApp Message](https://wa.me/${formattedPhone}?text=${whatsappMessage})`;
-  }
-
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: telegramMessage,
-        parse_mode: 'Markdown',
-        disable_web_page_preview: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Failed to send WhatsApp link message:', error);
-    }
-  } catch (error) {
-    console.error('Error sending WhatsApp link:', error);
-  }
-}
-
-// Repair status stages
-const REPAIR_STAGES = ['problem_raised', 'technician_called', 'technician_fixing', 'fixed', 'customer_satisfied'];
-
-// Update booking payment status in database
-// This is the AUTHORITATIVE update - Telegram confirmation always takes precedence
-async function updateBookingPaymentStatus(bookingRef: string, status: string) {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase not configured');
-    return false;
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  try {
-    // First check current status
-    const { data: existingBooking, error: fetchError } = await supabase
-      .from('bookings')
-      .select('payment_status')
-      .eq('razorpay_order_id', bookingRef)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error('Error fetching booking:', fetchError);
-      return false;
-    }
-
-    // Log the status change for debugging
-    console.log(`Updating booking ${bookingRef} from ${existingBooking?.payment_status} to ${status}`);
-
-    // Telegram confirmation is authoritative - can update from any status except already same
-    if (existingBooking?.payment_status === status) {
-      console.log(`Booking ${bookingRef} already has status ${status}, skipping update`);
-      return true;
-    }
-
-    const { error } = await supabase
-      .from('bookings')
-      .update({ 
-        payment_status: status,
-        updated_at: new Date().toISOString()
-      })
-      .eq('razorpay_order_id', bookingRef);
-
-    if (error) {
-      console.error('Database update error:', error);
-      return false;
-    }
-    console.log(`Booking ${bookingRef} payment status updated to ${status}`);
-    return true;
-  } catch (error) {
-    console.error('Error updating booking:', error);
-    return false;
-  }
-}
-
-// Update booking repair status in database
-async function updateRepairStatus(bookingRef: string, status: string) {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase not configured');
-    return { success: false, message: 'Supabase not configured' };
-  }
-
-  if (!REPAIR_STAGES.includes(status)) {
-    return { success: false, message: `Invalid status. Use: ${REPAIR_STAGES.join(', ')}` };
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  try {
-    // Find booking by reference or phone
-    const { data: booking, error: findError } = await supabase
-      .from('bookings')
-      .select('id, name, phone, issue, repair_status')
-      .or(`razorpay_order_id.ilike.%${bookingRef}%,phone.eq.${bookingRef}`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (findError || !booking) {
-      console.error('Booking not found:', findError);
-      return { success: false, message: 'Booking not found' };
-    }
-
-    const { error } = await supabase
-      .from('bookings')
-      .update({ repair_status: status })
-      .eq('id', booking.id);
-
-    if (error) {
-      console.error('Database update error:', error);
-      return { success: false, message: 'Database update failed' };
-    }
-
-    console.log(`Booking ${booking.id} repair status updated to ${status}`);
-    return { 
-      success: true, 
-      message: `✅ Updated repair status to "${status}" for ${booking.name} (${booking.phone})`,
-      booking 
-    };
-  } catch (error) {
-    console.error('Error updating repair status:', error);
-    return { success: false, message: 'Error updating status' };
-  }
-}
-
-// List recent bookings
-async function listRecentBookings() {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-  if (!supabaseUrl || !supabaseKey) {
-    return { success: false, message: 'Supabase not configured' };
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  try {
-    const { data: bookings, error } = await supabase
-      .from('bookings')
-      .select('id, name, phone, issue, repair_status, payment_status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    if (error) {
-      return { success: false, message: 'Failed to fetch bookings' };
-    }
-
-    return { success: true, bookings };
-  } catch (error) {
-    return { success: false, message: 'Error fetching bookings' };
-  }
-}
-
-// Send message to Telegram chat
+// Send Telegram message
 async function sendTelegramMessage(botToken: string, chatId: string, text: string, replyMarkup?: any) {
   try {
     const body: any = {
       chat_id: chatId,
       text: text,
-      parse_mode: 'Markdown',
+      parse_mode: "Markdown",
     };
     if (replyMarkup) {
       body.reply_markup = replyMarkup;
     }
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
+    console.error("Error sending message:", error);
   }
 }
 
-// Send status menu with inline buttons for a specific phone
-async function sendStatusMenu(botToken: string, chatId: string, phone: string, customerName: string, currentStatus?: string) {
-  const statuses = [
-    { key: 'technician_called', label: 'Technician Assigned', icon: '📞' },
-    { key: 'technician_fixing', label: 'Technician Fixing', icon: '🔧' },
-    { key: 'fixed', label: 'Device Fixed', icon: '✅' },
-    { key: 'customer_satisfied', label: 'Customer Satisfied', icon: '🎉' },
-  ];
-
-  const keyboard = {
-    inline_keyboard: statuses.map(s => [{
-      text: currentStatus === s.key ? `${s.icon} ${s.label} ✓` : `${s.icon} ${s.label}`,
-      callback_data: `rs:${phone}:${s.key}:${customerName.substring(0, 10)}`
-    }]),
-  };
-
-  await sendTelegramMessage(
-    botToken,
-    chatId,
-    `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n${currentStatus ? `✅ Current: \`${currentStatus}\`\n\n` : ''}👇 Select new status:`,
-    keyboard
-  );
-}
-
-// Edit existing message with updated keyboard
-async function editMessageWithStatus(botToken: string, chatId: string, messageId: number, phone: string, customerName: string, selectedStatus: string) {
-  const statuses = [
-    { key: 'technician_called', label: 'Technician Assigned', icon: '📞' },
-    { key: 'technician_fixing', label: 'Technician Fixing', icon: '🔧' },
-    { key: 'fixed', label: 'Device Fixed', icon: '✅' },
-    { key: 'customer_satisfied', label: 'Customer Satisfied', icon: '🎉' },
-  ];
-
-  const keyboard = {
-    inline_keyboard: statuses.map(s => [{
-      text: selectedStatus === s.key ? `${s.icon} ${s.label} ✓` : `${s.icon} ${s.label}`,
-      callback_data: `rs:${phone}:${s.key}:${customerName.substring(0, 10)}`
-    }]),
-  };
-
-  try {
-    await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        message_id: messageId,
-        text: `🔄 *Update Status for ${customerName}*\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${selectedStatus}*\n\n👇 Select to change:`,
-        parse_mode: 'Markdown',
-        reply_markup: keyboard,
-      }),
-    });
-  } catch (error) {
-    console.error('Error editing message:', error);
+// Send WhatsApp link message
+async function sendWhatsAppLink(botToken: string, chatId: string, phone: string, customerName: string, isConfirmed: boolean, bookingRef: string) {
+  let formattedPhone = phone.replace(/\D/g, "");
+  if (formattedPhone.length === 10) {
+    formattedPhone = "91" + formattedPhone;
   }
+
+  const message = isConfirmed
+    ? `Hi ${customerName}! 🎉\n\nYour payment for booking *${bookingRef}* has been confirmed! ✅\n\nOur technician will contact you shortly.\n\nThank you for choosing TechnoLogiya! 🙏`
+    : `Hi ${customerName},\n\nWe noticed that we haven't received the payment for your booking *${bookingRef}* yet.\n\nPlease complete the payment or contact us for assistance.\n\nThank you! 🙏`;
+
+  const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+  const telegramText = isConfirmed
+    ? `✅ *Payment Confirmed for ${customerName}*\n\n📋 Ref: \`${bookingRef}\`\n\n👇 Send confirmation:\n[Open WhatsApp](${whatsappUrl})`
+    : `❌ *Payment Not Received for ${customerName}*\n\n📋 Ref: \`${bookingRef}\`\n\n👇 Follow up:\n[Open WhatsApp](${whatsappUrl})`;
+
+  await sendTelegramMessage(botToken, chatId, telegramText);
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+  const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
   if (!botToken) {
-    console.error('TELEGRAM_BOT_TOKEN not configured');
-    return new Response(JSON.stringify({ error: 'Bot not configured' }), {
+    return new Response(JSON.stringify({ error: "Bot not configured" }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  // Validate Telegram webhook secret token for POST requests
-  // This ensures only legitimate Telegram webhook calls can access admin functions
-  const webhookSecret = Deno.env.get('TELEGRAM_WEBHOOK_SECRET');
-  if (req.method === 'POST' && webhookSecret) {
-    const secretToken = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
-    if (!secretToken || secretToken !== webhookSecret) {
-      console.error('Invalid or missing webhook secret token');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-  }
-
   try {
-    // Handle GET requests (Telegram webhook verification)
-    if (req.method === 'GET') {
-      return new Response(JSON.stringify({ ok: true, message: 'Webhook is active' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (req.method === "GET") {
+      return new Response(JSON.stringify({ ok: true, message: "Webhook active" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const body = await req.text();
     if (!body) {
-      console.log('Empty request body received');
       return new Response(JSON.stringify({ ok: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const update = JSON.parse(body);
-    console.log('Received Telegram update:', JSON.stringify(update));
+    console.log("Telegram update:", JSON.stringify(update));
 
     // Handle callback query (button press)
     if (update.callback_query) {
@@ -377,325 +224,201 @@ serve(async (req) => {
       const callbackQueryId = callbackQuery.id;
 
       if (!callbackData || !chatId) {
-        console.error('Missing callback data or chat ID');
         return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      console.log('Processing callback data:', callbackData);
+      console.log("Callback data:", callbackData);
 
-      // Parse callback data - formats:
-      // py:shortRef or pn:shortRef - payment confirmation
-      // rs:phone:status - repair status update
-      let action: string;
-      let bookingRef: string = '';
-      let phone: string | null = null;
-      let customerName: string | null = null;
+      // Payment confirmation: py:shortRef or pn:shortRef
+      if (callbackData.startsWith("py:") || callbackData.startsWith("pn:")) {
+        const isConfirmed = callbackData.startsWith("py:");
+        const shortRef = callbackData.substring(3);
+        const status = isConfirmed ? "confirmed" : "failed";
 
-      // Handle repair status update callback
-      if (callbackData.startsWith('rs:')) {
-        const parts = callbackData.split(':');
-        if (parts.length >= 3) {
-          const phoneNumber = parts[1];
-          const newStatus = parts[2];
-          const custName = parts[3] || 'Customer';
-          const messageId = callbackQuery.message?.message_id;
-          
-          const result = await updateRepairStatus(phoneNumber, newStatus);
-          
-          await answerCallbackQuery(
-            botToken, 
-            callbackQueryId, 
-            result.success ? `✅ Updated to ${newStatus}` : result.message
-          );
-          
-          if (result.success && messageId) {
-            // Edit the message to show the selected status with checkmark
-            await editMessageWithStatus(botToken, chatId.toString(), messageId, phoneNumber, custName, newStatus);
-          }
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+        const success = await updateBookingPaymentStatus(shortRef, status);
 
-      // Handle cmd: callback - execute commands from buttons
-      if (callbackData.startsWith('cmd:')) {
-        const command = callbackData.substring(4);
-        if (command === 'bookings') {
-          await answerCallbackQuery(botToken, callbackQueryId, 'Loading bookings...');
-          const result = await listRecentBookings();
-          if (result.success && result.bookings) {
-            let message = '📋 *Recent Bookings:*\n\n';
-            const inlineButtons: any[] = [];
-            
-            result.bookings.forEach((b: any, i: number) => {
-              const statusEmoji = b.repair_status === 'customer_satisfied' ? '✅' : 
-                                 b.repair_status === 'fixed' ? '🔧' :
-                                 b.repair_status === 'technician_fixing' ? '⚙️' :
-                                 b.repair_status === 'technician_called' ? '📞' : '🆕';
-              message += `${i + 1}. ${statusEmoji} *${b.name}*\n`;
-              message += `   📱 \`${b.phone}\`\n`;
-              message += `   📊 Status: \`${b.repair_status}\`\n\n`;
-              
-              if (b.repair_status !== 'customer_satisfied') {
-                inlineButtons.push([{ text: `📝 Update ${b.name}`, callback_data: `menu:${b.phone}:${b.name.substring(0, 10)}` }]);
-              }
-            });
-            
-            message += `_👇 Tap to update status_`;
-            const keyboard = inlineButtons.length > 0 ? { inline_keyboard: inlineButtons } : undefined;
-            await sendTelegramMessage(botToken, chatId.toString(), message, keyboard);
-          }
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+        await answerCallbackQuery(
+          botToken,
+          callbackQueryId,
+          success
+            ? isConfirmed
+              ? "✅ Payment confirmed!"
+              : "❌ Marked as not received"
+            : "⚠️ Failed to update"
+        );
 
-      // Handle menu callback - show status buttons for a customer
-      if (callbackData.startsWith('menu:')) {
-        const parts = callbackData.split(':');
-        if (parts.length >= 3) {
-          const phoneNumber = parts[1];
-          const customerName = parts[2];
-          await answerCallbackQuery(botToken, callbackQueryId, `Loading menu for ${customerName}...`);
-          await sendStatusMenu(botToken, chatId.toString(), phoneNumber, customerName);
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      if (callbackData.startsWith('py:') || callbackData.startsWith('pn:')) {
-        // New short format
-        const parts = callbackData.split(':');
-        action = parts[0] === 'py' ? 'payment_yes' : 'payment_no';
-        const shortRef = parts[1];
-        
-        // Look up booking details from database using LIKE to find the full reference
-        const supabaseUrl = Deno.env.get('SUPABASE_URL');
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-        
-        if (supabaseUrl && supabaseKey) {
+        // Get booking details for WhatsApp
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supabaseUrl && supabaseKey && success) {
           const supabase = createClient(supabaseUrl, supabaseKey);
-          const sanitizedRef = escapeLikePattern(shortRef);
-          const { data: booking, error: lookupError } = await supabase
-            .from('bookings')
-            .select('name, phone, razorpay_order_id')
-            .like('razorpay_order_id', `UPI-${sanitizedRef}%`)
-            .single();
-          
-          if (lookupError) {
-            console.error('Error looking up booking:', lookupError);
-          }
-          
-          if (booking) {
-            phone = booking.phone;
-            customerName = booking.name;
-            bookingRef = booking.razorpay_order_id; // Use the FULL reference from DB
-            console.log('Found booking:', customerName, phone, 'Full ref:', bookingRef);
-          } else {
-            console.error('Booking not found for shortRef:', shortRef);
-            await answerCallbackQuery(botToken, callbackQueryId, '❌ Booking not found');
-            return new Response(JSON.stringify({ ok: true }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
+          const { data: bookings } = await supabase
+            .from("bookings")
+            .select("customer_name, phone")
+            .ilike("id", `${shortRef}%`)
+            .limit(1);
+
+          if (bookings && bookings.length > 0) {
+            await sendWhatsAppLink(
+              botToken,
+              chatId.toString(),
+              bookings[0].phone,
+              bookings[0].customer_name,
+              isConfirmed,
+              shortRef
+            );
           }
         }
-      } else {
-        // Old format: payment_yes:bookingRef:phone:encodedName
-        const parts = callbackData.split(':');
-        if (parts.length < 4) {
-          console.error('Invalid callback data format:', callbackData);
-          await answerCallbackQuery(botToken, callbackQueryId, 'Invalid action');
-          return new Response(JSON.stringify({ ok: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        action = parts[0];
-        bookingRef = parts[1];
-        phone = parts[2];
-        customerName = decodeURIComponent(parts[3]);
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      const isPaymentReceived = action === 'payment_yes';
-      console.log(`Processing ${action} for booking ${bookingRef}, customer: ${customerName}, phone: ${phone}`);
+      // Repair status: rs:phone:status:name
+      if (callbackData.startsWith("rs:")) {
+        const parts = callbackData.split(":");
+        if (parts.length >= 3) {
+          const phone = parts[1];
+          const status = parts[2];
 
-      // Update booking status
-      const newStatus = isPaymentReceived ? 'completed' : 'payment_failed';
-      await updateBookingPaymentStatus(bookingRef, newStatus);
+          const result = await updateRepairStatus(phone, status);
+          await answerCallbackQuery(botToken, callbackQueryId, result.message);
+        }
 
-      // Answer callback to remove loading state
-      await answerCallbackQuery(
-        botToken, 
-        callbackQueryId, 
-        isPaymentReceived ? '✅ Payment marked as received!' : '❌ Payment marked as not received'
-      );
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-      // Send WhatsApp link message if we have phone and name
-      if (phone && customerName) {
-        await sendWhatsAppLink(
+      // Menu callback: menu:phone:name
+      if (callbackData.startsWith("menu:")) {
+        const parts = callbackData.split(":");
+        if (parts.length >= 3) {
+          const phone = parts[1];
+          const name = parts[2];
+
+          const statuses = [
+            { key: "technician_called", label: "Technician Assigned", icon: "📞" },
+            { key: "technician_fixing", label: "Repair In Progress", icon: "🔧" },
+            { key: "fixed", label: "Device Fixed", icon: "✅" },
+            { key: "customer_satisfied", label: "Completed", icon: "🎉" },
+          ];
+
+          const keyboard = {
+            inline_keyboard: statuses.map((s) => [
+              { text: `${s.icon} ${s.label}`, callback_data: `rs:${phone}:${s.key}:${name}` },
+            ]),
+          };
+
+          await sendTelegramMessage(
+            botToken,
+            chatId.toString(),
+            `🔄 *Update Status for ${name}*\n📱 Phone: \`${phone}\`\n\n👇 Select status:`,
+            keyboard
+          );
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Bookings list command
+      if (callbackData === "cmd:bookings") {
+        await answerCallbackQuery(botToken, callbackQueryId, "Loading bookings...");
+        const result = await listRecentBookings();
+
+        if (result.success && result.bookings) {
+          let message = "📋 *Recent Bookings:*\n\n";
+          const buttons: any[] = [];
+
+          result.bookings.forEach((b: any, i: number) => {
+            const emoji =
+              b.repair_status === "customer_satisfied"
+                ? "✅"
+                : b.repair_status === "fixed"
+                ? "🔧"
+                : b.payment_status === "confirmed"
+                ? "💚"
+                : "🆕";
+
+            message += `${i + 1}. ${emoji} *${b.customer_name}*\n`;
+            message += `   📱 \`${b.phone}\` | ₹${b.amount}\n`;
+            message += `   💳 ${b.payment_status} | 🔧 ${b.repair_status}\n\n`;
+
+            if (b.repair_status !== "customer_satisfied") {
+              buttons.push([
+                { text: `📝 ${b.customer_name}`, callback_data: `menu:${b.phone}:${b.customer_name.substring(0, 10)}` },
+              ]);
+            }
+          });
+
+          const keyboard = buttons.length > 0 ? { inline_keyboard: buttons } : undefined;
+          await sendTelegramMessage(botToken, chatId.toString(), message, keyboard);
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Handle text commands
+    if (update.message?.text) {
+      const chatId = update.message.chat.id;
+      const text = update.message.text.toLowerCase().trim();
+
+      if (text === "/bookings" || text === "/start") {
+        const result = await listRecentBookings();
+
+        if (result.success && result.bookings && result.bookings.length > 0) {
+          let message = "📋 *Recent Bookings:*\n\n";
+          const buttons: any[] = [];
+
+          result.bookings.forEach((b: any, i: number) => {
+            const emoji =
+              b.repair_status === "customer_satisfied"
+                ? "✅"
+                : b.payment_status === "confirmed"
+                ? "💚"
+                : "🆕";
+
+            message += `${i + 1}. ${emoji} *${b.customer_name}*\n`;
+            message += `   📱 \`${b.phone}\` | ₹${b.amount}\n\n`;
+
+            if (b.repair_status !== "customer_satisfied") {
+              buttons.push([
+                { text: `📝 ${b.customer_name}`, callback_data: `menu:${b.phone}:${b.customer_name.substring(0, 10)}` },
+              ]);
+            }
+          });
+
+          const keyboard = buttons.length > 0 ? { inline_keyboard: buttons } : undefined;
+          await sendTelegramMessage(botToken, chatId.toString(), message, keyboard);
+        } else {
+          await sendTelegramMessage(botToken, chatId.toString(), "No bookings found.");
+        }
+      } else if (text === "/help") {
+        await sendTelegramMessage(
           botToken,
           chatId.toString(),
-          phone,
-          customerName,
-          isPaymentReceived,
-          bookingRef
+          "*Available Commands:*\n\n/bookings - View recent bookings\n/help - Show this help"
         );
-
-        // If payment received, show repair status menu
-        if (isPaymentReceived) {
-          await sendStatusMenu(botToken, chatId.toString(), phone, customerName);
-        }
-      }
-    }
-
-    // Handle text message commands
-    if (update.message?.text) {
-      const messageText = update.message.text.trim();
-      const chatId = update.message.chat.id.toString();
-
-      // /status command - update repair status
-      // Format: /status PHONE_OR_REF STATUS
-      if (messageText.startsWith('/status')) {
-        const parts = messageText.split(/\s+/);
-        if (parts.length < 3) {
-          await sendTelegramMessage(botToken, chatId, 
-            `❌ *Usage:* \`/status PHONE_OR_REF STATUS\`\n\n` +
-            `*Available statuses:*\n` +
-            `• \`problem_raised\` - Problem Raised\n` +
-            `• \`technician_called\` - Technician Assigned\n` +
-            `• \`technician_fixing\` - Repair In Progress\n` +
-            `• \`fixed\` - Repair Complete\n` +
-            `• \`customer_satisfied\` - Completed\n\n` +
-            `*Example:*\n\`/status 8812910655 technician_called\``
-          );
-        } else {
-          const identifier = parts[1];
-          const status = parts[2];
-          const result = await updateRepairStatus(identifier, status);
-          await sendTelegramMessage(botToken, chatId, result.message);
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // /bookings command - list recent bookings with status buttons
-      if (messageText.startsWith('/bookings')) {
-        const result = await listRecentBookings();
-        if (result.success && result.bookings) {
-          let message = '📋 *Recent Bookings:*\n\n';
-          const inlineButtons: any[] = [];
-          
-          result.bookings.forEach((b: any, i: number) => {
-            const statusEmoji = b.repair_status === 'customer_satisfied' ? '✅' : 
-                               b.repair_status === 'fixed' ? '🔧' :
-                               b.repair_status === 'technician_fixing' ? '⚙️' :
-                               b.repair_status === 'technician_called' ? '📞' : '🆕';
-            message += `${i + 1}. ${statusEmoji} *${b.name}*\n`;
-            message += `   📱 \`${b.phone}\`\n`;
-            message += `   🔧 ${b.issue?.substring(0, 30)}...\n`;
-            message += `   📊 Status: \`${b.repair_status}\`\n\n`;
-            
-            // Add button for each booking (only incomplete ones)
-            if (b.repair_status !== 'customer_satisfied') {
-              inlineButtons.push([{ text: `📝 Update ${b.name} (${b.phone})`, callback_data: `menu:${b.phone}:${b.name.substring(0, 10)}` }]);
-            }
-          });
-          
-          message += `_👇 Tap a button to update status_`;
-          
-          const keyboard = inlineButtons.length > 0 ? { inline_keyboard: inlineButtons } : undefined;
-          await sendTelegramMessage(botToken, chatId, message, keyboard);
-        } else {
-          await sendTelegramMessage(botToken, chatId, '❌ Failed to fetch bookings');
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // /menu command - show status menu for a phone number
-      if (messageText.startsWith('/menu')) {
-        const parts = messageText.split(/\s+/);
-        if (parts.length < 2) {
-          await sendTelegramMessage(botToken, chatId, 
-            `❌ *Usage:* \`/menu PHONE\`\n\n` +
-            `*Example:*\n\`/menu 9988776655\`\n\n` +
-            `Or use /bookings to see all bookings with buttons.`
-          );
-        } else {
-          const phoneNumber = parts[1];
-          // Look up customer name
-          const supabaseUrl = Deno.env.get('SUPABASE_URL');
-          const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-          
-          if (supabaseUrl && supabaseKey) {
-            const supabase = createClient(supabaseUrl, supabaseKey);
-            const { data: booking } = await supabase
-              .from('bookings')
-              .select('name')
-              .eq('phone', phoneNumber)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            
-            if (booking) {
-              await sendStatusMenu(botToken, chatId, phoneNumber, booking.name);
-            } else {
-              await sendTelegramMessage(botToken, chatId, `❌ No booking found for phone: ${phoneNumber}`);
-            }
-          }
-        }
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // /help command
-      if (messageText.startsWith('/help')) {
-        const keyboard = {
-          inline_keyboard: [
-            [{ text: '📋 View Bookings', callback_data: 'cmd:bookings' }],
-          ],
-        };
-        await sendTelegramMessage(botToken, chatId,
-          `🤖 *TechFix Pro Admin Bot*\n\n` +
-          `*Commands:*\n\n` +
-          `📋 \`/bookings\` - List bookings with quick buttons\n\n` +
-          `📝 \`/menu PHONE\` - Status menu for a customer\n` +
-          `   Example: \`/menu 9988776655\`\n\n` +
-          `🔄 \`/status PHONE STATUS\` - Direct status update\n` +
-          `   Example: \`/status 9988776655 fixed\`\n\n` +
-          `*Status Steps:*\n` +
-          `📞 technician\\_called → Technician Assigned\n` +
-          `🔧 technician\\_fixing → Repair In Progress\n` +
-          `✅ fixed → Device Fixed\n` +
-          `🎉 customer\\_satisfied → Completed\n\n` +
-          `💡 _Use /bookings for easy one-tap updates!_`,
-          keyboard
-        );
-        return new Response(JSON.stringify({ ok: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Handle cmd: callbacks from help menu
-      if (messageText === 'cmd:bookings') {
-        // This shouldn't happen as it's a callback, but just in case
       }
     }
 
     return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error('Error processing Telegram webhook:', error);
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.error("Webhook error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
