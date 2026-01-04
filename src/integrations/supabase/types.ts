@@ -18,47 +18,64 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
-          currency: string
-          description: string | null
+          customer_name: string
           id: string
-          issue: string
-          name: string
           payment_status: string
           phone: string
-          razorpay_order_id: string | null
-          razorpay_payment_id: string | null
+          product_id: string | null
           repair_status: string
-          updated_at: string
         }
         Insert: {
-          amount?: number
+          amount: number
           created_at?: string
-          currency?: string
-          description?: string | null
+          customer_name: string
           id?: string
-          issue: string
-          name: string
           payment_status?: string
           phone: string
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
+          product_id?: string | null
           repair_status?: string
-          updated_at?: string
         }
         Update: {
           amount?: number
           created_at?: string
-          currency?: string
-          description?: string | null
+          customer_name?: string
           id?: string
-          issue?: string
-          name?: string
           payment_status?: string
           phone?: string
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
+          product_id?: string | null
           repair_status?: string
-          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
         }
         Relationships: []
       }
