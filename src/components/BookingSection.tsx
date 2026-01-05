@@ -122,7 +122,7 @@ const BookingSection = () => {
           booking_id: booking.id,
           customer_name: trimmedName,
           phone: phoneDigits,
-          amount: product.price,
+          amount: booking.amount,
         },
       });
 
@@ -136,12 +136,6 @@ const BookingSection = () => {
     }
   };
 
-  const generateUPILink = () => {
-    if (!product) return "";
-    const upiId = "8812910655-3@nyes";
-    const payeeName = "Sumit Das";
-    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${product.price}&cu=INR&tn=${encodeURIComponent("Repair Service")}`;
-  };
 
   return (
     <section id="booking" ref={sectionRef} className="py-32 bg-secondary/30">
