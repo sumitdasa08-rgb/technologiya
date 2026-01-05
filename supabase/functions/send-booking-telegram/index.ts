@@ -35,12 +35,13 @@ serve(async (req) => {
     // Short booking ref for callback data (Telegram has 64 byte limit)
     const shortRef = booking_id.substring(0, 8);
 
-    const message = `📦 *New Repair Booking*
+    const message = `🔔 *New Repair Booking*
 
 👤 Name: ${customer_name}
 📱 Phone: \`${phone}\`
 🆔 Booking ID: \`${booking_id}\`
 💰 Amount: ₹${amount}
+💳 UPI: \`8812910655-3@nyes\`
 
 _Waiting for payment confirmation..._`;
 
