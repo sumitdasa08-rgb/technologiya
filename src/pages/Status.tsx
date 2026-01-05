@@ -76,9 +76,9 @@ const Status = () => {
 
   const generateUPILink = () => {
     if (!booking) return "";
-    const upiId = "8812910655@ybl";
-    const businessName = "TechnoLogiya";
-    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(businessName)}&am=${booking.amount}&cu=INR&tn=${encodeURIComponent(`Booking ID: ${booking.id.substring(0, 8)}`)}`;
+    const upiId = "8812910655-3@nyes";
+    const payeeName = "Sumit Das";
+    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${booking.amount}&cu=INR&tn=${encodeURIComponent(`Repair Booking ID: ${booking.id.substring(0, 8)}`)}`;
   };
 
   const getPaymentStatusDisplay = () => {

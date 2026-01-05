@@ -138,9 +138,9 @@ const BookingSection = () => {
 
   const generateUPILink = () => {
     if (!product) return "";
-    const upiId = "8812910655@ybl";
-    const businessName = "TechnoLogiya";
-    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(businessName)}&am=${product.price}&cu=INR&tn=${encodeURIComponent("Repair Service")}`;
+    const upiId = "8812910655-3@nyes";
+    const payeeName = "Sumit Das";
+    return `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${product.price}&cu=INR&tn=${encodeURIComponent("Repair Service")}`;
   };
 
   return (
