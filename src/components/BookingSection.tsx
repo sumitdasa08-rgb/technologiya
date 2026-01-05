@@ -152,7 +152,7 @@ const BookingSection = () => {
             Schedule Repair
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light">
-            Book your repair slot and pay securely via UPI
+            Book your repair slot in seconds.
           </p>
         </div>
 
@@ -228,14 +228,14 @@ const BookingSection = () => {
                 ) : (
                   <>
                     <Smartphone className="w-4 h-4 mr-2" />
-                    Book & Pay via UPI
+                    Create Booking
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
-                After booking, you'll be redirected to pay via your UPI app
+                After booking, you'll be redirected to your status page
               </p>
             </form>
           </div>
