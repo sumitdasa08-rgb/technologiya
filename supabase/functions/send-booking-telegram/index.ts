@@ -41,7 +41,6 @@ serve(async (req) => {
 📱 Phone: \`${phone}\`
 🆔 Booking ID: \`${booking_id}\`
 💰 Amount: ₹${amount}
-💳 UPI: \`8812910655-3@nyes\`
 
 _Waiting for payment confirmation..._`;
 
