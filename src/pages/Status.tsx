@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, QrCode } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import upiQrImage from "@/assets/upi-qr.jpg";
 
 interface Booking {
   id: string;
@@ -222,7 +223,33 @@ const Status = () => {
             </div>
           )}
 
-          {/* Payment action removed */}
+          {/* UPI QR Payment Section - Show if processing */}
+          {booking.payment_status === "processing" && (
+            <div className="glass-card p-6 rounded-2xl mb-6 text-center">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                <QrCode className="w-5 h-5" />
+                Complete Payment
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Scan this QR code with any UPI app (GPay, PhonePe, Paytm, etc.)
+              </p>
+              <div className="bg-card p-4 rounded-xl inline-block mb-4">
+                <img 
+                  src={upiQrImage} 
+                  alt="UPI Payment QR Code" 
+                  className="w-48 h-48 object-contain mx-auto"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">Payee: <span className="font-medium text-foreground">Sumit Das</span></p>
+              <div className="flex items-center justify-center gap-1 text-xl font-bold text-foreground mb-4">
+                <IndianRupee className="w-5 h-5" />
+                <span>{booking.amount}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Enter the exact amount shown above when paying. Admin will confirm your payment shortly.
+              </p>
+            </div>
+          )}
 
           {/* Failed Payment - Show retry option */}
           {booking.payment_status === "failed" && (
