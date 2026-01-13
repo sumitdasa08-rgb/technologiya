@@ -232,7 +232,11 @@ const Status = () => {
                 className="w-48 h-48 object-contain mx-auto mb-4"
               />
               <p className="text-foreground font-medium mb-1">Sumit Das</p>
-              <p className="text-sm text-muted-foreground">sumitdasa99-3@oksbi</p>
+              <p className="text-sm text-muted-foreground mb-3">sumitdasa99-3@oksbi</p>
+              <div className="flex items-center justify-center gap-1 text-xl font-bold text-foreground">
+                <IndianRupee className="w-5 h-5" />
+                <span>{booking.amount}</span>
+              </div>
             </div>
           )}
 
