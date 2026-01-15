@@ -138,7 +138,7 @@ const BookingSection = () => {
 
 
   return (
-    <section id="booking" ref={sectionRef} className="py-32 bg-secondary/30">
+    <section id="booking" ref={sectionRef} className="py-16 md:py-32 bg-secondary/30">
       <div className="container mx-auto px-4">
         <div
           className={`text-center mb-16 transition-all duration-700 ${
