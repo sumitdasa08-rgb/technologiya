@@ -96,9 +96,9 @@ const ServicesSection = () => {
   };
 
   const handleServiceClick = (service: ServiceItem) => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      smoothScrollTo(contactSection, SCROLL_DURATION_MS);
+    const bookingSection = document.getElementById("booking");
+    if (bookingSection) {
+      smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
 
       setTimeout(() => {
         window.dispatchEvent(
@@ -114,9 +114,9 @@ const ServicesSection = () => {
   };
 
   const handleBookSlot = () => {
-    const contactSection = document.getElementById("contact");
-    if (contactSection) {
-      smoothScrollTo(contactSection, SCROLL_DURATION_MS);
+    const bookingSection = document.getElementById("booking");
+    if (bookingSection) {
+      smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
 
       setTimeout(() => {
         window.dispatchEvent(
