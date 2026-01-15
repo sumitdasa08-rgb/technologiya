@@ -66,9 +66,29 @@ const Status = () => {
   useEffect(() => {
     fetchBooking();
 
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchBooking, 10000);
-    return () => clearInterval(interval);
+    // Subscribe to realtime updates for this booking
+    if (bookingId) {
+      const channel = supabase
+        .channel(`booking-${bookingId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'bookings',
+            filter: `id=eq.${bookingId}`
+          },
+          (payload) => {
+            console.log('Realtime update received:', payload);
+            setBooking(payload.new as Booking);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [bookingId]);
 
   const handleRefresh = () => {
@@ -317,7 +337,7 @@ const Status = () => {
           </div>
 
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Page auto-refreshes every 10 seconds
+            Status updates automatically in real-time
           </p>
         </div>
       </main>
