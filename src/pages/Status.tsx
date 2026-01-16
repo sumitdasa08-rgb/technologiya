@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, QrCode } from "lucide-react";
+import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Smartphone } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import upiQrImage from "@/assets/upi-qr.jpg";
+
+// Merchant UPI details
+const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
+const MERCHANT_NAME = "TechnoloGiya";
 
 interface Booking {
   id: string;
@@ -15,7 +19,19 @@ interface Booking {
   payment_status: string;
   repair_status: string;
   created_at: string;
+  service_id?: string;
 }
+
+// Generate dynamic QR code URL using external API
+const generateDynamicQRUrl = (amount: number, bookingRef: string) => {
+  const upiString = `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
+};
+
+// Generate UPI intent URL for mobile
+const generateUPIIntentUrl = (amount: number, bookingRef: string) => {
+  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+};
 
 const Status = () => {
   const [searchParams] = useSearchParams();
@@ -26,7 +42,7 @@ const Status = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  
+  const [showStaticQR, setShowStaticQR] = useState(false);
 
   const fetchBooking = async () => {
     if (!bookingId) {
@@ -104,7 +120,7 @@ const Status = () => {
         return {
           icon: <Clock className="w-8 h-8 text-yellow-500" />,
           title: "Payment Processing",
-          description: "Waiting for admin confirmation.",
+          description: "Please complete payment using the options below.",
           color: "text-yellow-500",
           bgColor: "bg-yellow-500/10",
         };
@@ -187,6 +203,8 @@ const Status = () => {
 
   const paymentStatus = getPaymentStatusDisplay();
   const repairSteps = getRepairStatusSteps();
+  const bookingAmount = typeof booking.amount === 'string' ? parseFloat(booking.amount) : booking.amount;
+  const bookingRef = booking.id.substring(0, 8);
 
   return (
     <div className="min-h-screen bg-background">
@@ -200,7 +218,7 @@ const Status = () => {
               Booking Status
             </h1>
             <p className="text-muted-foreground">
-              Booking ID: <code className="bg-muted px-2 py-1 rounded text-sm">{booking.id.substring(0, 8)}</code>
+              Booking ID: <code className="bg-muted px-2 py-1 rounded text-sm">{bookingRef}</code>
             </p>
           </div>
 
@@ -219,7 +237,7 @@ const Status = () => {
                 <p className="text-muted-foreground">Amount</p>
                 <div className="flex items-center gap-1">
                   <IndianRupee className="w-4 h-4 text-foreground" />
-                  <span className="font-medium text-foreground">{booking.amount}</span>
+                  <span className="font-medium text-foreground">{bookingAmount}</span>
                 </div>
               </div>
               <div>
@@ -248,20 +266,74 @@ const Status = () => {
             </div>
           )}
 
-          {/* UPI QR Payment Section - Show if processing */}
+          {/* UPI Payment Section - Show if processing */}
           {booking.payment_status === "processing" && (
-            <div className="glass-card p-6 rounded-2xl mb-6 text-center">
-              <img 
-                src={upiQrImage} 
-                alt="UPI Payment QR Code" 
-                className="w-48 h-48 object-contain mx-auto mb-4"
-              />
-              <p className="text-foreground font-medium mb-1">Sumit Das</p>
-              <p className="text-sm text-muted-foreground mb-3">sumitdasa99-3@oksbi</p>
-              <div className="flex items-center justify-center gap-1 text-xl font-bold text-foreground">
-                <IndianRupee className="w-5 h-5" />
-                <span>{booking.amount}</span>
+            <div className="glass-card p-6 rounded-2xl mb-6">
+              {/* Amount Display */}
+              <div className="text-center mb-6">
+                <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
+                <div className="flex items-center justify-center gap-1">
+                  <IndianRupee className="w-8 h-8 text-foreground" />
+                  <span className="text-4xl font-bold text-foreground">{bookingAmount}</span>
+                </div>
               </div>
+
+              {/* Dynamic QR Code */}
+              <div className="text-center mb-6">
+                <p className="text-sm text-muted-foreground mb-3">Scan QR to pay exact amount</p>
+                <img 
+                  src={generateDynamicQRUrl(bookingAmount, bookingRef)}
+                  alt="UPI Payment QR Code" 
+                  className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
+                  onError={(e) => {
+                    // Fallback to static QR if dynamic fails
+                    (e.target as HTMLImageElement).src = upiQrImage;
+                    setShowStaticQR(true);
+                  }}
+                />
+                {showStaticQR && (
+                  <p className="text-xs text-yellow-500 mt-2">
+                    Using static QR - please enter amount manually: ₹{bookingAmount}
+                  </p>
+                )}
+              </div>
+
+              {/* UPI Pay Button */}
+              <a
+                href={generateUPIIntentUrl(bookingAmount, bookingRef)}
+                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-full font-medium transition-colors mb-4"
+              >
+                <Smartphone className="w-5 h-5" />
+                Pay ₹{bookingAmount} with UPI App
+              </a>
+
+              {/* UPI ID Display */}
+              <div className="text-center pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-1">Pay to UPI ID</p>
+                <p className="font-mono text-sm text-foreground bg-muted px-3 py-2 rounded-lg inline-block">
+                  {MERCHANT_UPI_ID}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Name: {MERCHANT_NAME}
+                </p>
+              </div>
+
+              {/* Static QR Fallback */}
+              <details className="mt-6 text-center">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  QR not scanning? Use alternate QR
+                </summary>
+                <div className="mt-4 p-4 bg-muted/50 rounded-xl">
+                  <img 
+                    src={upiQrImage} 
+                    alt="Static UPI QR" 
+                    className="w-32 h-32 mx-auto rounded-lg"
+                  />
+                  <p className="text-xs text-yellow-500 mt-2">
+                    ⚠️ Enter amount manually: ₹{bookingAmount}
+                  </p>
+                </div>
+              </details>
             </div>
           )}
 

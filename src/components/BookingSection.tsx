@@ -2,16 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, ArrowRight, IndianRupee, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-interface Product {
+interface ServicePricing {
   id: string;
-  name: string;
+  label: string;
+  description: string | null;
   price: number;
-  active: boolean;
+  is_active: boolean;
+  display_order: number;
 }
 
 const BookingSection = () => {
@@ -20,11 +29,14 @@ const BookingSection = () => {
     phone: "",
     issue: "",
   });
-  const [product, setProduct] = useState<Product | null>(null);
+  const [services, setServices] = useState<ServicePricing[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const selectedService = services.find((s) => s.id === selectedServiceId);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -43,31 +55,34 @@ const BookingSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Fetch active product pricing
+  // Fetch active services from service_pricing
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchServices = async () => {
       const { data, error } = await supabase
-        .from("products")
+        .from("service_pricing")
         .select("*")
-        .eq("active", true)
-        .limit(1)
-        .maybeSingle();
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
 
       if (data && !error) {
-        setProduct(data);
+        setServices(data);
       }
     };
 
-    fetchProduct();
+    fetchServices();
   }, []);
 
   // Listen for prefill events from services section
   useEffect(() => {
-    const handlePrefill = (e: CustomEvent<{ issue: string; message: string }>) => {
-      setFormData(prev => ({
+    const handlePrefill = (e: CustomEvent<{ issue: string; message: string; serviceId?: string }>) => {
+      setFormData((prev) => ({
         ...prev,
         issue: e.detail.issue || e.detail.message,
       }));
+      // If a serviceId is provided, select it
+      if (e.detail.serviceId) {
+        setSelectedServiceId(e.detail.serviceId);
+      }
     };
 
     window.addEventListener("prefillContact", handlePrefill as EventListener);
@@ -86,14 +101,14 @@ const BookingSection = () => {
       return;
     }
 
-    const phoneDigits = trimmedPhone.replace(/[\s\-\(\)]/g, "");
-    if (!/^\d{10,15}$/.test(phoneDigits)) {
-      toast.error("Please enter a valid phone number (10-15 digits)");
+    if (!selectedServiceId || !selectedService) {
+      toast.error("Please select a service");
       return;
     }
 
-    if (!product) {
-      toast.error("Service not available. Please try again later.");
+    const phoneDigits = trimmedPhone.replace(/[\s\-\(\)]/g, "");
+    if (!/^\d{10,15}$/.test(phoneDigits)) {
+      toast.error("Please enter a valid phone number (10-15 digits)");
       return;
     }
 
@@ -106,8 +121,8 @@ const BookingSection = () => {
         .insert({
           customer_name: trimmedName,
           phone: phoneDigits,
-          product_id: product.id,
-          amount: product.price,
+          service_id: selectedServiceId,
+          amount: selectedService.price,
           payment_status: "processing",
           repair_status: "pending",
         })
@@ -123,6 +138,7 @@ const BookingSection = () => {
           customer_name: trimmedName,
           phone: phoneDigits,
           amount: booking.amount,
+          service: selectedService.label,
         },
       });
 
@@ -135,7 +151,6 @@ const BookingSection = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <section id="booking" ref={sectionRef} className="py-16 md:py-32 bg-secondary/30">
@@ -162,15 +177,37 @@ const BookingSection = () => {
               isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
             }`}
           >
-            {/* Price Display */}
-            {product && (
+            {/* Service Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Select Service *
+              </label>
+              <Select value={selectedServiceId} onValueChange={setSelectedServiceId}>
+                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl h-12">
+                  <SelectValue placeholder="Choose a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.label} - ₹{service.price}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Display - Show only when service is selected */}
+            {selectedService && (
               <div className="text-center mb-8 p-4 bg-foreground/5 rounded-2xl">
                 <p className="text-sm text-muted-foreground mb-1">Service Charge</p>
                 <div className="flex items-center justify-center gap-1">
                   <IndianRupee className="w-8 h-8 text-foreground" />
-                  <span className="text-4xl font-bold text-foreground">{product.price}</span>
+                  <span className="text-4xl font-bold text-foreground">{selectedService.price}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">{product.name}</p>
+                <p className="text-xs text-muted-foreground mt-2">{selectedService.label}</p>
+                {selectedService.description && (
+                  <p className="text-xs text-muted-foreground mt-1">{selectedService.description}</p>
+                )}
               </div>
             )}
 
@@ -217,7 +254,7 @@ const BookingSection = () => {
 
               <Button
                 type="submit"
-                disabled={isLoading || !product}
+                disabled={isLoading || !selectedService}
                 className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium"
               >
                 {isLoading ? (
@@ -228,7 +265,7 @@ const BookingSection = () => {
                 ) : (
                   <>
                     <Smartphone className="w-4 h-4 mr-2" />
-                    Create Booking
+                    Book for ₹{selectedService?.price || "..."}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

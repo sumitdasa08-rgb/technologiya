@@ -24,6 +24,7 @@ export type Database = {
           phone: string
           product_id: string | null
           repair_status: string
+          service_id: string | null
         }
         Insert: {
           amount: number
@@ -34,6 +35,7 @@ export type Database = {
           phone: string
           product_id?: string | null
           repair_status?: string
+          service_id?: string | null
         }
         Update: {
           amount?: number
@@ -44,6 +46,7 @@ export type Database = {
           phone?: string
           product_id?: string | null
           repair_status?: string
+          service_id?: string | null
         }
         Relationships: [
           {
