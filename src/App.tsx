@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import Status from "./pages/Status";
+import Track from "./pages/Track";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/status" element={<Status />} />
+            <Route path="/track" element={<Track />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
