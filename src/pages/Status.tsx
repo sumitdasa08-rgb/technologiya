@@ -301,11 +301,16 @@ const Status = () => {
               {/* UPI Pay Button */}
               <a
                 href={generateUPIIntentUrl(bookingAmount, bookingRef)}
-                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-full font-medium transition-colors mb-4"
+                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-full font-medium transition-colors mb-3"
               >
                 <Smartphone className="w-5 h-5" />
                 Pay ₹{bookingAmount} with UPI App
               </a>
+
+              {/* BHIM UPI Notice */}
+              <p className="text-xs text-amber-500 text-center mb-4 px-2">
+                ⚠️ BHIM UPI is temporarily unavailable. Please use Google Pay, PhonePe, or Paytm for a seamless experience.
+              </p>
 
               {/* UPI ID Display */}
               <div className="text-center pt-4 border-t border-border">
