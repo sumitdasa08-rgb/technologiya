@@ -1,5 +1,6 @@
-import { Phone, Menu, X } from "lucide-react";
+import { Phone, Menu, X, Package } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,7 +19,7 @@ const Navbar = () => {
       scrolled ? "glass border-b border-border/50" : "bg-transparent"
     }`}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-3 group">
+        <a href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             <span className="text-background font-bold text-lg">LL</span>
           </div>
@@ -29,13 +30,21 @@ const Navbar = () => {
           {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
             <a 
               key={item}
-              href={`#${item.toLowerCase()}`} 
+              href={`/#${item.toLowerCase()}`} 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 relative group"
             >
               {item}
               <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
+          <Link 
+            to="/track"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 relative group"
+          >
+            <Package className="w-4 h-4" />
+            Track Repair
+            <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
+          </Link>
         </div>
 
         <a 
@@ -62,13 +71,21 @@ const Navbar = () => {
           {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
             <a 
               key={item}
-              href={`#${item.toLowerCase()}`}
+              href={`/#${item.toLowerCase()}`}
               className="block text-lg text-foreground hover:opacity-70 transition-opacity"
               onClick={() => setIsOpen(false)}
             >
               {item}
             </a>
           ))}
+          <Link 
+            to="/track"
+            className="flex items-center gap-2 text-lg text-foreground hover:opacity-70 transition-opacity"
+            onClick={() => setIsOpen(false)}
+          >
+            <Package className="w-5 h-5" />
+            Track Repair
+          </Link>
           <div className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
             <Phone className="w-4 h-4" />
             <span className="font-medium">8812910655</span>
