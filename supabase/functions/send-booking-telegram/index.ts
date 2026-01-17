@@ -23,7 +23,7 @@ serve(async (req) => {
       );
     }
 
-    const { booking_id, customer_name, phone, amount } = await req.json();
+    const { booking_id, customer_name, phone, amount, service } = await req.json();
 
     if (!booking_id || !customer_name || !phone || !amount) {
       return new Response(
@@ -39,6 +39,7 @@ serve(async (req) => {
 
 👤 Name: ${customer_name}
 📱 Phone: \`${phone}\`
+🛠 Service: ${service || "Not specified"}
 🆔 Booking ID: \`${booking_id}\`
 💰 Amount: ₹${amount}
 💳 UPI: \`sumitdasa99-3@oksbi\`
