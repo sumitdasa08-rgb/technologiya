@@ -131,10 +131,11 @@ const BookingSection = () => {
 
       if (error) throw error;
 
-      // Send Telegram notification
+      // Send Telegram notification with short_ref
       await supabase.functions.invoke("send-booking-telegram", {
         body: {
           booking_id: booking.id,
+          short_ref: booking.short_ref,
           customer_name: trimmedName,
           phone: phoneDigits,
           amount: booking.amount,

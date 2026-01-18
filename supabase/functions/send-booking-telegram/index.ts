@@ -23,7 +23,7 @@ serve(async (req) => {
       );
     }
 
-    const { booking_id, customer_name, phone, amount, service } = await req.json();
+    const { booking_id, customer_name, phone, amount, service, short_ref } = await req.json();
 
     if (!booking_id || !customer_name || !phone || !amount) {
       return new Response(
@@ -32,15 +32,15 @@ serve(async (req) => {
       );
     }
 
-    // Short booking ref for callback data (Telegram has 64 byte limit)
-    const shortRef = booking_id.substring(0, 8);
+    // Use the short_ref from database, fallback to substring for backwards compatibility
+    const shortRef = short_ref || booking_id.substring(0, 8).toUpperCase();
 
     const message = `🔔 *New Repair Booking*
 
 👤 Name: ${customer_name}
 📱 Phone: \`${phone}\`
 🛠 Service: ${service || "Not specified"}
-🆔 Booking ID: \`${booking_id}\`
+🆔 Ref: \`${shortRef}\`
 💰 Amount: ₹${amount}
 💳 UPI: \`sumitdasa99-3@oksbi\`
 
