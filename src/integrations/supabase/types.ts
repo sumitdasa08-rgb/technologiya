@@ -25,6 +25,7 @@ export type Database = {
           product_id: string | null
           repair_status: string
           service_id: string | null
+          short_ref: string | null
         }
         Insert: {
           amount: number
@@ -36,6 +37,7 @@ export type Database = {
           product_id?: string | null
           repair_status?: string
           service_id?: string | null
+          short_ref?: string | null
         }
         Update: {
           amount?: number
@@ -47,6 +49,7 @@ export type Database = {
           product_id?: string | null
           repair_status?: string
           service_id?: string | null
+          short_ref?: string | null
         }
         Relationships: [
           {

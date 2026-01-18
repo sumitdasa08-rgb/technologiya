@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 
 interface Booking {
   id: string;
+  short_ref: string;
   customer_name: string;
   phone: string;
   amount: number | string;
@@ -40,11 +41,11 @@ const Track = () => {
     setSearched(true);
 
     try {
-      // Search by full ID or partial match (first 8 chars)
+      // Search by short_ref (the 8-character reference number sent to clients)
       const { data, error: fetchError } = await supabase
         .from("bookings")
         .select("*")
-        .or(`id.eq.${trimmedRef},id.ilike.${trimmedRef}%`)
+        .eq("short_ref", trimmedRef.toUpperCase())
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -157,7 +158,7 @@ const Track = () => {
                 <p className="text-sm text-muted-foreground">Booking for</p>
                 <p className="text-xl font-semibold text-foreground">{booking.customer_name}</p>
                 <p className="text-xs text-muted-foreground mt-1 font-mono">
-                  Ref: {booking.id.substring(0, 8).toUpperCase()}
+                  Ref: {booking.short_ref}
                 </p>
               </div>
 
