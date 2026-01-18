@@ -1,5 +1,6 @@
-import { Star, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Star, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 
 const testimonials = [
   {
@@ -34,8 +35,34 @@ const testimonials = [
 
 const TestimonialsSection = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
+  
+  // Embla carousel for swipe gestures
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: true,
+    align: 'center',
+    skipSnaps: false,
+  });
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  // Sync active index with carousel
+  useEffect(() => {
+    if (!emblaApi) return;
+    
+    const onSelect = () => {
+      setActiveIndex(emblaApi.selectedScrollSnap());
+    };
+    
+    emblaApi.on('select', onSelect);
+    onSelect();
+    
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -54,19 +81,20 @@ const TestimonialsSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Auto-cycle through testimonials on mobile
+  // Auto-play carousel
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !emblaApi) return;
     
     const interval = setInterval(() => {
-      setActiveIndex((prev) => {
-        if (prev === null) return 0;
-        return (prev + 1) % testimonials.length;
-      });
-    }, 3000);
+      emblaApi.scrollNext();
+    }, 4000);
 
     return () => clearInterval(interval);
-  }, [isVisible]);
+  }, [isVisible, emblaApi]);
+
+  const scrollTo = useCallback((index: number) => {
+    emblaApi?.scrollTo(index);
+  }, [emblaApi]);
 
   return (
     <section id="reviews" ref={sectionRef} className="py-16 md:py-32 bg-card overflow-hidden">
@@ -82,96 +110,82 @@ const TestimonialsSection = () => {
             Loved by customers ❤️
           </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto font-light">
-            See what our happy customers are saying
+            Swipe to see what our happy customers say
           </p>
         </div>
 
-        {/* Mind Map Layout - Mobile */}
+        {/* Mobile Swipeable Carousel */}
         <div className="md:hidden relative">
           {/* Central Node */}
-          <div className={`flex justify-center mb-8 transition-all duration-500 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-3xl shadow-lg animate-pulse">
+          <div className={`flex justify-center mb-6 transition-all duration-500 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-2xl shadow-lg animate-pulse">
               ⭐
             </div>
           </div>
 
-          {/* Connecting Lines SVG */}
-          <svg className="absolute top-20 left-1/2 -translate-x-1/2 w-full h-32 pointer-events-none" viewBox="0 0 400 100">
-            <path
-              d="M200 0 Q100 50 50 100"
-              stroke="hsl(var(--primary) / 0.3)"
-              strokeWidth="2"
-              fill="none"
-              className={`transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-              strokeDasharray="5,5"
-            />
-            <path
-              d="M200 0 Q300 50 350 100"
-              stroke="hsl(var(--primary) / 0.3)"
-              strokeWidth="2"
-              fill="none"
-              className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-              strokeDasharray="5,5"
-            />
-          </svg>
+          {/* Swipe Hint */}
+          <div className={`flex justify-center items-center gap-2 mb-4 text-muted-foreground text-xs transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+            <ChevronLeft className="w-4 h-4 animate-pulse" />
+            <span>Swipe</span>
+            <ChevronRight className="w-4 h-4 animate-pulse" />
+          </div>
 
-          {/* Testimonial Cards - Stacked with Animation */}
-          <div className="relative mt-16 space-y-4">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                onClick={() => setActiveIndex(index)}
-                className={`relative p-5 rounded-2xl border transition-all duration-500 cursor-pointer
-                  ${activeIndex === index 
-                    ? 'bg-primary/10 border-primary scale-[1.02] shadow-lg' 
-                    : 'bg-background border-border hover:border-primary/50'
-                  }
-                  ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}
-                `}
-                style={{ 
-                  transitionDelay: `${index * 150}ms`,
-                  animation: isVisible ? `float ${3 + index * 0.5}s ease-in-out infinite` : 'none',
-                  animationDelay: `${index * 0.2}s`
-                }}
-              >
-                {/* Floating Emoji */}
-                <div className={`absolute -top-3 -right-2 text-2xl transition-transform duration-300 ${activeIndex === index ? 'scale-125 animate-bounce' : ''}`}>
-                  {testimonial.emoji}
-                </div>
+          {/* Embla Carousel */}
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex touch-pan-y">
+              {testimonials.map((testimonial, index) => (
+                <div
+                  key={index}
+                  className="flex-[0_0_85%] min-w-0 pl-4 first:pl-0"
+                >
+                  <div
+                    className={`relative p-6 rounded-2xl border transition-all duration-500
+                      ${activeIndex === index 
+                        ? 'bg-primary/10 border-primary shadow-lg scale-100' 
+                        : 'bg-background border-border scale-95 opacity-70'
+                      }
+                    `}
+                  >
+                    {/* Floating Emoji */}
+                    <div className={`absolute -top-3 -right-2 text-3xl transition-transform duration-300 ${activeIndex === index ? 'scale-125 animate-bounce' : 'scale-100'}`}>
+                      {testimonial.emoji}
+                    </div>
 
-                {/* Stars */}
-                <div className="flex gap-0.5 mb-2">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className={`w-3.5 h-3.5 fill-primary text-primary transition-all duration-300 ${activeIndex === index ? 'scale-110' : ''}`}
-                      style={{ transitionDelay: `${i * 50}ms` }}
-                    />
-                  ))}
-                </div>
+                    {/* Stars */}
+                    <div className="flex gap-0.5 mb-3">
+                      {Array.from({ length: testimonial.rating }).map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-4 h-4 fill-primary text-primary transition-all duration-300 ${activeIndex === index ? 'scale-110' : ''}`}
+                          style={{ transitionDelay: `${i * 50}ms` }}
+                        />
+                      ))}
+                    </div>
 
-                {/* Content */}
-                <p className="text-foreground text-sm leading-relaxed mb-3">
-                  "{testimonial.content}"
-                </p>
+                    {/* Content */}
+                    <p className="text-foreground text-base leading-relaxed mb-4">
+                      "{testimonial.content}"
+                    </p>
 
-                {/* Author */}
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">{testimonial.name}</h4>
-                    <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                    {/* Author */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
+                        <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                      </div>
+                    </div>
+
+                    {/* Active Indicator Pulse */}
+                    {activeIndex === index && (
+                      <div className="absolute inset-0 rounded-2xl border-2 border-primary animate-ping opacity-20 pointer-events-none" />
+                    )}
                   </div>
                 </div>
-
-                {/* Active Indicator Pulse */}
-                {activeIndex === index && (
-                  <div className="absolute inset-0 rounded-2xl border-2 border-primary animate-ping opacity-20 pointer-events-none" />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Navigation Dots */}
@@ -179,12 +193,28 @@ const TestimonialsSection = () => {
             {testimonials.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setActiveIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  activeIndex === index ? 'w-6 bg-primary' : 'bg-muted-foreground/30'
+                onClick={() => scrollTo(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  activeIndex === index ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
                 }`}
               />
             ))}
+          </div>
+
+          {/* Navigation Arrows */}
+          <div className="flex justify-center gap-4 mt-4">
+            <button
+              onClick={scrollPrev}
+              className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-300"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={scrollNext}
+              className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-300"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
