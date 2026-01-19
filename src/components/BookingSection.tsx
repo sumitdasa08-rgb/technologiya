@@ -89,8 +89,15 @@ const BookingSection = () => {
     return () => window.removeEventListener("prefillContact", handlePrefill as EventListener);
   }, []);
 
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    triggerHaptic();
 
     const trimmedName = formData.name.trim();
     const trimmedPhone = formData.phone.trim();
