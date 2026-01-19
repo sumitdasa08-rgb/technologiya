@@ -120,6 +120,8 @@ const HeroSection = () => {
                   src={heroCharacter} 
                   alt="3D Tech Repair Character" 
                   className="w-72 md:w-80 lg:w-[420px] h-auto drop-shadow-2xl"
+                  loading="eager"
+                  fetchPriority="high"
                 />
               </div>
               
