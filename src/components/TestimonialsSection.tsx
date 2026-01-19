@@ -48,12 +48,20 @@ const TestimonialsSection = () => {
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
-  // Sync active index with carousel
+  // Haptic feedback function
+  const triggerHaptic = useCallback(() => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10); // Short 10ms vibration
+    }
+  }, []);
+
+  // Sync active index with carousel and add haptic feedback
   useEffect(() => {
     if (!emblaApi) return;
     
     const onSelect = () => {
       setActiveIndex(emblaApi.selectedScrollSnap());
+      triggerHaptic();
     };
     
     emblaApi.on('select', onSelect);
@@ -62,7 +70,7 @@ const TestimonialsSection = () => {
     return () => {
       emblaApi.off('select', onSelect);
     };
-  }, [emblaApi]);
+  }, [emblaApi, triggerHaptic]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -97,37 +105,32 @@ const TestimonialsSection = () => {
   }, [emblaApi]);
 
   return (
-    <section id="reviews" ref={sectionRef} className="py-16 md:py-32 bg-card overflow-hidden">
+    <section id="reviews" ref={sectionRef} className="py-10 md:py-24 bg-card overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className={`text-center mb-12 md:mb-16 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-widest uppercase mb-4">
-            <Sparkles className="w-4 h-4 animate-pulse" />
+        <div className={`text-center mb-6 md:mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <span className="inline-flex items-center gap-2 text-xs md:text-sm font-medium text-primary tracking-widest uppercase mb-2">
+            <Sparkles className="w-3 h-3 md:w-4 md:h-4 animate-pulse" />
             Real Reviews
-            <Sparkles className="w-4 h-4 animate-pulse" />
+            <Sparkles className="w-3 h-3 md:w-4 md:h-4 animate-pulse" />
           </span>
-          <h2 className="text-3xl md:text-6xl font-bold text-foreground mb-4 tracking-tight">
+          <h2 className="text-2xl md:text-5xl font-bold text-foreground mb-2 tracking-tight">
             Loved by customers ❤️
           </h2>
-          <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto font-light">
+          <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto font-light">
             Swipe to see what our happy customers say
           </p>
         </div>
 
         {/* Mobile Swipeable Carousel */}
         <div className="md:hidden relative">
-          {/* Central Node */}
-          <div className={`flex justify-center mb-6 transition-all duration-500 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-2xl shadow-lg animate-pulse">
+          {/* Central Node with Swipe Hint */}
+          <div className={`flex justify-center items-center gap-3 mb-4 transition-all duration-500 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+            <ChevronLeft className="w-4 h-4 text-muted-foreground animate-pulse" />
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-xl shadow-lg animate-pulse">
               ⭐
             </div>
-          </div>
-
-          {/* Swipe Hint */}
-          <div className={`flex justify-center items-center gap-2 mb-4 text-muted-foreground text-xs transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-            <ChevronLeft className="w-4 h-4 animate-pulse" />
-            <span>Swipe</span>
-            <ChevronRight className="w-4 h-4 animate-pulse" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground animate-pulse" />
           </div>
 
           {/* Embla Carousel */}
@@ -136,10 +139,10 @@ const TestimonialsSection = () => {
               {testimonials.map((testimonial, index) => (
                 <div
                   key={index}
-                  className="flex-[0_0_85%] min-w-0 pl-4 first:pl-0"
+                  className="flex-[0_0_88%] min-w-0 pl-3 first:pl-0"
                 >
                   <div
-                    className={`relative p-6 rounded-2xl border transition-all duration-500
+                    className={`relative p-4 rounded-xl border transition-all duration-500
                       ${activeIndex === index 
                         ? 'bg-primary/10 border-primary shadow-lg scale-100' 
                         : 'bg-background border-border scale-95 opacity-70'
@@ -147,40 +150,40 @@ const TestimonialsSection = () => {
                     `}
                   >
                     {/* Floating Emoji */}
-                    <div className={`absolute -top-3 -right-2 text-3xl transition-transform duration-300 ${activeIndex === index ? 'scale-125 animate-bounce' : 'scale-100'}`}>
+                    <div className={`absolute -top-2 -right-1 text-2xl transition-transform duration-300 ${activeIndex === index ? 'scale-125 animate-bounce' : 'scale-100'}`}>
                       {testimonial.emoji}
                     </div>
 
                     {/* Stars */}
-                    <div className="flex gap-0.5 mb-3">
+                    <div className="flex gap-0.5 mb-2">
                       {Array.from({ length: testimonial.rating }).map((_, i) => (
                         <Star 
                           key={i} 
-                          className={`w-4 h-4 fill-primary text-primary transition-all duration-300 ${activeIndex === index ? 'scale-110' : ''}`}
+                          className={`w-3.5 h-3.5 fill-primary text-primary transition-all duration-300 ${activeIndex === index ? 'scale-110' : ''}`}
                           style={{ transitionDelay: `${i * 50}ms` }}
                         />
                       ))}
                     </div>
 
                     {/* Content */}
-                    <p className="text-foreground text-base leading-relaxed mb-4">
+                    <p className="text-foreground text-sm leading-relaxed mb-3">
                       "{testimonial.content}"
                     </p>
 
                     {/* Author */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
                         {testimonial.name.charAt(0)}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                        <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                        <h4 className="font-semibold text-foreground text-sm">{testimonial.name}</h4>
+                        <p className="text-[10px] text-muted-foreground">{testimonial.role}</p>
                       </div>
                     </div>
 
                     {/* Active Indicator Pulse */}
                     {activeIndex === index && (
-                      <div className="absolute inset-0 rounded-2xl border-2 border-primary animate-ping opacity-20 pointer-events-none" />
+                      <div className="absolute inset-0 rounded-xl border-2 border-primary animate-ping opacity-20 pointer-events-none" />
                     )}
                   </div>
                 </div>
@@ -188,32 +191,30 @@ const TestimonialsSection = () => {
             </div>
           </div>
 
-          {/* Navigation Dots */}
-          <div className="flex justify-center gap-2 mt-6">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollTo(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  activeIndex === index ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Navigation Arrows */}
-          <div className="flex justify-center gap-4 mt-4">
+          {/* Navigation Dots & Arrows Combined */}
+          <div className="flex justify-center items-center gap-3 mt-4">
             <button
-              onClick={scrollPrev}
-              className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-300"
+              onClick={() => { triggerHaptic(); scrollPrev(); }}
+              className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
+            <div className="flex gap-1.5">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => { triggerHaptic(); scrollTo(index); }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    activeIndex === index ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
+                  }`}
+                />
+              ))}
+            </div>
             <button
-              onClick={scrollNext}
-              className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors duration-300"
+              onClick={() => { triggerHaptic(); scrollNext(); }}
+              className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
