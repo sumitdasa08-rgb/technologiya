@@ -37,6 +37,7 @@ const TestimonialsSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isUserInteraction = useRef(false);
   
   // Embla carousel for swipe gestures
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -45,17 +46,25 @@ const TestimonialsSection = () => {
     skipSnaps: false,
   });
 
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
-
-  // Haptic feedback function
+  // Haptic feedback function - only triggers on manual interaction
   const triggerHaptic = useCallback(() => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10); // Short 10ms vibration
+    if ('vibrate' in navigator && isUserInteraction.current) {
+      navigator.vibrate(10);
+      isUserInteraction.current = false;
     }
   }, []);
 
-  // Sync active index with carousel and add haptic feedback
+  const scrollPrev = useCallback(() => {
+    isUserInteraction.current = true;
+    emblaApi?.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    isUserInteraction.current = true;
+    emblaApi?.scrollNext();
+  }, [emblaApi]);
+
+  // Sync active index with carousel and add haptic feedback only on user interaction
   useEffect(() => {
     if (!emblaApi) return;
     
@@ -63,12 +72,18 @@ const TestimonialsSection = () => {
       setActiveIndex(emblaApi.selectedScrollSnap());
       triggerHaptic();
     };
+
+    const onPointerDown = () => {
+      isUserInteraction.current = true;
+    };
     
     emblaApi.on('select', onSelect);
+    emblaApi.on('pointerDown', onPointerDown);
     onSelect();
     
     return () => {
       emblaApi.off('select', onSelect);
+      emblaApi.off('pointerDown', onPointerDown);
     };
   }, [emblaApi, triggerHaptic]);
 
@@ -194,7 +209,7 @@ const TestimonialsSection = () => {
           {/* Navigation Dots & Arrows Combined */}
           <div className="flex justify-center items-center gap-3 mt-4">
             <button
-              onClick={() => { triggerHaptic(); scrollPrev(); }}
+              onClick={scrollPrev}
               className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -203,7 +218,7 @@ const TestimonialsSection = () => {
               {testimonials.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => { triggerHaptic(); scrollTo(index); }}
+                  onClick={() => { isUserInteraction.current = true; scrollTo(index); }}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     activeIndex === index ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
                   }`}
@@ -211,7 +226,7 @@ const TestimonialsSection = () => {
               ))}
             </div>
             <button
-              onClick={() => { triggerHaptic(); scrollNext(); }}
+              onClick={scrollNext}
               className="w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-foreground active:bg-primary active:text-primary-foreground transition-colors duration-200"
             >
               <ChevronRight className="w-4 h-4" />
