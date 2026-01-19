@@ -95,7 +95,14 @@ const ServicesSection = () => {
     requestAnimationFrame(animation);
   };
 
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
   const handleServiceClick = (service: ServiceItem) => {
+    triggerHaptic();
     const bookingSection = document.getElementById("booking");
     if (bookingSection) {
       smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
