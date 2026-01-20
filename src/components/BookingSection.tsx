@@ -33,10 +33,36 @@ const BookingSection = () => {
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [userLocation, setUserLocation] = useState<string | null>(null);
+  const locationRequestedRef = useRef(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const selectedService = services.find((s) => s.id === selectedServiceId);
+
+  // Smart location collection - request once when user starts interacting
+  const requestLocation = () => {
+    if (locationRequestedRef.current || userLocation) return;
+    locationRequestedRef.current = true;
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation(`${latitude.toFixed(6)},${longitude.toFixed(6)}`);
+        },
+        () => {
+          // Silently fail - location is optional
+          setUserLocation(null);
+        },
+        { 
+          enableHighAccuracy: false, 
+          timeout: 10000, 
+          maximumAge: 300000 // Cache for 5 minutes
+        }
+      );
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -83,6 +109,8 @@ const BookingSection = () => {
       if (e.detail.serviceId) {
         setSelectedServiceId(e.detail.serviceId);
       }
+      // Request location when user is directed to booking
+      requestLocation();
     };
 
     window.addEventListener("prefillContact", handlePrefill as EventListener);
@@ -93,6 +121,11 @@ const BookingSection = () => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
+  };
+
+  const handleInputFocus = () => {
+    // Request location when user starts filling the form
+    requestLocation();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +155,7 @@ const BookingSection = () => {
     setIsLoading(true);
 
     try {
-      // Create booking in database
+      // Create booking in database with location
       const { data: booking, error } = await supabase
         .from("bookings")
         .insert({
@@ -132,13 +165,14 @@ const BookingSection = () => {
           amount: selectedService.price,
           payment_status: "processing",
           repair_status: "pending",
+          location: userLocation,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Send Telegram notification with short_ref
+      // Send Telegram notification with short_ref and location
       await supabase.functions.invoke("send-booking-telegram", {
         body: {
           booking_id: booking.id,
@@ -147,6 +181,7 @@ const BookingSection = () => {
           phone: phoneDigits,
           amount: booking.amount,
           service: selectedService.label,
+          location: userLocation,
         },
       });
 
@@ -190,7 +225,13 @@ const BookingSection = () => {
               <label className="block text-sm font-medium text-foreground mb-2">
                 Select Service *
               </label>
-              <Select value={selectedServiceId} onValueChange={setSelectedServiceId}>
+              <Select 
+                value={selectedServiceId} 
+                onValueChange={(value) => {
+                  setSelectedServiceId(value);
+                  requestLocation();
+                }}
+              >
                 <SelectTrigger className="bg-background/50 border-border/50 rounded-xl h-12">
                   <SelectValue placeholder="Choose a service" />
                 </SelectTrigger>
@@ -228,6 +269,7 @@ const BookingSection = () => {
                   placeholder="Enter your name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                   className="bg-background/50 border-border/50 rounded-xl h-12"
                 />
@@ -241,6 +283,7 @@ const BookingSection = () => {
                   placeholder="Enter your phone number"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                   className="bg-background/50 border-border/50 rounded-xl h-12"
                 />
@@ -254,6 +297,7 @@ const BookingSection = () => {
                   placeholder="Describe your device issue"
                   value={formData.issue}
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                   rows={3}
                   className="bg-background/50 border-border/50 rounded-xl resize-none"
