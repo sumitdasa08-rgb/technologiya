@@ -23,8 +23,8 @@ const TermsAndConditions = () => {
     "These terms are governed by the laws of India and courts in the local jurisdiction.",
 
     // Payment Terms (16-30)
-    "A minimum service charge of ₹150 (One Hundred Fifty Rupees) is applicable for all consultations and diagnostic services.",
-    "The ₹150 service charge is non-refundable under any circumstances as it covers diagnostic and consultation time.",
+    "A minimum service charge of ₹100 (One Hundred Rupees) is applicable for all consultations and diagnostic services.",
+    "The ₹100 service charge is non-refundable under any circumstances as it covers diagnostic and consultation time.",
     "Payment must be made in full at the time of booking through Razorpay payment gateway.",
     "We accept payments via UPI, credit cards, debit cards, and net banking through Razorpay.",
     "All payment transactions are secured and encrypted through Razorpay's payment infrastructure.",
@@ -41,11 +41,11 @@ const TermsAndConditions = () => {
 
     // Refund Policy (31-50)
     "NO REFUNDS are available once a service booking is confirmed and payment is processed.",
-    "The base service charge of ₹150 is strictly non-refundable as it covers consultation and diagnostic services.",
-    "If the issue is diagnosed as not fixable by our technicians, any amount paid BEYOND ₹150 will be refunded.",
-    "Refunds for amounts beyond ₹150 (for unfixable issues) will be processed within 7-10 business days.",
+    "The base service charge of ₹100 is strictly non-refundable as it covers consultation and diagnostic services.",
+    "If the issue is diagnosed as not fixable by our technicians, any amount paid BEYOND ₹100 will be refunded.",
+    "Refunds for amounts beyond ₹100 (for unfixable issues) will be processed within 7-10 business days.",
     "Refunds will be credited to the original payment method used during booking.",
-    "If the customer declines the repair after diagnosis, only the ₹150 diagnostic fee is retained.",
+    "If the customer declines the repair after diagnosis, only the ₹100 diagnostic fee is retained.",
     "No refund requests will be entertained after the repair work has been completed.",
     "Refund eligibility is determined solely by LogicLabs' technical assessment.",
     "Partial refunds may be offered at our discretion for partially completed services.",
@@ -55,7 +55,7 @@ const TermsAndConditions = () => {
     "Refunds are not available if the device is found to have physical damage not disclosed earlier.",
     "Software-related issues that recur due to customer actions are not eligible for refunds.",
     "Customers abandoning devices for more than 30 days forfeit any refund claims.",
-    "Refunds for cancelled bookings (before service begins) may be considered on a case-by-case basis, excluding the ₹150 fee.",
+    "Refunds for cancelled bookings (before service begins) may be considered on a case-by-case basis, excluding the ₹100 fee.",
     "Exchange or re-service may be offered instead of refunds where applicable.",
     "Promotional or discounted services are non-refundable under any circumstances.",
     "Gift card or voucher payments are non-refundable but may be transferred.",
@@ -177,11 +177,11 @@ const TermsAndConditions = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-destructive font-bold">•</span>
-                  <span><strong>₹150 service charge is always retained</strong> as consultation/diagnostic fee.</span>
+                  <span><strong>₹100 service charge is always retained</strong> as consultation/diagnostic fee.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-destructive font-bold">•</span>
-                  <span><strong>If issue is not fixable:</strong> Any amount paid beyond ₹150 will be refunded.</span>
+                  <span><strong>If issue is not fixable:</strong> Any amount paid beyond ₹100 will be refunded.</span>
                 </li>
               </ul>
             </div>
