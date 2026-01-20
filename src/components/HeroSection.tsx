@@ -65,7 +65,7 @@ const HeroSection = () => {
             </p>
             
             <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
-              Starting at just ₹250 · Same-day service available
+              Starting at just ₹100 · Same-day service available
             </p>
 
             <div className="opacity-0 animate-fade-up delay-400 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
