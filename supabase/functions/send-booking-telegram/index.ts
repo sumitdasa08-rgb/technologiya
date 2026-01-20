@@ -23,7 +23,7 @@ serve(async (req) => {
       );
     }
 
-    const { booking_id, customer_name, phone, amount, service, short_ref } = await req.json();
+    const { booking_id, customer_name, phone, amount, service, short_ref, location } = await req.json();
 
     if (!booking_id || !customer_name || !phone || !amount) {
       return new Response(
@@ -35,6 +35,11 @@ serve(async (req) => {
     // Use the short_ref from database, fallback to substring for backwards compatibility
     const shortRef = short_ref || booking_id.substring(0, 8).toUpperCase();
 
+    // Build location line if available
+    const locationLine = location 
+      ? `📍 Location: [View Map](https://www.google.com/maps?q=${location})\n` 
+      : "";
+
     const message = `🔔 *New Repair Booking*
 
 👤 Name: ${customer_name}
@@ -42,7 +47,7 @@ serve(async (req) => {
 🛠 Service: ${service || "Not specified"}
 🆔 Ref: \`${shortRef}\`
 💰 Amount: ₹${amount}
-💳 UPI: \`sumitdasa99-3@oksbi\`
+${locationLine}💳 UPI: \`sumitdasa99-3@oksbi\`
 
 _Waiting for payment confirmation..._`;
 

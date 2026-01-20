@@ -111,6 +111,8 @@ const TermsAndConditions = () => {
     "We retain service records for a minimum of 2 years for warranty purposes.",
     "Customer feedback may be used anonymously for service improvement.",
     "Data breach notifications will be sent within 72 hours if customer data is compromised.",
+    "We may collect approximate location data during booking to improve service delivery and logistics.",
+    "Location data is collected only when you interact with our booking form and is stored securely.",
 
     // Miscellaneous (96-100)
     "Promotional offers and discounts cannot be combined unless explicitly stated.",
@@ -163,7 +165,7 @@ const TermsAndConditions = () => {
         <div className="container mx-auto px-4 pb-16">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Terms and Conditions</h1>
-            <p className="text-muted-foreground mb-8">Last updated: December 2024</p>
+            <p className="text-muted-foreground mb-8">Last updated: January 2025</p>
 
             {/* Important Refund Notice */}
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 mb-8">
@@ -253,9 +255,9 @@ const TermsAndConditions = () => {
 
               {/* Privacy & Data */}
               <section>
-                <h2 className="text-2xl font-bold text-foreground mb-4 border-b border-border pb-2">Privacy & Data (86-95)</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4 border-b border-border pb-2">Privacy & Data (86-97)</h2>
                 <ol className="space-y-3" start={86}>
-                  {terms.slice(85, 95).map((term, index) => (
+                  {terms.slice(85, 97).map((term, index) => (
                     <li key={index} className="flex gap-3 text-muted-foreground">
                       <span className="font-semibold text-foreground min-w-8">{index + 86}.</span>
                       <span>{term}</span>
@@ -266,11 +268,11 @@ const TermsAndConditions = () => {
 
               {/* Miscellaneous */}
               <section>
-                <h2 className="text-2xl font-bold text-foreground mb-4 border-b border-border pb-2">Miscellaneous (96-100)</h2>
-                <ol className="space-y-3" start={96}>
-                  {terms.slice(95, 100).map((term, index) => (
+                <h2 className="text-2xl font-bold text-foreground mb-4 border-b border-border pb-2">Miscellaneous (98-102)</h2>
+                <ol className="space-y-3" start={98}>
+                  {terms.slice(97, 102).map((term, index) => (
                     <li key={index} className="flex gap-3 text-muted-foreground">
-                      <span className="font-semibold text-foreground min-w-8">{index + 96}.</span>
+                      <span className="font-semibold text-foreground min-w-8">{index + 98}.</span>
                       <span>{term}</span>
                     </li>
                   ))}
@@ -302,7 +304,7 @@ const TermsAndConditions = () => {
         {/* Footer */}
         <footer className="bg-foreground text-background py-8">
           <div className="container mx-auto px-4 text-center">
-            <p className="text-background/60">© 2024 LogicLabs. All rights reserved.</p>
+            <p className="text-background/60">© 2025 LogicLabs. All rights reserved.</p>
           </div>
         </footer>
       </main>
