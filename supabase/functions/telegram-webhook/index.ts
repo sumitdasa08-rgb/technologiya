@@ -19,23 +19,15 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    // Find booking by ID starting with shortRef
-    const { data: allBookings, error: findError } = await supabase
+    // Find booking by short_ref (stored in database)
+    const { data: bookings, error: findError } = await supabase
       .from("bookings")
-      .select("id, payment_status")
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .select("id, payment_status, short_ref")
+      .eq("short_ref", bookingRef.toUpperCase())
+      .limit(1);
 
-    if (findError || !allBookings) {
-      console.error("Error fetching bookings:", findError);
-      return false;
-    }
-
-    // Filter bookings where ID starts with the short reference
-    const bookings = allBookings.filter(b => b.id.startsWith(bookingRef));
-
-    if (bookings.length === 0) {
-      console.error("No booking found starting with:", bookingRef);
+    if (findError || !bookings || bookings.length === 0) {
+      console.error("No booking found with short_ref:", bookingRef);
       return false;
     }
 
@@ -263,13 +255,11 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
         if (supabaseUrl && supabaseKey && success) {
           const supabase = createClient(supabaseUrl, supabaseKey);
-          const { data: allBookings } = await supabase
+          const { data: bookings } = await supabase
             .from("bookings")
-            .select("customer_name, phone, id")
-            .order("created_at", { ascending: false })
-            .limit(50);
-
-          const bookings = allBookings?.filter(b => b.id.startsWith(shortRef)) || [];
+            .select("customer_name, phone, id, short_ref")
+            .eq("short_ref", shortRef.toUpperCase())
+            .limit(1);
 
           if (bookings && bookings.length > 0) {
             await sendWhatsAppLink(
