@@ -25,15 +25,33 @@
 
   <body>
     <div id="root">
-      <!-- Initial loading state before React hydrates -->
-      <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a;">
-        <div style="text-align:center;">
-          <div style="width:64px;height:64px;margin:0 auto 16px;border-radius:16px;background:#fafafa;display:flex;align-items:center;justify-content:center;">
+      <!-- Initial loading state before React hydrates - with smooth fade -->
+      <div id="initial-loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a;opacity:1;transition:opacity 0.4s ease-out;z-index:9999;">
+        <div style="text-align:center;animation:fadeInUp 0.5s ease-out forwards;">
+          <div style="width:64px;height:64px;margin:0 auto 16px;border-radius:16px;background:#fafafa;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s ease-in-out infinite;">
             <span style="font-size:24px;font-weight:bold;color:#0a0a0a;">L</span>
           </div>
-          <p style="font-size:14px;color:#a1a1aa;">Loading...</p>
+          <p style="font-size:14px;color:#a1a1aa;animation:fadeIn 0.6s ease-out 0.2s forwards;opacity:0;">Loading...</p>
         </div>
       </div>
+      <style>
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        #initial-loader.fade-out {
+          opacity: 0;
+          pointer-events: none;
+        }
+      </style>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
