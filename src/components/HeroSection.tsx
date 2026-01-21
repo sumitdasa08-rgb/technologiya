@@ -114,7 +114,7 @@ const HeroSection = () => {
               {/* Subtle shadow/glow behind character */}
               <div className="absolute inset-0 bg-foreground/5 blur-3xl scale-90 rounded-full" />
               
-              {/* Character image with floating animation */}
+              {/* Character image with floating animation - optimized loading */}
               <div className="relative animate-[float_6s_ease-in-out_infinite]">
                 <img 
                   src={heroCharacter} 
@@ -122,6 +122,9 @@ const HeroSection = () => {
                   className="w-72 md:w-80 lg:w-[420px] h-auto drop-shadow-2xl"
                   loading="eager"
                   fetchPriority="high"
+                  decoding="async"
+                  width="420"
+                  height="420"
                 />
               </div>
               
