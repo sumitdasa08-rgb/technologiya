@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import InstallPrompt from "@/components/InstallPrompt";
 import { Helmet } from "react-helmet-async";
 
 // Lazy load below-the-fold components for faster initial load
@@ -30,6 +31,7 @@ const Index = () => {
       <main className="min-h-screen bg-background">
         <Navbar />
         <HeroSection />
+        <InstallPrompt />
         <Suspense fallback={<SectionSkeleton />}>
           <ServicesSection />
         </Suspense>
