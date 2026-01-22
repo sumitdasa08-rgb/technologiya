@@ -28,13 +28,13 @@ const Footer = () => {
             ))}
           </div>
 
-          <a 
-            href="tel:8812910655"
-            className="flex items-center gap-2 bg-background text-foreground px-5 py-2.5 rounded-full font-medium hover:opacity-90 transition-opacity"
-          >
-            <Phone className="w-4 h-4" />
-            <span>8812910655</span>
-          </a>
+        <a 
+          href="tel:+913613597940"
+          className="flex items-center gap-2 bg-background text-foreground px-5 py-2.5 rounded-full font-medium hover:opacity-90 transition-opacity"
+        >
+          <Phone className="w-4 h-4" />
+          <span>+91 361 359 7940</span>
+        </a>
         </div>
 
         <div className="pt-8 border-t border-background/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-background/40">
