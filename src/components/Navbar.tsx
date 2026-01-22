@@ -48,11 +48,11 @@ const Navbar = () => {
         </div>
 
         <a 
-          href="tel:8812910655"
+          href="tel:+913613597940"
           className="hidden md:flex items-center gap-2 text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
         >
           <Phone className="w-4 h-4" />
-          <span>8812910655</span>
+          <span>+91 361 359 7940</span>
         </a>
 
         <button 
@@ -86,10 +86,10 @@ const Navbar = () => {
             <Package className="w-5 h-5" />
             Track Repair
           </Link>
-          <div className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
+          <a href="tel:+913613597940" className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
             <Phone className="w-4 h-4" />
-            <span className="font-medium">8812910655</span>
-          </div>
+            <span className="font-medium">+91 361 359 7940</span>
+          </a>
         </div>
       </div>
     </nav>
