@@ -66,7 +66,7 @@ const TeamSection = () => {
           <p className="text-background/70 mb-8 font-light">
             Our team is just a call away. We provide the best solution within your budget.
           </p>
-          <a className="inline-block bg-background text-foreground px-8 py-4 rounded-full font-medium hover:opacity-90 transition-all duration-300 hover:scale-105" href="tel:3613597940">Call Now: +91 361 359 7940</a>
+          <a className="inline-block bg-background text-foreground px-8 py-4 rounded-full font-medium hover:opacity-90 transition-all duration-300 hover:scale-105" href="tel:+913613597940">Call Now: +91 361 359 7940</a>
         </div>
       </div>
     </section>;
