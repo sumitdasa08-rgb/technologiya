@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
+import { useNotificationSound } from "@/hooks/use-notification-sound";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import upiQrImage from "@/assets/upi-qr.jpg";
@@ -33,6 +35,8 @@ const Status = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const bookingId = searchParams.get("booking_id");
+  const { playSuccessChime } = useNotificationSound();
+  const previousPaymentStatus = useRef<string | null>(null);
   
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +97,24 @@ const Status = () => {
           },
           (payload) => {
             console.log('Realtime update received:', payload);
-            setBooking(payload.new as Booking);
+            const newBooking = payload.new as Booking;
+            
+            // Check if payment status just changed to confirmed
+            if (
+              previousPaymentStatus.current && 
+              previousPaymentStatus.current !== 'confirmed' && 
+              newBooking.payment_status === 'confirmed'
+            ) {
+              // Play success chime and show toast
+              playSuccessChime();
+              toast.success('🎉 Payment Confirmed!', {
+                description: 'Your payment has been verified. Repair will begin shortly!',
+                duration: 6000,
+              });
+            }
+            
+            previousPaymentStatus.current = newBooking.payment_status;
+            setBooking(newBooking);
           }
         )
         .subscribe();
@@ -102,7 +123,14 @@ const Status = () => {
         supabase.removeChannel(channel);
       };
     }
-  }, [bookingId]);
+  }, [bookingId, playSuccessChime]);
+
+  // Track initial payment status
+  useEffect(() => {
+    if (booking && !previousPaymentStatus.current) {
+      previousPaymentStatus.current = booking.payment_status;
+    }
+  }, [booking]);
 
   const handleRefresh = () => {
     setRefreshing(true);
