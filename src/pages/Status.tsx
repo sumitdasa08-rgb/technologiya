@@ -9,7 +9,8 @@ import upiQrImage from "@/assets/upi-qr.jpg";
 
 // Merchant UPI details
 const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
-const MERCHANT_NAME = "TechnoloGiya";
+const MERCHANT_NAME = "Sumit Das";
+const MERCHANT_BANK = "Federal Bank";
 
 interface Booking {
   id: string;
@@ -326,7 +327,7 @@ const Status = () => {
                   {MERCHANT_UPI_ID}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Name: {MERCHANT_NAME}
+                  {MERCHANT_NAME} • {MERCHANT_BANK}
                 </p>
               </div>
 
