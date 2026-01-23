@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Smartphone } from "lucide-react";
+import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import upiQrImage from "@/assets/upi-qr.jpg";
@@ -25,12 +25,7 @@ interface Booking {
 // Generate dynamic QR code URL using external API
 const generateDynamicQRUrl = (amount: number, bookingRef: string) => {
   const upiString = `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
-};
-
-// Generate UPI intent URL for mobile
-const generateUPIIntentUrl = (amount: number, bookingRef: string) => {
-  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+  return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
 };
 
 const Status = () => {
@@ -43,6 +38,7 @@ const Status = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showStaticQR, setShowStaticQR] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const fetchBooking = async () => {
     if (!bookingId) {
@@ -284,7 +280,7 @@ const Status = () => {
                 <img 
                   src={generateDynamicQRUrl(bookingAmount, bookingRef)}
                   alt="UPI Payment QR Code" 
-                  className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
+                  className="w-56 h-56 mx-auto border border-border rounded-lg bg-white p-2"
                   onError={(e) => {
                     // Fallback to static QR if dynamic fails
                     (e.target as HTMLImageElement).src = upiQrImage;
@@ -296,21 +292,32 @@ const Status = () => {
                     Using static QR - please enter amount manually: ₹{bookingAmount}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground mt-3">
+                  Open any UPI app → Scan this QR → Pay
+                </p>
               </div>
 
-              {/* UPI Pay Button */}
-              <a
-                href={generateUPIIntentUrl(bookingAmount, bookingRef)}
-                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-full font-medium transition-colors mb-3"
+              {/* Copy UPI ID Button */}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(MERCHANT_UPI_ID);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="flex items-center justify-center gap-2 w-full bg-foreground hover:bg-foreground/90 text-background py-3 px-4 rounded-full font-medium transition-colors mb-3"
               >
-                <Smartphone className="w-5 h-5" />
-                Pay ₹{bookingAmount} with UPI App
-              </a>
-
-              {/* BHIM UPI Notice */}
-              <p className="text-xs text-amber-500 text-center mb-4 px-2">
-                ⚠️ BHIM UPI is temporarily unavailable. Please use Google Pay, PhonePe, or Paytm for a seamless experience.
-              </p>
+                {copied ? (
+                  <>
+                    <Check className="w-5 h-5" />
+                    UPI ID Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-5 h-5" />
+                    Copy UPI ID to Pay Manually
+                  </>
+                )}
+              </button>
 
               {/* UPI ID Display */}
               <div className="text-center pt-4 border-t border-border">
