@@ -11,6 +11,7 @@ const TeamSection = lazy(() => import("@/components/TeamSection"));
 const PrivacySection = lazy(() => import("@/components/PrivacySection"));
 const BookingSection = lazy(() => import("@/components/BookingSection"));
 const FAQSection = lazy(() => import("@/components/FAQSection"));
+const TrackRepairSection = lazy(() => import("@/components/TrackRepairSection"));
 const Footer = lazy(() => import("@/components/Footer"));
 
 // Minimal skeleton loader for lazy components
@@ -49,6 +50,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <FAQSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <TrackRepairSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <Footer />
