@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Check if user is authorized (only admin can interact)
+function isAuthorizedUser(chatId: number | string | undefined): boolean {
+  if (!chatId) return false;
+  const authorizedChatId = Deno.env.get("TELEGRAM_CHAT_ID");
+  if (!authorizedChatId) return false;
+  return chatId.toString() === authorizedChatId;
+}
+
 // Update booking payment status
 async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -230,6 +238,15 @@ serve(async (req) => {
         });
       }
 
+      // Check authorization
+      if (!isAuthorizedUser(chatId)) {
+        console.log(`Unauthorized callback from chat: ${chatId}`);
+        await answerCallbackQuery(botToken, callbackQueryId, "⛔ Access denied. This bot is private.");
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       console.log("Callback data:", callbackData);
 
       // Payment confirmation: py:shortRef or pn:shortRef
@@ -370,6 +387,19 @@ serve(async (req) => {
     // Handle text commands
     if (update.message?.text) {
       const chatId = update.message.chat.id;
+
+      // Check authorization
+      if (!isAuthorizedUser(chatId)) {
+        console.log(`Unauthorized message from chat: ${chatId}`);
+        await sendTelegramMessage(
+          botToken,
+          chatId.toString(),
+          "⛔ This bot is private. Access denied."
+        );
+        return new Response(JSON.stringify({ ok: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const text = update.message.text.toLowerCase().trim();
 
       if (text === "/bookings" || text === "/start") {
