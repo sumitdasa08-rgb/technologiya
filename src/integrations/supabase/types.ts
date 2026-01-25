@@ -64,6 +64,47 @@ export type Database = {
           },
         ]
       }
+      payment_logs: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
