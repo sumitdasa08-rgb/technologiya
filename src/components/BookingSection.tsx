@@ -185,22 +185,8 @@ const BookingSection = () => {
       }
 
       const booking = response.booking;
-      const serviceLabel = response.service?.label || selectedService.label;
 
-      // Send Telegram notification with short_ref and location
-      await supabase.functions.invoke("send-booking-telegram", {
-        body: {
-          booking_id: booking.id,
-          short_ref: booking.short_ref,
-          customer_name: trimmedName,
-          phone: phoneDigits,
-          amount: booking.amount,
-          service: serviceLabel,
-          location: userLocation,
-        },
-      });
-
-      // Navigate to status page with booking ID
+      // Navigate immediately - Telegram notification is handled server-side
       navigate(`/status?booking_id=${booking.id}`);
     } catch (error) {
       console.error("Booking error:", error);
