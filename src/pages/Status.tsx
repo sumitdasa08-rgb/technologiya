@@ -23,21 +23,24 @@ const UPI_APPS = {
     package: 'com.google.android.apps.nbu.paisa.user',
     iosScheme: 'tez',
     icon: '💳',
-    color: 'bg-blue-600 hover:bg-blue-700'
+    color: 'bg-blue-600 hover:bg-blue-700',
+    isChat: false
   },
   phonepe: { 
     name: 'PhonePe', 
     package: 'com.phonepe.app',
     iosScheme: 'phonepe',
     icon: '📱',
-    color: 'bg-purple-600 hover:bg-purple-700'
+    color: 'bg-purple-600 hover:bg-purple-700',
+    isChat: false
   },
   paytm: { 
     name: 'Paytm', 
     package: 'net.one97.paytm',
     iosScheme: 'paytmmp',
     icon: '💰',
-    color: 'bg-sky-600 hover:bg-sky-700'
+    color: 'bg-sky-600 hover:bg-sky-700',
+    isChat: false
   },
   // BHIM removed: Deep links require NPCI merchant registration. QR scanning works reliably.
   amazonpay: { 
@@ -45,14 +48,24 @@ const UPI_APPS = {
     package: 'in.amazon.mShop.android.shopping',
     iosScheme: 'amazonpay',
     icon: '🛒',
-    color: 'bg-amber-600 hover:bg-amber-700'
+    color: 'bg-amber-600 hover:bg-amber-700',
+    isChat: false
   },
   cred: { 
     name: 'CRED', 
     package: 'com.dreamplug.androidapp',
     iosScheme: 'cred',
     icon: '💎',
-    color: 'bg-gray-700 hover:bg-gray-800'
+    color: 'bg-gray-700 hover:bg-gray-800',
+    isChat: false
+  },
+  whatsapp: { 
+    name: 'WhatsApp Pay', 
+    package: 'com.whatsapp',
+    iosScheme: 'whatsapp',
+    icon: '💬',
+    color: 'bg-green-600 hover:bg-green-700',
+    isChat: true
   },
 } as const;
 
@@ -132,9 +145,9 @@ const generateUPIDeepLink = (amount: number, bookingRef: string, transactionRef:
   return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
 
-// Generate WhatsApp pay link
+// Generate WhatsApp chat link for WhatsApp Pay
 const generateWhatsAppPayLink = (amount: number, bookingRef: string) => {
-  const message = `Hi! I want to pay ₹${amount} for Booking #${bookingRef}. Please confirm payment details.`;
+  const message = `Hi! I'd like to pay ₹${amount} for Booking #${bookingRef}. Please share your UPI ID or payment link so I can complete the payment via WhatsApp Pay.`;
   return `https://wa.me/${MERCHANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
 };
 
@@ -624,15 +637,26 @@ const Status = () => {
                   </p>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.entries(UPI_APPS).map(([key, app]) => {
-                      const href = isIOS 
-                        ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme, currentTransactionRef)
-                        : generateAndroidIntent(bookingAmount, bookingRef, app.package, currentTransactionRef);
+                      // WhatsApp uses chat link, others use UPI intents
+                      const href = app.isChat
+                        ? generateWhatsAppPayLink(bookingAmount, bookingRef)
+                        : isIOS 
+                          ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme, currentTransactionRef)
+                          : generateAndroidIntent(bookingAmount, bookingRef, app.package, currentTransactionRef);
                       
                       return (
                         <a
                           key={key}
                           href={href}
+                          target={app.isChat ? '_blank' : undefined}
+                          rel={app.isChat ? 'noopener noreferrer' : undefined}
                           onClick={() => {
+                            if (app.isChat) {
+                              toast.info('Opening WhatsApp', {
+                                description: 'You can pay via WhatsApp Pay in the chat',
+                              });
+                              return;
+                            }
                             // Detect if app didn't open after 1.5s
                             setTimeout(() => {
                               if (document.visibilityState === 'visible') {
