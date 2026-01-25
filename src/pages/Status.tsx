@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check, Smartphone, MessageCircle, Building2 } from "lucide-react";
+import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check, Smartphone, MessageCircle, Building2, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
 import Navbar from "@/components/Navbar";
@@ -24,6 +24,16 @@ const BANK_DETAILS = {
   branch: "Memari Branch"
 };
 
+// QR Code providers with auto-fallback
+const QR_PROVIDERS = [
+  (data: string) => `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data)}`,
+  (data: string) => `https://quickchart.io/qr?text=${encodeURIComponent(data)}&size=250`,
+  (data: string) => `https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(data)}&chs=250x250`,
+];
+
+// Connection health types
+type ConnectionHealth = 'connected' | 'reconnecting' | 'offline';
+
 interface Booking {
   id: string;
   customer_name: string;
@@ -35,15 +45,14 @@ interface Booking {
   service_id?: string;
 }
 
-// Generate dynamic QR code URL using external API
-const generateDynamicQRUrl = (amount: number, bookingRef: string) => {
-  const upiString = `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
-  return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+// Generate UPI string for QR
+const generateUPIString = (amount: number, bookingRef: string) => {
+  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
 };
 
 // Generate UPI deep link for one-tap payment on mobile
 const generateUPIDeepLink = (amount: number, bookingRef: string) => {
-  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+  return generateUPIString(amount, bookingRef);
 };
 
 // Generate WhatsApp pay link
@@ -52,12 +61,30 @@ const generateWhatsAppPayLink = (amount: number, bookingRef: string) => {
   return `https://wa.me/${MERCHANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
 };
 
+// Log client-side errors silently to database
+const logPaymentError = async (bookingId: string, eventType: string, errorMessage: string, metadata?: object) => {
+  try {
+    await supabase.from('payment_logs').insert({
+      booking_id: bookingId,
+      event_type: `client_${eventType}`,
+      error_message: errorMessage,
+      metadata: { ...metadata, userAgent: navigator.userAgent, timestamp: new Date().toISOString() },
+    });
+  } catch {
+    // Silently fail - don't disrupt user experience
+    console.warn('Failed to log payment error');
+  }
+};
+
 const Status = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const bookingId = searchParams.get("booking_id");
   const { playSuccessChime } = useNotificationSound();
   const previousPaymentStatus = useRef<string | null>(null);
+  const reconnectAttempts = useRef(0);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +93,9 @@ const Status = () => {
   const [showStaticQR, setShowStaticQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [qrProviderIndex, setQrProviderIndex] = useState(0);
+  const [connectionHealth, setConnectionHealth] = useState<ConnectionHealth>('connected');
+  const [qrLoadFailed, setQrLoadFailed] = useState(false);
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -73,7 +103,7 @@ const Status = () => {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async (silent = false) => {
     if (!bookingId) {
       setError("No booking ID provided");
       setLoading(false);
@@ -92,16 +122,127 @@ const Status = () => {
       if (!data) {
         setError("Booking not found");
       } else {
+        // Check if payment status changed (for polling mode)
+        if (booking && booking.payment_status !== data.payment_status) {
+          if (data.payment_status === 'confirmed' && booking.payment_status !== 'confirmed') {
+            playSuccessChime();
+            toast.success('🎉 Payment Confirmed!', {
+              description: 'Your payment has been verified. Repair will begin shortly!',
+              duration: 6000,
+            });
+          }
+        }
         setBooking(data);
+        previousPaymentStatus.current = data.payment_status;
       }
     } catch (err) {
       console.error("Error fetching booking:", err);
-      setError("Failed to load booking");
+      if (!silent) {
+        setError("Failed to load booking");
+      }
+      // Log fetch error
+      if (bookingId) {
+        logPaymentError(bookingId, 'fetch_failed', String(err));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [bookingId, booking, playSuccessChime]);
+
+  // Setup realtime subscription with auto-reconnect
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!bookingId) return;
+
+    // Clean up existing channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channel = supabase
+      .channel(`booking-${bookingId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${bookingId}`
+        },
+        (payload) => {
+          console.log('Realtime update received:', payload);
+          const newBooking = payload.new as Booking;
+          
+          // Check if payment status just changed to confirmed
+          if (
+            previousPaymentStatus.current && 
+            previousPaymentStatus.current !== 'confirmed' && 
+            newBooking.payment_status === 'confirmed'
+          ) {
+            playSuccessChime();
+            toast.success('🎉 Payment Confirmed!', {
+              description: 'Your payment has been verified. Repair will begin shortly!',
+              duration: 6000,
+            });
+          }
+          
+          previousPaymentStatus.current = newBooking.payment_status;
+          setBooking(newBooking);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          setConnectionHealth('connected');
+          reconnectAttempts.current = 0;
+          // Clear polling if we're back online
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setConnectionHealth('reconnecting');
+          
+          // Log connection issue
+          if (bookingId) {
+            logPaymentError(bookingId, 'realtime_disconnected', `Status: ${status}`);
+          }
+          
+          // Auto-reconnect with exponential backoff
+          if (reconnectAttempts.current < 5) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+            setTimeout(() => {
+              reconnectAttempts.current++;
+              setupRealtimeSubscription();
+            }, delay);
+          } else {
+            // Give up on realtime, switch to polling
+            setConnectionHealth('offline');
+            toast.info('Live updates unavailable', {
+              description: 'We\'ll check for updates every 15 seconds',
+            });
+          }
+        }
+      });
+
+    channelRef.current = channel;
+  }, [bookingId, playSuccessChime]);
+
+  // Fallback polling when realtime fails
+  useEffect(() => {
+    if (connectionHealth === 'offline' && booking?.payment_status === 'processing') {
+      pollIntervalRef.current = setInterval(() => {
+        fetchBooking(true);
+      }, 15000); // Poll every 15 seconds
+      
+      return () => {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+      };
+    }
+  }, [connectionHealth, booking?.payment_status, fetchBooking]);
 
   // Scroll to top when page loads
   useEffect(() => {
@@ -110,48 +251,17 @@ const Status = () => {
 
   useEffect(() => {
     fetchBooking();
+    setupRealtimeSubscription();
 
-    // Subscribe to realtime updates for this booking
-    if (bookingId) {
-      const channel = supabase
-        .channel(`booking-${bookingId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'bookings',
-            filter: `id=eq.${bookingId}`
-          },
-          (payload) => {
-            console.log('Realtime update received:', payload);
-            const newBooking = payload.new as Booking;
-            
-            // Check if payment status just changed to confirmed
-            if (
-              previousPaymentStatus.current && 
-              previousPaymentStatus.current !== 'confirmed' && 
-              newBooking.payment_status === 'confirmed'
-            ) {
-              // Play success chime and show toast
-              playSuccessChime();
-              toast.success('🎉 Payment Confirmed!', {
-                description: 'Your payment has been verified. Repair will begin shortly!',
-                duration: 6000,
-              });
-            }
-            
-            previousPaymentStatus.current = newBooking.payment_status;
-            setBooking(newBooking);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [bookingId, playSuccessChime]);
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Track initial payment status
   useEffect(() => {
@@ -163,6 +273,35 @@ const Status = () => {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchBooking();
+    // Also try to reconnect realtime if offline
+    if (connectionHealth === 'offline') {
+      reconnectAttempts.current = 0;
+      setupRealtimeSubscription();
+    }
+  };
+
+  // Handle QR code load error with auto-fallback
+  const handleQRError = () => {
+    if (qrProviderIndex < QR_PROVIDERS.length - 1) {
+      // Try next provider
+      setQrProviderIndex(prev => prev + 1);
+      if (bookingId) {
+        logPaymentError(bookingId, 'qr_provider_failed', `Provider ${qrProviderIndex} failed, trying next`);
+      }
+    } else {
+      // All providers failed, show static QR
+      setShowStaticQR(true);
+      setQrLoadFailed(true);
+      if (bookingId) {
+        logPaymentError(bookingId, 'all_qr_providers_failed', 'Falling back to static QR');
+      }
+    }
+  };
+
+  // Get current QR URL
+  const getCurrentQRUrl = (amount: number, bookingRef: string) => {
+    const upiString = generateUPIString(amount, bookingRef);
+    return QR_PROVIDERS[qrProviderIndex](upiString);
   };
 
   const getPaymentStatusDisplay = () => {
@@ -343,21 +482,31 @@ const Status = () => {
                 📱 Tap above on mobile to open GPay, PhonePe, Paytm etc.
               </p>
 
-              {/* Secondary: Dynamic QR Code */}
+              {/* Secondary: Dynamic QR Code with auto-fallback */}
               <div className="text-center mb-6 pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground mb-3">Or scan QR to pay</p>
-                <img 
-                  src={generateDynamicQRUrl(bookingAmount, bookingRef)}
-                  alt="UPI Payment QR Code" 
-                  className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = upiQrImage;
-                    setShowStaticQR(true);
-                  }}
-                />
+                {!qrLoadFailed ? (
+                  <img 
+                    src={getCurrentQRUrl(bookingAmount, bookingRef)}
+                    alt="UPI Payment QR Code" 
+                    className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
+                    onError={handleQRError}
+                  />
+                ) : (
+                  <img 
+                    src={upiQrImage} 
+                    alt="Static UPI QR" 
+                    className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
+                  />
+                )}
                 {showStaticQR && (
                   <p className="text-xs text-yellow-500 mt-2">
-                    Using static QR - please enter amount manually: ₹{bookingAmount}
+                    Using backup QR - please enter amount manually: ₹{bookingAmount}
+                  </p>
+                )}
+                {qrProviderIndex > 0 && !qrLoadFailed && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Using backup QR provider ({qrProviderIndex + 1}/{QR_PROVIDERS.length})
                   </p>
                 )}
               </div>
@@ -548,9 +697,27 @@ const Status = () => {
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Status updates automatically in real-time
-          </p>
+          {/* Connection Health Indicator */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            {connectionHealth === 'connected' && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Wifi className="w-3 h-3 text-emerald-500" />
+                Live updates active
+              </p>
+            )}
+            {connectionHealth === 'reconnecting' && (
+              <p className="text-xs text-yellow-500 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Reconnecting to live updates...
+              </p>
+            )}
+            {connectionHealth === 'offline' && (
+              <p className="text-xs text-orange-500 flex items-center gap-1">
+                <WifiOff className="w-3 h-3" />
+                Checking every 15s
+              </p>
+            )}
+          </div>
         </div>
       </main>
 

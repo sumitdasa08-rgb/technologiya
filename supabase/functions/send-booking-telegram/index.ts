@@ -1,9 +1,71 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Retry helper with exponential backoff
+async function fetchWithRetry(
+  url: string, 
+  options: RequestInit, 
+  maxRetries = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      
+      const errorText = await response.text();
+      console.error(`Attempt ${attempt + 1}/${maxRetries} failed:`, errorText);
+      lastError = new Error(errorText);
+      
+      // Don't retry on client errors (4xx)
+      if (response.status >= 400 && response.status < 500) {
+        throw lastError;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.error(`Attempt ${attempt + 1}/${maxRetries} error:`, error);
+    }
+    
+    // Wait before retry with exponential backoff
+    if (attempt < maxRetries - 1) {
+      const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  
+  throw lastError || new Error('All retry attempts failed');
+}
+
+// Log payment event to database
+async function logPaymentEvent(
+  bookingId: string, 
+  eventType: string, 
+  errorMessage?: string, 
+  metadata?: object
+) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  
+  if (!supabaseUrl || !supabaseKey) return;
+  
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    await supabase.from('payment_logs').insert({
+      booking_id: bookingId,
+      event_type: eventType,
+      error_message: errorMessage,
+      metadata: metadata,
+    });
+  } catch (e) {
+    console.error('Failed to log event:', e);
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -60,34 +122,47 @@ _Waiting for payment confirmation..._`;
       ],
     };
 
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: "Markdown",
-          reply_markup: keyboard,
-        }),
-      }
-    );
+    try {
+      const response = await fetchWithRetry(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "Markdown",
+            reply_markup: keyboard,
+          }),
+        },
+        3 // 3 retry attempts
+      );
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Telegram API error:", error);
-      throw new Error("Failed to send Telegram message");
+      console.log(`Booking notification sent for ${booking_id}`);
+      
+      // Log successful send
+      await logPaymentEvent(booking_id, 'telegram_notification_sent', undefined, { shortRef });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } catch (telegramError) {
+      const errorMessage = telegramError instanceof Error ? telegramError.message : "Unknown error";
+      console.error("Telegram API error after retries:", errorMessage);
+      
+      // Log failure
+      await logPaymentEvent(booking_id, 'telegram_notification_failed', errorMessage, { shortRef, retried: true });
+      
+      // Return success to client anyway - booking is created, just notification failed
+      // Admin can check the database directly
+      return new Response(
+        JSON.stringify({ success: true, warning: "Notification delayed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-
-    console.log(`Booking notification sent for ${booking_id}`);
-
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (error) {
-    console.error("Error sending booking notification:", error);
+    console.error("Error in booking notification:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),
