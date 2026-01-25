@@ -86,36 +86,23 @@ interface Booking {
   service_id?: string;
 }
 
-// Generate unique transaction reference for NPCI compliance
-// BHIM requires 'tr' parameter for merchant transactions
-const generateTransactionRef = (bookingRef: string) => {
-  const timestamp = Date.now().toString().slice(-6);
-  return `TXN${bookingRef}${timestamp}`;
-};
-
 // Generate UPI string for QR - Optimized for NPCI standards and BHIM compatibility
 // Key fixes: Added mandatory 'tr' parameter, removed 'mode=02', use '+' for spaces
-const generateUPIString = (amount: number, bookingRef: string) => {
+// transactionRef is now passed in to prevent regeneration on every render
+const generateUPIString = (amount: number, bookingRef: string, transactionRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  const transactionRef = generateTransactionRef(simpleRef);
   // Use + for spaces (BHIM works better with this), include mandatory 'tr' parameter
   const merchantName = MERCHANT_NAME.replace(/ /g, '+');
   return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
 
 // Generate Android intent URL for specific UPI app
-// BHIM gets direct upi:// scheme (intent:// causes errors), others get intent://
-const generateAndroidIntent = (amount: number, bookingRef: string, packageName: string) => {
+// transactionRef is now passed in to prevent regeneration on every render
+const generateAndroidIntent = (amount: number, bookingRef: string, packageName: string, transactionRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  const transactionRef = generateTransactionRef(simpleRef);
   const merchantName = MERCHANT_NAME.replace(/ /g, '+');
-  
-  // BHIM specifically: use direct upi:// scheme - intent:// causes "invalid link" error
-  if (packageName === 'in.org.npci.upiapp') {
-    return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
-  }
   
   // Other apps: use intent:// for app-specific launching
   const params = `pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
@@ -123,10 +110,10 @@ const generateAndroidIntent = (amount: number, bookingRef: string, packageName: 
 };
 
 // Generate iOS deep link for specific UPI app
-const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string) => {
+// transactionRef is now passed in to prevent regeneration on every render
+const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string, transactionRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  const transactionRef = generateTransactionRef(simpleRef);
   const merchantName = MERCHANT_NAME.replace(/ /g, '+');
   
   // GPay (tez) on iOS works with standard upi:// format
@@ -137,10 +124,10 @@ const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string) 
 };
 
 // Generate generic UPI deep link as system chooser fallback
-const generateUPIDeepLink = (amount: number, bookingRef: string) => {
+// transactionRef is now passed in to prevent regeneration on every render
+const generateUPIDeepLink = (amount: number, bookingRef: string, transactionRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  const transactionRef = generateTransactionRef(simpleRef);
   const merchantName = MERCHANT_NAME.replace(/ /g, '+');
   return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
@@ -192,6 +179,9 @@ const Status = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  
+  // Stable transaction reference - only changes on manual refresh or booking change
+  const [currentTransactionRef, setCurrentTransactionRef] = useState<string>('');
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -372,16 +362,25 @@ const Status = () => {
     }
   }, [booking?.payment_status]);
 
+  // Generate stable transaction ref only when qrRefreshKey or booking changes
+  useEffect(() => {
+    if (booking?.id) {
+      const simpleRef = booking.id.replace(/[^A-Za-z0-9]/g, '').substring(0, 8);
+      const timestamp = qrRefreshKey.toString().slice(-6);
+      setCurrentTransactionRef(`TXN${simpleRef}${timestamp}`);
+    }
+  }, [qrRefreshKey, booking?.id]);
+
   // Preload next QR provider for instant failover
   useEffect(() => {
-    if (booking?.payment_status === 'processing' && qrProviderIndex < QR_PROVIDERS.length - 1) {
+    if (booking?.payment_status === 'processing' && qrProviderIndex < QR_PROVIDERS.length - 1 && currentTransactionRef) {
       const bookingAmount = typeof booking.amount === 'string' ? parseFloat(booking.amount) : booking.amount;
       const bookingRef = booking.id.substring(0, 8);
-      const nextUrl = QR_PROVIDERS[qrProviderIndex + 1](generateUPIString(bookingAmount, bookingRef));
+      const nextUrl = QR_PROVIDERS[qrProviderIndex + 1](generateUPIString(bookingAmount, bookingRef, currentTransactionRef));
       const preloadImg = new Image();
       preloadImg.src = `${nextUrl}&_t=${qrRefreshKey}`;
     }
-  }, [qrProviderIndex, qrRefreshKey, booking]);
+  }, [qrProviderIndex, qrRefreshKey, booking, currentTransactionRef]);
 
   useEffect(() => {
     fetchBooking();
@@ -432,13 +431,14 @@ const Status = () => {
     }
   };
 
-  // Get current QR URL with cache-busting
-  const getCurrentQRUrl = (amount: number, bookingRef: string) => {
-    const upiString = generateUPIString(amount, bookingRef);
+  // Get current QR URL with cache-busting - memoized to prevent unnecessary regeneration
+  const getCurrentQRUrl = useCallback((amount: number, bookingRef: string) => {
+    if (!currentTransactionRef) return '';
+    const upiString = generateUPIString(amount, bookingRef, currentTransactionRef);
     const baseUrl = QR_PROVIDERS[qrProviderIndex](upiString);
     // Add cache-busting parameter to prevent stale QR
     return `${baseUrl}&_t=${qrRefreshKey}`;
-  };
+  }, [currentTransactionRef, qrProviderIndex, qrRefreshKey]);
 
   // Manual QR refresh handler
   const handleQRRefresh = () => {
@@ -625,8 +625,8 @@ const Status = () => {
                   <div className="grid grid-cols-3 gap-2">
                     {Object.entries(UPI_APPS).map(([key, app]) => {
                       const href = isIOS 
-                        ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme)
-                        : generateAndroidIntent(bookingAmount, bookingRef, app.package);
+                        ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme, currentTransactionRef)
+                        : generateAndroidIntent(bookingAmount, bookingRef, app.package, currentTransactionRef);
                       
                       return (
                         <a
@@ -653,7 +653,7 @@ const Status = () => {
                   
                   {/* Generic UPI fallback - System chooser */}
                   <a
-                    href={generateUPIDeepLink(bookingAmount, bookingRef)}
+                    href={generateUPIDeepLink(bookingAmount, bookingRef, currentTransactionRef)}
                     className="flex items-center justify-center gap-2 w-full mt-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 px-4 rounded-xl font-medium transition-all text-sm"
                   >
                     <Smartphone className="w-4 h-4" />
@@ -670,7 +670,7 @@ const Status = () => {
               {!isMobile && (
                 <div className="mb-6">
                   <a 
-                    href={generateUPIDeepLink(bookingAmount, bookingRef)}
+                    href={generateUPIDeepLink(bookingAmount, bookingRef, currentTransactionRef)}
                     className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors text-lg"
                   >
                     <Smartphone className="w-6 h-6" />
