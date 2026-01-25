@@ -210,17 +210,17 @@ const Status = () => {
     }
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("id", bookingId)
-        .maybeSingle();
+      // Use secure Edge Function for booking lookup
+      const { data: response, error: fetchError } = await supabase.functions.invoke("get-booking-status", {
+        body: { booking_id: bookingId }
+      });
 
       if (fetchError) throw fetchError;
 
-      if (!data) {
-        setError("Booking not found");
+      if (!response?.success || !response?.booking) {
+        setError(response?.error || "Booking not found");
       } else {
+        const data = response.booking;
         // Check if payment status changed (for polling mode)
         if (booking && booking.payment_status !== data.payment_status) {
           if (data.payment_status === 'confirmed' && booking.payment_status !== 'confirmed') {
@@ -238,10 +238,6 @@ const Status = () => {
       console.error("Error fetching booking:", err);
       if (!silent) {
         setError("Failed to load booking");
-      }
-      // Log fetch error
-      if (bookingId) {
-        logPaymentError(bookingId, 'fetch_failed', String(err));
       }
     } finally {
       setLoading(false);
@@ -303,12 +299,7 @@ const Status = () => {
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setConnectionHealth('reconnecting');
           
-          // Log connection issue
-          if (bookingId) {
-            logPaymentError(bookingId, 'realtime_disconnected', `Status: ${status}`);
-          }
-          
-          // Auto-reconnect with exponential backoff
+          // Auto-reconnect with exponential backoff (only log on final failure)
           if (reconnectAttempts.current < 5) {
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
             setTimeout(() => {
@@ -316,8 +307,11 @@ const Status = () => {
               setupRealtimeSubscription();
             }, delay);
           } else {
-            // Give up on realtime, switch to polling
+            // Give up on realtime, switch to polling - log only once
             setConnectionHealth('offline');
+            if (bookingId) {
+              logPaymentError(bookingId, 'realtime_failed', 'Switched to polling after 5 retries');
+            }
             toast.info('Live updates unavailable', {
               description: 'We\'ll check for updates every 15 seconds',
             });
