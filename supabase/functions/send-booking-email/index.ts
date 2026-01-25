@@ -22,7 +22,7 @@ async function sendEmail(to: string, toName: string, subject: string, html: stri
     body: JSON.stringify({
       sender: {
         name: "TechnoLogiya",
-        email: "noreply@technologiya.com"
+        email: "emailme.sumit.das@gmail.com"  // Must be verified in Brevo
       },
       to: [{ email: to, name: toName }],
       subject,
