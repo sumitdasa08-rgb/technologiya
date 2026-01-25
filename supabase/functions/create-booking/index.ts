@@ -166,6 +166,24 @@ serve(async (req) => {
 
     console.log(`Booking created: ${booking.id} for ${trimmedName}, ₹${service.price}`);
 
+    // Fire-and-forget Telegram notification (non-blocking for fast redirect)
+    fetch(`${supabaseUrl}/functions/v1/send-booking-telegram`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({
+        booking_id: booking.id,
+        short_ref: booking.short_ref,
+        customer_name: trimmedName,
+        phone: phoneDigits,
+        amount: service.price,
+        service: service.label,
+        location: validatedLocation,
+      }),
+    }).catch(err => console.error("Background Telegram notification failed:", err));
+
     return new Response(
       JSON.stringify({
         success: true,
