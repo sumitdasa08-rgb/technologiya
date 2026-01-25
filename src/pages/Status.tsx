@@ -15,6 +15,38 @@ const MERCHANT_NAME = "Sumit Das";
 const MERCHANT_BANK = "Federal Bank";
 const MERCHANT_WHATSAPP = "918812910655";
 
+// UPI App definitions with package names (Android) and URL schemes (iOS)
+const UPI_APPS = {
+  gpay: { 
+    name: 'Google Pay', 
+    package: 'com.google.android.apps.nbu.paisa.user',
+    iosScheme: 'tez',
+    icon: '💳',
+    color: 'bg-blue-600 hover:bg-blue-700'
+  },
+  phonepe: { 
+    name: 'PhonePe', 
+    package: 'com.phonepe.app',
+    iosScheme: 'phonepe',
+    icon: '📱',
+    color: 'bg-purple-600 hover:bg-purple-700'
+  },
+  paytm: { 
+    name: 'Paytm', 
+    package: 'net.one97.paytm',
+    iosScheme: 'paytmmp',
+    icon: '💰',
+    color: 'bg-sky-600 hover:bg-sky-700'
+  },
+  bhim: { 
+    name: 'BHIM', 
+    package: 'in.org.npci.upiapp',
+    iosScheme: 'bhim',
+    icon: '🏦',
+    color: 'bg-orange-600 hover:bg-orange-700'
+  },
+} as const;
+
 // Bank transfer details
 const BANK_DETAILS = {
   accountName: "Sumit Das",
@@ -50,9 +82,25 @@ const generateUPIString = (amount: number, bookingRef: string) => {
   return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
 };
 
-// Generate UPI deep link for one-tap payment on mobile
+// Generate Android intent URL for specific UPI app
+const generateAndroidIntent = (amount: number, bookingRef: string, packageName: string) => {
+  // Use simple alphanumeric ref for BHIM compatibility
+  const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
+  const params = `pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
+  return `intent://pay?${params}#Intent;scheme=upi;package=${packageName};end`;
+};
+
+// Generate iOS deep link for specific UPI app
+const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string) => {
+  const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
+  const params = `pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
+  return `${iosScheme}://pay?${params}`;
+};
+
+// Generate generic UPI deep link as fallback
 const generateUPIDeepLink = (amount: number, bookingRef: string) => {
-  return generateUPIString(amount, bookingRef);
+  const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
+  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
 };
 
 // Generate WhatsApp pay link
@@ -98,6 +146,8 @@ const Status = () => {
   const [qrLoadFailed, setQrLoadFailed] = useState(false);
   const [qrRefreshKey, setQrRefreshKey] = useState(Date.now());
   const [isMobile, setIsMobile] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -246,10 +296,14 @@ const Status = () => {
     }
   }, [connectionHealth, booking?.payment_status, fetchBooking]);
 
-  // Scroll to top and detect mobile when page loads
+  // Scroll to top and detect mobile/platform when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
-    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    const ua = navigator.userAgent;
+    const mobile = /Android|iPhone|iPad|iPod/i.test(ua);
+    setIsMobile(mobile);
+    setIsIOS(/iPhone|iPad|iPod/i.test(ua));
+    setIsAndroid(/Android/i.test(ua));
   }, []);
 
   // Auto-refresh QR every 60 seconds to prevent caching issues
@@ -497,17 +551,61 @@ const Status = () => {
                 </div>
               </div>
 
-              {/* Primary: UPI Deep Link Button - One Tap Payment */}
-              <a 
-                href={generateUPIDeepLink(bookingAmount, bookingRef)}
-                className={`flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors mb-4 text-lg ${isMobile ? 'animate-pulse ring-2 ring-emerald-400 ring-offset-2 ring-offset-background' : ''}`}
-              >
-                <Smartphone className="w-6 h-6" />
-                {isMobile ? `Tap to Pay ₹${bookingAmount}` : `Pay ₹${bookingAmount} via UPI App`}
-              </a>
-              <p className="text-xs text-muted-foreground text-center mb-6">
-                {isMobile ? '👆 Tap the button above to open your UPI app directly' : '📱 Open on mobile to tap and pay via GPay, PhonePe, Paytm etc.'}
-              </p>
+              {/* Mobile: App Selection Grid */}
+              {isMobile && (
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground text-center mb-3">
+                    Choose your UPI App to pay ₹{bookingAmount}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(UPI_APPS).map(([key, app]) => {
+                      const href = isIOS 
+                        ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme)
+                        : generateAndroidIntent(bookingAmount, bookingRef, app.package);
+                      
+                      return (
+                        <a
+                          key={key}
+                          href={href}
+                          onClick={() => {
+                            // Detect if app didn't open after 1.5s
+                            setTimeout(() => {
+                              if (document.visibilityState === 'visible') {
+                                toast.info(`${app.name} may not be installed`, {
+                                  description: 'Try another app or scan QR code below',
+                                });
+                              }
+                            }, 1500);
+                          }}
+                          className={`flex items-center justify-center gap-2 ${app.color} text-white py-3 px-4 rounded-xl font-medium transition-colors text-sm`}
+                        >
+                          <span className="text-lg">{app.icon}</span>
+                          {app.name}
+                        </a>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    👆 Tap your preferred UPI app
+                  </p>
+                </div>
+              )}
+
+              {/* Desktop/Fallback: Generic UPI Link */}
+              {!isMobile && (
+                <div className="mb-6">
+                  <a 
+                    href={generateUPIDeepLink(bookingAmount, bookingRef)}
+                    className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors text-lg"
+                  >
+                    <Smartphone className="w-6 h-6" />
+                    Pay ₹{bookingAmount} via UPI App
+                  </a>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    📱 Open on mobile to tap and pay via GPay, PhonePe, Paytm etc.
+                  </p>
+                </div>
+              )}
 
               {/* Secondary: Dynamic QR Code with auto-fallback and auto-refresh */}
               <div className="text-center mb-6 pt-4 border-t border-border">
