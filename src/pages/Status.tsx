@@ -2,17 +2,27 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check } from "lucide-react";
+import { Loader2, RefreshCw, Home, Clock, CheckCircle, XCircle, IndianRupee, AlertCircle, Copy, Check, Smartphone, MessageCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import upiQrImage from "@/assets/upi-qr.jpg";
 
-// Merchant UPI details
+// Merchant details
 const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
 const MERCHANT_NAME = "Sumit Das";
 const MERCHANT_BANK = "Federal Bank";
+const MERCHANT_WHATSAPP = "918812910655";
+
+// Bank transfer details
+const BANK_DETAILS = {
+  accountName: "Sumit Das",
+  accountNumber: "14730100014181",
+  ifscCode: "FDRL0001473",
+  bankName: "Federal Bank",
+  branch: "Memari Branch"
+};
 
 interface Booking {
   id: string;
@@ -31,6 +41,17 @@ const generateDynamicQRUrl = (amount: number, bookingRef: string) => {
   return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
 };
 
+// Generate UPI deep link for one-tap payment on mobile
+const generateUPIDeepLink = (amount: number, bookingRef: string) => {
+  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+};
+
+// Generate WhatsApp pay link
+const generateWhatsAppPayLink = (amount: number, bookingRef: string) => {
+  const message = `Hi! I want to pay ₹${amount} for Booking #${bookingRef}. Please confirm payment details.`;
+  return `https://wa.me/${MERCHANT_WHATSAPP}?text=${encodeURIComponent(message)}`;
+};
+
 const Status = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -44,6 +65,13 @@ const Status = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showStaticQR, setShowStaticQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const fetchBooking = async () => {
     if (!bookingId) {
@@ -303,15 +331,26 @@ const Status = () => {
                 </div>
               </div>
 
-              {/* Dynamic QR Code */}
-              <div className="text-center mb-6">
-                <p className="text-sm text-muted-foreground mb-3">Scan QR to pay exact amount</p>
+              {/* Primary: UPI Deep Link Button - One Tap Payment */}
+              <a 
+                href={generateUPIDeepLink(bookingAmount, bookingRef)}
+                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors mb-4 text-lg"
+              >
+                <Smartphone className="w-6 h-6" />
+                Pay ₹{bookingAmount} via UPI App
+              </a>
+              <p className="text-xs text-muted-foreground text-center mb-6">
+                📱 Tap above on mobile to open GPay, PhonePe, Paytm etc.
+              </p>
+
+              {/* Secondary: Dynamic QR Code */}
+              <div className="text-center mb-6 pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-3">Or scan QR to pay</p>
                 <img 
                   src={generateDynamicQRUrl(bookingAmount, bookingRef)}
                   alt="UPI Payment QR Code" 
-                  className="w-56 h-56 mx-auto border border-border rounded-lg bg-white p-2"
+                  className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
                   onError={(e) => {
-                    // Fallback to static QR if dynamic fails
                     (e.target as HTMLImageElement).src = upiQrImage;
                     setShowStaticQR(true);
                   }}
@@ -321,10 +360,18 @@ const Status = () => {
                     Using static QR - please enter amount manually: ₹{bookingAmount}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-3">
-                  Open any UPI app → Scan this QR → Pay
-                </p>
               </div>
+
+              {/* Tertiary: WhatsApp Pay Button */}
+              <a 
+                href={generateWhatsAppPayLink(bookingAmount, bookingRef)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-full font-medium transition-colors mb-4"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Pay via WhatsApp
+              </a>
 
               {/* Copy UPI ID Button */}
               <button
@@ -333,7 +380,7 @@ const Status = () => {
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
-                className="flex items-center justify-center gap-2 w-full bg-foreground hover:bg-foreground/90 text-background py-3 px-4 rounded-full font-medium transition-colors mb-3"
+                className="flex items-center justify-center gap-2 w-full bg-foreground hover:bg-foreground/90 text-background py-3 px-4 rounded-full font-medium transition-colors mb-4"
               >
                 {copied ? (
                   <>
@@ -343,7 +390,7 @@ const Status = () => {
                 ) : (
                   <>
                     <Copy className="w-5 h-5" />
-                    Copy UPI ID to Pay Manually
+                    Copy UPI ID
                   </>
                 )}
               </button>
@@ -359,8 +406,60 @@ const Status = () => {
                 </p>
               </div>
 
+              {/* Bank Transfer Collapsible */}
+              <details className="mt-6">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Prefer Bank Transfer? Click here
+                </summary>
+                <div className="mt-4 space-y-3 p-4 bg-muted/50 rounded-xl">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Account Name</p>
+                      <p className="font-medium text-foreground">{BANK_DETAILS.accountName}</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(BANK_DETAILS.accountName, 'accountName')}
+                      className="p-2 rounded-lg bg-background hover:bg-accent transition-colors"
+                    >
+                      {copiedField === 'accountName' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Account Number</p>
+                      <p className="font-medium font-mono text-foreground">{BANK_DETAILS.accountNumber}</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(BANK_DETAILS.accountNumber, 'accountNumber')}
+                      className="p-2 rounded-lg bg-background hover:bg-accent transition-colors"
+                    >
+                      {copiedField === 'accountNumber' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground">IFSC Code</p>
+                      <p className="font-medium font-mono text-foreground">{BANK_DETAILS.ifscCode}</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(BANK_DETAILS.ifscCode, 'ifscCode')}
+                      className="p-2 rounded-lg bg-background hover:bg-accent transition-colors"
+                    >
+                      {copiedField === 'ifscCode' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                  </div>
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground">{BANK_DETAILS.bankName} • {BANK_DETAILS.branch}</p>
+                  </div>
+                  <p className="text-xs text-yellow-500">
+                    ⚠️ Please enter amount: ₹{bookingAmount}
+                  </p>
+                </div>
+              </details>
+
               {/* Static QR Fallback */}
-              <details className="mt-6 text-center">
+              <details className="mt-4 text-center">
                 <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
                   QR not scanning? Use alternate QR
                 </summary>
