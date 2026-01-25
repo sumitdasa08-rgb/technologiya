@@ -73,7 +73,7 @@ serve(async (req) => {
     // Build query - only return non-sensitive fields (NO location!)
     let query = supabase
       .from("bookings")
-      .select("id, customer_name, phone, amount, payment_status, repair_status, created_at, service_id, short_ref");
+      .select("id, customer_name, phone, email, amount, payment_status, repair_status, created_at, service_id, short_ref");
 
     if (booking_id) {
       // Validate UUID format to prevent injection
@@ -122,6 +122,7 @@ serve(async (req) => {
           id: booking.id,
           customer_name: booking.customer_name,
           phone: booking.phone,
+          email: booking.email,
           amount: booking.amount,
           payment_status: booking.payment_status,
           repair_status: booking.repair_status,

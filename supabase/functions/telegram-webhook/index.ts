@@ -26,14 +26,14 @@ function isAuthorizedUser(chatId: number | string | undefined): boolean {
   return chatId.toString() === authorizedChatId;
 }
 
-// Update booking payment status
+// Update booking payment status and send email notification
 async function updateBookingPaymentStatus(bookingRef: string, status: string) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseKey) {
     console.error("Supabase not configured");
-    return false;
+    return { success: false, booking: null };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -42,13 +42,13 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
     // Find booking by short_ref (stored in database)
     const { data: bookings, error: findError } = await supabase
       .from("bookings")
-      .select("id, payment_status, short_ref")
+      .select("id, payment_status, short_ref, email, customer_name, phone, amount")
       .eq("short_ref", bookingRef.toUpperCase())
       .limit(1);
 
     if (findError || !bookings || bookings.length === 0) {
       console.error("No booking found with short_ref:", bookingRef);
-      return false;
+      return { success: false, booking: null };
     }
 
     const booking = bookings[0];
@@ -61,18 +61,43 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
 
     if (error) {
       console.error("Database update error:", error);
-      return false;
+      return { success: false, booking: null };
     }
 
     console.log(`Booking ${booking.id} payment status updated to ${status}`);
-    return true;
+
+    // Send email notification if payment confirmed and email exists
+    if (status === "confirmed" && booking.email) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-booking-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            email: booking.email,
+            customer_name: booking.customer_name,
+            short_ref: booking.short_ref,
+            event_type: "payment_confirmed",
+            amount: booking.amount,
+          }),
+        });
+        console.log(`Payment confirmation email queued for ${booking.email}`);
+      } catch (emailError) {
+        console.error("Failed to send payment email:", emailError);
+        // Don't fail the whole operation if email fails
+      }
+    }
+
+    return { success: true, booking };
   } catch (error) {
     console.error("Error updating booking:", error);
-    return false;
+    return { success: false, booking: null };
   }
 }
 
-// Update booking repair status
+// Update booking repair status and send email notification
 async function updateRepairStatus(bookingRef: string, status: string) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -92,7 +117,7 @@ async function updateRepairStatus(bookingRef: string, status: string) {
     // Search by phone only since UUID pattern matching is complex
     const { data: bookings, error: findError } = await supabase
       .from("bookings")
-      .select("id, customer_name, phone, repair_status")
+      .select("id, customer_name, phone, repair_status, email, short_ref")
       .eq("phone", bookingRef)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -110,6 +135,30 @@ async function updateRepairStatus(bookingRef: string, status: string) {
 
     if (error) {
       return { success: false, message: "Database update failed" };
+    }
+
+    // Send email notification if email exists
+    if (booking.email) {
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/send-booking-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            email: booking.email,
+            customer_name: booking.customer_name,
+            short_ref: booking.short_ref,
+            event_type: "status_update",
+            repair_status: status,
+          }),
+        });
+        console.log(`Status update email queued for ${booking.email}`);
+      } catch (emailError) {
+        console.error("Failed to send status email:", emailError);
+        // Don't fail the whole operation if email fails
+      }
     }
 
     return {
@@ -276,39 +325,28 @@ serve(async (req) => {
         const shortRef = callbackData.substring(3);
         const status = isConfirmed ? "confirmed" : "failed";
 
-        const success = await updateBookingPaymentStatus(shortRef, status);
+        const result = await updateBookingPaymentStatus(shortRef, status);
 
         await answerCallbackQuery(
           botToken,
           callbackQueryId,
-          success
+          result.success
             ? isConfirmed
               ? "✅ Payment confirmed!"
               : "❌ Marked as not received"
             : "⚠️ Failed to update"
         );
 
-        // Get booking details for WhatsApp
-        const supabaseUrl = Deno.env.get("SUPABASE_URL");
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        if (supabaseUrl && supabaseKey && success) {
-          const supabase = createClient(supabaseUrl, supabaseKey);
-          const { data: bookings } = await supabase
-            .from("bookings")
-            .select("customer_name, phone, id, short_ref")
-            .eq("short_ref", shortRef.toUpperCase())
-            .limit(1);
-
-          if (bookings && bookings.length > 0) {
-            await sendWhatsAppLink(
-              botToken,
-              chatId.toString(),
-              bookings[0].phone,
-              bookings[0].customer_name,
-              isConfirmed,
-              shortRef
-            );
-          }
+        // Send WhatsApp link if update succeeded
+        if (result.success && result.booking) {
+          await sendWhatsAppLink(
+            botToken,
+            chatId.toString(),
+            result.booking.phone || "",
+            result.booking.customer_name,
+            isConfirmed,
+            shortRef
+          );
         }
 
         return new Response(JSON.stringify({ ok: true }), {

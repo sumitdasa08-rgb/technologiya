@@ -59,7 +59,7 @@ serve(async (req) => {
       );
     }
 
-    const { customer_name, phone, service_id, location } = await req.json();
+    const { customer_name, phone, service_id, location, email } = await req.json();
 
     // Validate customer_name
     if (!customer_name || typeof customer_name !== "string") {
@@ -130,6 +130,16 @@ serve(async (req) => {
       // Silently ignore invalid location - it's optional
     }
 
+    // Validate email format if provided (optional field)
+    let validatedEmail: string | null = null;
+    if (email && typeof email === "string") {
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      if (emailRegex.test(email.trim())) {
+        validatedEmail = email.trim().toLowerCase();
+      }
+      // Silently ignore invalid email - it's optional
+    }
+
     // Create booking with SERVER-DETERMINED amount (not client-provided)
     const { data: booking, error: insertError } = await supabase
       .from("bookings")
@@ -141,8 +151,9 @@ serve(async (req) => {
         payment_status: "processing",
         repair_status: "pending",
         location: validatedLocation,
+        email: validatedEmail,
       })
-      .select("id, customer_name, phone, amount, service_id, short_ref, payment_status, repair_status, created_at")
+      .select("id, customer_name, phone, email, amount, service_id, short_ref, payment_status, repair_status, created_at")
       .single();
 
     if (insertError) {

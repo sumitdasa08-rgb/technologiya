@@ -19,6 +19,7 @@ export type Database = {
           amount: number
           created_at: string
           customer_name: string
+          email: string | null
           id: string
           location: string | null
           payment_status: string
@@ -32,6 +33,7 @@ export type Database = {
           amount: number
           created_at?: string
           customer_name: string
+          email?: string | null
           id?: string
           location?: string | null
           payment_status?: string
@@ -45,6 +47,7 @@ export type Database = {
           amount?: number
           created_at?: string
           customer_name?: string
+          email?: string | null
           id?: string
           location?: string | null
           payment_status?: string
