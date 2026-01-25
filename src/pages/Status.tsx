@@ -39,13 +39,7 @@ const UPI_APPS = {
     icon: '💰',
     color: 'bg-sky-600 hover:bg-sky-700'
   },
-  bhim: { 
-    name: 'BHIM', 
-    package: 'in.org.npci.upiapp',
-    iosScheme: 'bhim',
-    icon: '🏦',
-    color: 'bg-orange-600 hover:bg-orange-700'
-  },
+  // BHIM removed: Deep links require NPCI merchant registration. QR scanning works reliably.
   amazonpay: { 
     name: 'Amazon Pay', 
     package: 'in.amazon.mShop.android.shopping',
@@ -690,8 +684,13 @@ const Status = () => {
 
               {/* Secondary: Dynamic QR Code with auto-fallback and auto-refresh */}
               <div className="text-center mb-6 pt-4 border-t border-border">
+                {/* BHIM users callout - QR is the reliable method for BHIM */}
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-sm font-medium text-orange-400">🏦 Using BHIM? Scan the QR code below</p>
+                  <p className="text-xs text-muted-foreground mt-1">BHIM app buttons may not work, but QR scanning is fully supported</p>
+                </div>
                 <div className="flex items-center justify-center gap-2 mb-3">
-                  <p className="text-sm text-muted-foreground">Or scan QR to pay</p>
+                  <p className="text-sm text-muted-foreground">Scan QR to pay</p>
                   <button
                     onClick={handleQRRefresh}
                     className="p-1 rounded-md hover:bg-muted transition-colors"
