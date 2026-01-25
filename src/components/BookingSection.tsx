@@ -155,22 +155,24 @@ const BookingSection = () => {
     setIsLoading(true);
 
     try {
-      // Create booking in database with location
-      const { data: booking, error } = await supabase
-        .from("bookings")
-        .insert({
+      // Create booking via secure Edge Function (server-side price validation)
+      const { data: response, error: createError } = await supabase.functions.invoke("create-booking", {
+        body: {
           customer_name: trimmedName,
           phone: phoneDigits,
           service_id: selectedServiceId,
-          amount: selectedService.price,
-          payment_status: "processing",
-          repair_status: "pending",
           location: userLocation,
-        })
-        .select()
-        .single();
+        },
+      });
 
-      if (error) throw error;
+      if (createError) throw createError;
+      
+      if (!response?.success || !response?.booking) {
+        throw new Error(response?.error || "Failed to create booking");
+      }
+
+      const booking = response.booking;
+      const serviceLabel = response.service?.label || selectedService.label;
 
       // Send Telegram notification with short_ref and location
       await supabase.functions.invoke("send-booking-telegram", {
@@ -180,7 +182,7 @@ const BookingSection = () => {
           customer_name: trimmedName,
           phone: phoneDigits,
           amount: booking.amount,
-          service: selectedService.label,
+          service: serviceLabel,
           location: userLocation,
         },
       });
@@ -189,7 +191,8 @@ const BookingSection = () => {
       navigate(`/status?booking_id=${booking.id}`);
     } catch (error) {
       console.error("Booking error:", error);
-      toast.error("Failed to create booking. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to create booking";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

@@ -3,8 +3,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-telegram-bot-api-secret-token",
 };
+
+// Validate Telegram webhook secret token
+function isValidWebhookRequest(req: Request): boolean {
+  const webhookSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
+  if (!webhookSecret) {
+    console.warn("TELEGRAM_WEBHOOK_SECRET not configured - webhook validation disabled");
+    return true; // Allow if not configured (for backwards compatibility during migration)
+  }
+  
+  const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
+  return secretToken === webhookSecret;
+}
 
 // Check if user is authorized (only admin can interact)
 function isAuthorizedUser(chatId: number | string | undefined): boolean {
@@ -211,6 +223,15 @@ serve(async (req) => {
   try {
     if (req.method === "GET") {
       return new Response(JSON.stringify({ ok: true, message: "Webhook active" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate webhook secret for POST requests (Telegram sends POST)
+    if (req.method === "POST" && !isValidWebhookRequest(req)) {
+      console.error("Invalid webhook secret token - rejecting request");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
