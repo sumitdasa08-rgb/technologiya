@@ -13,6 +13,7 @@ serve(async (req) => {
 
   const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const webhookSecret = Deno.env.get('TELEGRAM_WEBHOOK_SECRET');
 
   if (!botToken || !supabaseUrl) {
     console.error('Missing TELEGRAM_BOT_TOKEN or SUPABASE_URL');
@@ -31,21 +32,33 @@ serve(async (req) => {
     const webhookUrl = `${supabaseUrl}/functions/v1/telegram-webhook`;
     
     console.log('Setting up Telegram webhook to:', webhookUrl);
+    console.log('Webhook secret configured:', !!webhookSecret);
 
     // First, get current webhook info
     const getInfoResponse = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
     const webhookInfo = await getInfoResponse.json();
     console.log('Current webhook info:', JSON.stringify(webhookInfo));
 
+    // Build webhook configuration - include secret_token if available
+    const webhookConfig: any = {
+      url: webhookUrl,
+      allowed_updates: ['message', 'callback_query'],
+      drop_pending_updates: true,
+    };
+
+    // Add secret token for security (Telegram will send it as X-Telegram-Bot-Api-Secret-Token header)
+    if (webhookSecret) {
+      webhookConfig.secret_token = webhookSecret;
+      console.log('Including secret_token in webhook configuration');
+    } else {
+      console.warn('TELEGRAM_WEBHOOK_SECRET not set - webhook will not be secured');
+    }
+
     // Set the webhook
     const setWebhookResponse = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: webhookUrl,
-        allowed_updates: ['message', 'callback_query'],
-        drop_pending_updates: true,
-      }),
+      body: JSON.stringify(webhookConfig),
     });
 
     const result = await setWebhookResponse.json();
@@ -59,6 +72,7 @@ serve(async (req) => {
       success: true,
       setWebhookResult: result,
       webhookUrl,
+      secretConfigured: !!webhookSecret,
       currentWebhookInfo: newWebhookInfo,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

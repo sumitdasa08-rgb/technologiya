@@ -41,20 +41,18 @@ const Track = () => {
     setSearched(true);
 
     try {
-      // Search by short_ref (the 8-character reference number sent to clients)
-      const { data, error: fetchError } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("short_ref", trimmedRef.toUpperCase())
-        .maybeSingle();
+      // Use secure Edge Function for booking lookup (prevents data enumeration)
+      const { data: response, error: fetchError } = await supabase.functions.invoke("get-booking-status", {
+        body: { short_ref: trimmedRef }
+      });
 
       if (fetchError) throw fetchError;
 
-      if (!data) {
-        setError("No booking found with this reference number. Please check and try again.");
+      if (!response?.success || !response?.booking) {
+        setError(response?.error || "No booking found with this reference number. Please check and try again.");
         setBooking(null);
       } else {
-        setBooking(data);
+        setBooking(response.booking);
         setError(null);
       }
     } catch (err) {
