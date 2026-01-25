@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 
+// Debug: log key format (not the full key)
+console.log("BREVO_API_KEY configured:", BREVO_API_KEY ? `yes (${BREVO_API_KEY.substring(0, 10)}...)` : "no");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
