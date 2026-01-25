@@ -1,31 +1,35 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Send email via Resend API
-async function sendEmail(to: string, subject: string, html: string) {
-  const response = await fetch("https://api.resend.com/emails", {
+// Send email via Brevo API
+async function sendEmail(to: string, toName: string, subject: string, html: string) {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
+      "accept": "application/json",
+      "api-key": BREVO_API_KEY!,
+      "content-type": "application/json",
     },
     body: JSON.stringify({
-      from: "TechnoLogiya <noreply@technologiya.lovable.app>",
-      to: [to],
+      sender: {
+        name: "TechnoLogiya",
+        email: "noreply@technologiya.com"
+      },
+      to: [{ email: to, name: toName }],
       subject,
-      html,
+      htmlContent: html,
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Resend API error: ${error}`);
+    throw new Error(`Brevo API error: ${error}`);
   }
 
   return await response.json();
@@ -165,8 +169,8 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY not configured");
+    if (!BREVO_API_KEY) {
+      console.error("BREVO_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -183,7 +187,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Sending ${event_type} email to ${email} for booking ${short_ref}`);
 
-    const emailResponse = await sendEmail(email, subject, html);
+    const emailResponse = await sendEmail(email, customer_name, subject, html);
 
     console.log("Email sent successfully:", emailResponse);
 
