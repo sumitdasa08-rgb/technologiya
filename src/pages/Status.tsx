@@ -96,6 +96,8 @@ const Status = () => {
   const [qrProviderIndex, setQrProviderIndex] = useState(0);
   const [connectionHealth, setConnectionHealth] = useState<ConnectionHealth>('connected');
   const [qrLoadFailed, setQrLoadFailed] = useState(false);
+  const [qrRefreshKey, setQrRefreshKey] = useState(Date.now());
+  const [isMobile, setIsMobile] = useState(false);
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -244,10 +246,25 @@ const Status = () => {
     }
   }, [connectionHealth, booking?.payment_status, fetchBooking]);
 
-  // Scroll to top when page loads
+  // Scroll to top and detect mobile when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
+    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
+
+  // Auto-refresh QR every 60 seconds to prevent caching issues
+  useEffect(() => {
+    if (booking?.payment_status === 'processing') {
+      const refreshInterval = setInterval(() => {
+        setQrRefreshKey(Date.now());
+        setQrProviderIndex(0); // Reset to first provider on refresh
+        setQrLoadFailed(false);
+        setShowStaticQR(false);
+      }, 60000); // Every 60 seconds
+      
+      return () => clearInterval(refreshInterval);
+    }
+  }, [booking?.payment_status]);
 
   useEffect(() => {
     fetchBooking();
@@ -298,10 +315,20 @@ const Status = () => {
     }
   };
 
-  // Get current QR URL
+  // Get current QR URL with cache-busting
   const getCurrentQRUrl = (amount: number, bookingRef: string) => {
     const upiString = generateUPIString(amount, bookingRef);
-    return QR_PROVIDERS[qrProviderIndex](upiString);
+    const baseUrl = QR_PROVIDERS[qrProviderIndex](upiString);
+    // Add cache-busting parameter to prevent stale QR
+    return `${baseUrl}&_t=${qrRefreshKey}`;
+  };
+
+  // Manual QR refresh handler
+  const handleQRRefresh = () => {
+    setQrRefreshKey(Date.now());
+    setQrProviderIndex(0);
+    setQrLoadFailed(false);
+    setShowStaticQR(false);
   };
 
   const getPaymentStatusDisplay = () => {
@@ -473,18 +500,27 @@ const Status = () => {
               {/* Primary: UPI Deep Link Button - One Tap Payment */}
               <a 
                 href={generateUPIDeepLink(bookingAmount, bookingRef)}
-                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors mb-4 text-lg"
+                className={`flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-full font-semibold transition-colors mb-4 text-lg ${isMobile ? 'animate-pulse ring-2 ring-emerald-400 ring-offset-2 ring-offset-background' : ''}`}
               >
                 <Smartphone className="w-6 h-6" />
-                Pay ₹{bookingAmount} via UPI App
+                {isMobile ? `Tap to Pay ₹${bookingAmount}` : `Pay ₹${bookingAmount} via UPI App`}
               </a>
               <p className="text-xs text-muted-foreground text-center mb-6">
-                📱 Tap above on mobile to open GPay, PhonePe, Paytm etc.
+                {isMobile ? '👆 Tap the button above to open your UPI app directly' : '📱 Open on mobile to tap and pay via GPay, PhonePe, Paytm etc.'}
               </p>
 
-              {/* Secondary: Dynamic QR Code with auto-fallback */}
+              {/* Secondary: Dynamic QR Code with auto-fallback and auto-refresh */}
               <div className="text-center mb-6 pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-3">Or scan QR to pay</p>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <p className="text-sm text-muted-foreground">Or scan QR to pay</p>
+                  <button
+                    onClick={handleQRRefresh}
+                    className="p-1 rounded-md hover:bg-muted transition-colors"
+                    title="Refresh QR Code"
+                  >
+                    <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                </div>
                 {!qrLoadFailed ? (
                   <img 
                     src={getCurrentQRUrl(bookingAmount, bookingRef)}
@@ -499,8 +535,12 @@ const Status = () => {
                     className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
                   />
                 )}
+                <p className="text-xs text-emerald-600 mt-2 flex items-center justify-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  QR auto-refreshes every 60s
+                </p>
                 {showStaticQR && (
-                  <p className="text-xs text-yellow-500 mt-2">
+                  <p className="text-xs text-yellow-500 mt-1">
                     Using backup QR - please enter amount manually: ₹{bookingAmount}
                   </p>
                 )}
