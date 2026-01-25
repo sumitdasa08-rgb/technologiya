@@ -92,22 +92,39 @@ interface Booking {
   service_id?: string;
 }
 
-// Generate UPI string for QR - Optimized for NPCI standards
-// Using exact 2 decimal places for amount, mode=02 for merchant QR, simple alphanumeric tn
+// Generate unique transaction reference for NPCI compliance
+// BHIM requires 'tr' parameter for merchant transactions
+const generateTransactionRef = (bookingRef: string) => {
+  const timestamp = Date.now().toString().slice(-6);
+  return `TXN${bookingRef}${timestamp}`;
+};
+
+// Generate UPI string for QR - Optimized for NPCI standards and BHIM compatibility
+// Key fixes: Added mandatory 'tr' parameter, removed 'mode=02', use '+' for spaces
 const generateUPIString = (amount: number, bookingRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
-  const formattedAmount = amount.toFixed(2); // NPCI requires 2 decimal places
-  // Minimal encoding - BHIM has issues with over-encoded strings
-  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+  const formattedAmount = amount.toFixed(2);
+  const transactionRef = generateTransactionRef(simpleRef);
+  // Use + for spaces (BHIM works better with this), include mandatory 'tr' parameter
+  const merchantName = MERCHANT_NAME.replace(/ /g, '+');
+  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
 
 // Generate Android intent URL for specific UPI app
-// Uses intent:// scheme for reliable app-specific launching
+// BHIM gets direct upi:// scheme (intent:// causes errors), others get intent://
 const generateAndroidIntent = (amount: number, bookingRef: string, packageName: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  // Build params without excessive encoding for BHIM compatibility
-  const params = `pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+  const transactionRef = generateTransactionRef(simpleRef);
+  const merchantName = MERCHANT_NAME.replace(/ /g, '+');
+  
+  // BHIM specifically: use direct upi:// scheme - intent:// causes "invalid link" error
+  if (packageName === 'in.org.npci.upiapp') {
+    return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
+  }
+  
+  // Other apps: use intent:// for app-specific launching
+  const params = `pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
   return `intent://pay?${params}#Intent;scheme=upi;package=${packageName};end`;
 };
 
@@ -115,18 +132,23 @@ const generateAndroidIntent = (amount: number, bookingRef: string, packageName: 
 const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
+  const transactionRef = generateTransactionRef(simpleRef);
+  const merchantName = MERCHANT_NAME.replace(/ /g, '+');
+  
   // GPay (tez) on iOS works with standard upi:// format
   if (iosScheme === 'tez') {
-    return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+    return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
   }
-  return `${iosScheme}://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+  return `${iosScheme}://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
 
 // Generate generic UPI deep link as system chooser fallback
 const generateUPIDeepLink = (amount: number, bookingRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
   const formattedAmount = amount.toFixed(2);
-  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+  const transactionRef = generateTransactionRef(simpleRef);
+  const merchantName = MERCHANT_NAME.replace(/ /g, '+');
+  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${merchantName}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&tr=${transactionRef}`;
 };
 
 // Generate WhatsApp pay link
