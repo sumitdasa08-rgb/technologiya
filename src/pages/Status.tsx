@@ -16,6 +16,7 @@ const MERCHANT_BANK = "Federal Bank";
 const MERCHANT_WHATSAPP = "918812910655";
 
 // UPI App definitions with package names (Android) and URL schemes (iOS)
+// Enhanced for maximum compatibility across all UPI apps
 const UPI_APPS = {
   gpay: { 
     name: 'Google Pay', 
@@ -44,6 +45,20 @@ const UPI_APPS = {
     iosScheme: 'bhim',
     icon: '🏦',
     color: 'bg-orange-600 hover:bg-orange-700'
+  },
+  amazonpay: { 
+    name: 'Amazon Pay', 
+    package: 'in.amazon.mShop.android.shopping',
+    iosScheme: 'amazonpay',
+    icon: '🛒',
+    color: 'bg-amber-600 hover:bg-amber-700'
+  },
+  cred: { 
+    name: 'CRED', 
+    package: 'com.dreamplug.androidapp',
+    iosScheme: 'cred',
+    icon: '💎',
+    color: 'bg-gray-700 hover:bg-gray-800'
   },
 } as const;
 
@@ -77,30 +92,41 @@ interface Booking {
   service_id?: string;
 }
 
-// Generate UPI string for QR
+// Generate UPI string for QR - Optimized for NPCI standards
+// Using exact 2 decimal places for amount, mode=02 for merchant QR, simple alphanumeric tn
 const generateUPIString = (amount: number, bookingRef: string) => {
-  return `upi://pay?pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Booking-${bookingRef}`)}`;
+  const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
+  const formattedAmount = amount.toFixed(2); // NPCI requires 2 decimal places
+  // Minimal encoding - BHIM has issues with over-encoded strings
+  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
 };
 
 // Generate Android intent URL for specific UPI app
+// Uses intent:// scheme for reliable app-specific launching
 const generateAndroidIntent = (amount: number, bookingRef: string, packageName: string) => {
-  // Use simple alphanumeric ref for BHIM compatibility
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
-  const params = `pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
+  const formattedAmount = amount.toFixed(2);
+  // Build params without excessive encoding for BHIM compatibility
+  const params = `pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
   return `intent://pay?${params}#Intent;scheme=upi;package=${packageName};end`;
 };
 
 // Generate iOS deep link for specific UPI app
 const generateIOSLink = (amount: number, bookingRef: string, iosScheme: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
-  const params = `pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
-  return `${iosScheme}://pay?${params}`;
+  const formattedAmount = amount.toFixed(2);
+  // GPay (tez) on iOS works with standard upi:// format
+  if (iosScheme === 'tez') {
+    return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
+  }
+  return `${iosScheme}://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
 };
 
-// Generate generic UPI deep link as fallback
+// Generate generic UPI deep link as system chooser fallback
 const generateUPIDeepLink = (amount: number, bookingRef: string) => {
   const simpleRef = bookingRef.replace(/[^A-Za-z0-9]/g, '');
-  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amount}&cu=INR&tn=Order${simpleRef}`;
+  const formattedAmount = amount.toFixed(2);
+  return `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${MERCHANT_NAME}&am=${formattedAmount}&cu=INR&tn=Order${simpleRef}&mode=02`;
 };
 
 // Generate WhatsApp pay link
@@ -145,6 +171,8 @@ const Status = () => {
   const [connectionHealth, setConnectionHealth] = useState<ConnectionHealth>('connected');
   const [qrLoadFailed, setQrLoadFailed] = useState(false);
   const [qrRefreshKey, setQrRefreshKey] = useState(Date.now());
+  const [qrCountdown, setQrCountdown] = useState(60);
+  const [qrLoading, setQrLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
@@ -306,19 +334,38 @@ const Status = () => {
     setIsAndroid(/Android/i.test(ua));
   }, []);
 
-  // Auto-refresh QR every 60 seconds to prevent caching issues
+  // Auto-refresh QR every 60 seconds with visual countdown
   useEffect(() => {
     if (booking?.payment_status === 'processing') {
-      const refreshInterval = setInterval(() => {
-        setQrRefreshKey(Date.now());
-        setQrProviderIndex(0); // Reset to first provider on refresh
-        setQrLoadFailed(false);
-        setShowStaticQR(false);
-      }, 60000); // Every 60 seconds
+      const countdownInterval = setInterval(() => {
+        setQrCountdown(prev => {
+          if (prev <= 1) {
+            // Reset countdown and refresh QR
+            setQrRefreshKey(Date.now());
+            setQrProviderIndex(0);
+            setQrLoadFailed(false);
+            setShowStaticQR(false);
+            setQrLoading(true);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
       
-      return () => clearInterval(refreshInterval);
+      return () => clearInterval(countdownInterval);
     }
   }, [booking?.payment_status]);
+
+  // Preload next QR provider for instant failover
+  useEffect(() => {
+    if (booking?.payment_status === 'processing' && qrProviderIndex < QR_PROVIDERS.length - 1) {
+      const bookingAmount = typeof booking.amount === 'string' ? parseFloat(booking.amount) : booking.amount;
+      const bookingRef = booking.id.substring(0, 8);
+      const nextUrl = QR_PROVIDERS[qrProviderIndex + 1](generateUPIString(bookingAmount, bookingRef));
+      const preloadImg = new Image();
+      preloadImg.src = `${nextUrl}&_t=${qrRefreshKey}`;
+    }
+  }, [qrProviderIndex, qrRefreshKey, booking]);
 
   useEffect(() => {
     fetchBooking();
@@ -383,6 +430,8 @@ const Status = () => {
     setQrProviderIndex(0);
     setQrLoadFailed(false);
     setShowStaticQR(false);
+    setQrLoading(true);
+    setQrCountdown(60);
   };
 
   const getPaymentStatusDisplay = () => {
@@ -557,7 +606,7 @@ const Status = () => {
                   <p className="text-sm text-muted-foreground text-center mb-3">
                     Choose your UPI App to pay ₹{bookingAmount}
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     {Object.entries(UPI_APPS).map(([key, app]) => {
                       const href = isIOS 
                         ? generateIOSLink(bookingAmount, bookingRef, app.iosScheme)
@@ -577,16 +626,26 @@ const Status = () => {
                               }
                             }, 1500);
                           }}
-                          className={`flex items-center justify-center gap-2 ${app.color} text-white py-3 px-4 rounded-xl font-medium transition-colors text-sm`}
+                          className={`flex flex-col items-center justify-center gap-1 ${app.color} text-white py-3 px-2 rounded-xl font-medium transition-colors text-xs`}
                         >
-                          <span className="text-lg">{app.icon}</span>
+                          <span className="text-xl">{app.icon}</span>
                           {app.name}
                         </a>
                       );
                     })}
                   </div>
+                  
+                  {/* Generic UPI fallback - System chooser */}
+                  <a
+                    href={generateUPIDeepLink(bookingAmount, bookingRef)}
+                    className="flex items-center justify-center gap-2 w-full mt-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 px-4 rounded-xl font-medium transition-all text-sm"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    Any Other UPI App
+                  </a>
+                  
                   <p className="text-xs text-muted-foreground text-center mt-3">
-                    👆 Tap your preferred UPI app
+                    👆 Tap your preferred UPI app • All apps use NPCI standards
                   </p>
                 </div>
               )}
@@ -616,27 +675,47 @@ const Status = () => {
                     className="p-1 rounded-md hover:bg-muted transition-colors"
                     title="Refresh QR Code"
                   >
-                    <RefreshCw className="w-3 h-3 text-muted-foreground" />
+                    <RefreshCw className={`w-3 h-3 text-muted-foreground ${qrLoading ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
-                {!qrLoadFailed ? (
-                  <img 
-                    src={getCurrentQRUrl(bookingAmount, bookingRef)}
-                    alt="UPI Payment QR Code" 
-                    className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
-                    onError={handleQRError}
-                  />
-                ) : (
-                  <img 
-                    src={upiQrImage} 
-                    alt="Static UPI QR" 
-                    className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
-                  />
-                )}
-                <p className="text-xs text-emerald-600 mt-2 flex items-center justify-center gap-1">
-                  <RefreshCw className="w-3 h-3" />
-                  QR auto-refreshes every 60s
-                </p>
+                
+                <div className="relative inline-block">
+                  {!qrLoadFailed ? (
+                    <img 
+                      src={getCurrentQRUrl(bookingAmount, bookingRef)}
+                      alt="UPI Payment QR Code" 
+                      className={`w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2 transition-opacity ${qrLoading ? 'opacity-50' : 'opacity-100'}`}
+                      onLoad={() => setQrLoading(false)}
+                      onError={handleQRError}
+                    />
+                  ) : (
+                    <img 
+                      src={upiQrImage} 
+                      alt="Static UPI QR" 
+                      className="w-48 h-48 mx-auto border border-border rounded-lg bg-white p-2"
+                    />
+                  )}
+                  {qrLoading && !qrLoadFailed && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Countdown Timer */}
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-2">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  <span>QR refreshes in {qrCountdown}s</span>
+                  {qrCountdown <= 30 && (
+                    <button
+                      onClick={handleQRRefresh}
+                      className="text-emerald-600 hover:text-emerald-700 underline ml-1"
+                    >
+                      Refresh now
+                    </button>
+                  )}
+                </div>
+                
                 {showStaticQR && (
                   <p className="text-xs text-yellow-500 mt-1">
                     Using backup QR - please enter amount manually: ₹{bookingAmount}
