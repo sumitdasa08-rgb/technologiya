@@ -27,6 +27,7 @@ const BookingSection = () => {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
+    email: "",
     issue: "",
   });
   const [services, setServices] = useState<ServicePricing[]>([]);
@@ -134,11 +135,22 @@ const BookingSection = () => {
 
     const trimmedName = formData.name.trim();
     const trimmedPhone = formData.phone.trim();
+    const trimmedEmail = formData.email.trim();
     const trimmedIssue = formData.issue.trim();
 
-    if (!trimmedName || !trimmedPhone || !trimmedIssue) {
-      toast.error("Please fill in all required fields");
+    // Name and phone are required, issue and email are optional
+    if (!trimmedName || !trimmedPhone) {
+      toast.error("Please fill in name and phone number");
       return;
+    }
+
+    // Validate email format if provided
+    if (trimmedEmail) {
+      const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
     }
 
     if (!selectedServiceId || !selectedService) {
@@ -160,6 +172,7 @@ const BookingSection = () => {
         body: {
           customer_name: trimmedName,
           phone: phoneDigits,
+          email: trimmedEmail || null,
           service_id: selectedServiceId,
           location: userLocation,
         },
@@ -294,14 +307,30 @@ const BookingSection = () => {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Issue Description *
+                  Email Address <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email for updates"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onFocus={handleInputFocus}
+                  className="bg-background/50 border-border/50 rounded-xl h-12"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Get payment confirmations and repair updates via email
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Issue Description <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <Textarea
                   placeholder="Describe your device issue"
                   value={formData.issue}
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                   onFocus={handleInputFocus}
-                  required
                   rows={3}
                   className="bg-background/50 border-border/50 rounded-xl resize-none"
                 />
