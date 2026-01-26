@@ -174,7 +174,7 @@ const Status = () => {
     const status = booking?.payment_status;
     if (status === "confirmed") {
       return <CheckCircle className="w-16 h-16 text-green-500" />;
-    } else if (status === "pending") {
+    } else if (status === "pending" || status === "processing") {
       return <Clock className="w-16 h-16 text-yellow-500 animate-pulse" />;
     }
     return <XCircle className="w-16 h-16 text-red-500" />;
@@ -186,6 +186,7 @@ const Status = () => {
       case "confirmed":
         return "Payment Confirmed";
       case "pending":
+      case "processing":
         return "Awaiting Payment";
       case "failed":
         return "Payment Failed";
@@ -304,7 +305,7 @@ const Status = () => {
         </Card>
 
         {/* Payment Section - Only show if pending */}
-        {booking.payment_status === "pending" && (
+        {(booking.payment_status === "pending" || booking.payment_status === "processing") && (
           <Card className="border-primary/50">
             <CardContent className="pt-6 space-y-6">
               {/* Amount Display */}
