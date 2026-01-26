@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import paymentQrCode from "@/assets/payment-qr.jpg";
+import paymentQrCode100 from "@/assets/payment-qr-100.jpg";
 
 // Merchant details
 const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
@@ -323,7 +324,7 @@ const Status = () => {
                 <div className="flex justify-center">
                   <div className="bg-white p-3 rounded-xl shadow-sm border">
                     <img 
-                      src={paymentQrCode} 
+                      src={booking.amount === 100 ? paymentQrCode100 : paymentQrCode} 
                       alt="UPI QR Code for payment" 
                       className="w-48 h-48 object-contain"
                     />
