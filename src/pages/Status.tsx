@@ -14,6 +14,7 @@ import paymentQrCode from "@/assets/payment-qr.jpg";
 import paymentQrCode100 from "@/assets/payment-qr-100.jpg";
 import paymentQrCode200 from "@/assets/payment-qr-200.jpg";
 import paymentQrCode300 from "@/assets/payment-qr-300.jpg";
+import paymentQrCode350 from "@/assets/payment-qr-350.jpg";
 
 // Merchant details
 const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
@@ -330,6 +331,7 @@ const Status = () => {
                         booking.amount === 100 ? paymentQrCode100 : 
                         booking.amount === 200 ? paymentQrCode200 : 
                         booking.amount === 300 ? paymentQrCode300 : 
+                        booking.amount === 350 ? paymentQrCode350 : 
                         paymentQrCode
                       } 
                       alt="UPI QR Code for payment" 
