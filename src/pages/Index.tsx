@@ -13,6 +13,7 @@ const BookingSection = lazy(() => import("@/components/BookingSection"));
 const FAQSection = lazy(() => import("@/components/FAQSection"));
 const TrackRepairSection = lazy(() => import("@/components/TrackRepairSection"));
 const Footer = lazy(() => import("@/components/Footer"));
+const WhatsAppChannelBanner = lazy(() => import("@/components/WhatsAppChannelBanner"));
 
 // Minimal skeleton loader for lazy components
 const SectionSkeleton = () => (
@@ -56,6 +57,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <Footer />
+        </Suspense>
+        <Suspense fallback={null}>
+          <WhatsAppChannelBanner />
         </Suspense>
       </main>
     </>
