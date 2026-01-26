@@ -376,6 +376,27 @@ const Status = () => {
                   Thank you for your payment. We'll start working on your repair soon.
                 </p>
               </div>
+              
+              {/* Booking ID Display */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Your Booking ID</p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="font-mono text-sm bg-background px-3 py-1.5 rounded border">
+                    {booking.short_ref || bookingId?.slice(0, 8)}
+                  </code>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => copyToClipboard(booking.short_ref || bookingId?.slice(0, 8) || "", "Booking ID")}
+                  >
+                    {copiedField === "Booking ID" ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Save this ID to track your repair status
+                </p>
+              </div>
+
               <Link to={`/track?ref=${booking.short_ref || bookingId?.slice(0, 8)}`}>
                 <Button className="w-full mt-4">
                   Track Your Repair
