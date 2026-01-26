@@ -98,17 +98,17 @@ async function updateBookingPaymentStatus(bookingRef: string, status: string) {
 }
 
 // Update booking repair status and send email notification
-async function updateRepairStatus(bookingRef: string, status: string) {
+async function updateRepairStatus(phone: string, status: string) {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !supabaseKey) {
-    return { success: false, message: "Supabase not configured" };
+    return { success: false, message: "Supabase not configured", booking: null };
   }
 
   const validStatuses = ["pending", "technician_called", "technician_fixing", "fixed", "customer_satisfied"];
   if (!validStatuses.includes(status)) {
-    return { success: false, message: `Invalid status. Use: ${validStatuses.join(", ")}` };
+    return { success: false, message: `Invalid status. Use: ${validStatuses.join(", ")}`, booking: null };
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
@@ -118,12 +118,12 @@ async function updateRepairStatus(bookingRef: string, status: string) {
     const { data: bookings, error: findError } = await supabase
       .from("bookings")
       .select("id, customer_name, phone, repair_status, email, short_ref")
-      .eq("phone", bookingRef)
+      .eq("phone", phone)
       .order("created_at", { ascending: false })
       .limit(1);
 
     if (findError || !bookings || bookings.length === 0) {
-      return { success: false, message: "Booking not found" };
+      return { success: false, message: "Booking not found", booking: null };
     }
 
     const booking = bookings[0];
@@ -134,7 +134,7 @@ async function updateRepairStatus(bookingRef: string, status: string) {
       .eq("id", booking.id);
 
     if (error) {
-      return { success: false, message: "Database update failed" };
+      return { success: false, message: "Database update failed", booking: null };
     }
 
     // Send email notification if email exists
@@ -150,7 +150,7 @@ async function updateRepairStatus(bookingRef: string, status: string) {
             email: booking.email,
             customer_name: booking.customer_name,
             short_ref: booking.short_ref,
-            event_type: "status_update",
+            event_type: status, // Use status directly for specific email templates
             repair_status: status,
           }),
         });
@@ -164,10 +164,10 @@ async function updateRepairStatus(bookingRef: string, status: string) {
     return {
       success: true,
       message: `✅ Updated to "${status}" for ${booking.customer_name}`,
-      booking,
+      booking: { ...booking, repair_status: status },
     };
   } catch (error) {
-    return { success: false, message: "Error updating status" };
+    return { success: false, message: "Error updating status", booking: null };
   }
 }
 
@@ -197,6 +197,54 @@ async function listRecentBookings() {
   } catch (error) {
     return { success: false, message: "Error fetching bookings" };
   }
+}
+
+// Get current booking status by phone
+async function getBookingByPhone(phone: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: bookings, error } = await supabase
+      .from("bookings")
+      .select("id, customer_name, phone, repair_status, payment_status")
+      .eq("phone", phone)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error || !bookings || bookings.length === 0) {
+      return null;
+    }
+
+    return bookings[0];
+  } catch {
+    return null;
+  }
+}
+
+// Generate status menu keyboard with tick on current status
+function generateStatusKeyboard(phone: string, name: string, currentStatus: string) {
+  const statuses = [
+    { key: "pending", label: "Booking Received", icon: "📦" },
+    { key: "technician_called", label: "Technician Assigned", icon: "📞" },
+    { key: "technician_fixing", label: "Repair In Progress", icon: "🔧" },
+    { key: "fixed", label: "Device Fixed", icon: "✅" },
+    { key: "customer_satisfied", label: "Completed", icon: "🎉" },
+  ];
+
+  return {
+    inline_keyboard: statuses.map((s) => {
+      const isCurrent = s.key === currentStatus;
+      const label = isCurrent ? `${s.icon} ${s.label} ✓` : `${s.icon} ${s.label}`;
+      return [{ text: label, callback_data: `rs:${phone}:${s.key}:${name}` }];
+    }),
+  };
 }
 
 // Answer callback query
@@ -234,6 +282,28 @@ async function sendTelegramMessage(botToken: string, chatId: string, text: strin
     });
   } catch (error) {
     console.error("Error sending message:", error);
+  }
+}
+
+// Edit Telegram message
+async function editTelegramMessage(botToken: string, chatId: string, messageId: number, text: string, replyMarkup?: any) {
+  try {
+    const body: any = {
+      chat_id: chatId,
+      message_id: messageId,
+      text: text,
+      parse_mode: "Markdown",
+    };
+    if (replyMarkup) {
+      body.reply_markup = replyMarkup;
+    }
+    await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    console.error("Error editing message:", error);
   }
 }
 
@@ -357,12 +427,34 @@ serve(async (req) => {
       // Repair status: rs:phone:status:name
       if (callbackData.startsWith("rs:")) {
         const parts = callbackData.split(":");
-        if (parts.length >= 3) {
+        if (parts.length >= 4) {
           const phone = parts[1];
           const status = parts[2];
+          const name = parts[3];
+          const messageId = callbackQuery.message?.message_id;
 
           const result = await updateRepairStatus(phone, status);
           await answerCallbackQuery(botToken, callbackQueryId, result.message);
+
+          // Edit the message to show updated status with tick
+          if (result.success && result.booking && messageId) {
+            const keyboard = generateStatusKeyboard(phone, name, status);
+            const statusLabels: Record<string, string> = {
+              pending: "📦 Booking Received",
+              technician_called: "📞 Technician Assigned",
+              technician_fixing: "🔧 Repair In Progress",
+              fixed: "✅ Device Fixed",
+              customer_satisfied: "🎉 Completed",
+            };
+            
+            await editTelegramMessage(
+              botToken,
+              chatId.toString(),
+              messageId,
+              `🔄 *Update Status for ${name}*\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${statusLabels[status] || status}*\n\n👇 Select to change:`,
+              keyboard
+            );
+          }
         }
 
         return new Response(JSON.stringify({ ok: true }), {
@@ -377,23 +469,23 @@ serve(async (req) => {
           const phone = parts[1];
           const name = parts[2];
 
-          const statuses = [
-            { key: "technician_called", label: "Technician Assigned", icon: "📞" },
-            { key: "technician_fixing", label: "Repair In Progress", icon: "🔧" },
-            { key: "fixed", label: "Device Fixed", icon: "✅" },
-            { key: "customer_satisfied", label: "Completed", icon: "🎉" },
-          ];
+          // Get current booking status
+          const booking = await getBookingByPhone(phone);
+          const currentStatus = booking?.repair_status || "pending";
 
-          const keyboard = {
-            inline_keyboard: statuses.map((s) => [
-              { text: `${s.icon} ${s.label}`, callback_data: `rs:${phone}:${s.key}:${name}` },
-            ]),
+          const keyboard = generateStatusKeyboard(phone, name, currentStatus);
+          const statusLabels: Record<string, string> = {
+            pending: "📦 Booking Received",
+            technician_called: "📞 Technician Assigned",
+            technician_fixing: "🔧 Repair In Progress",
+            fixed: "✅ Device Fixed",
+            customer_satisfied: "🎉 Completed",
           };
 
           await sendTelegramMessage(
             botToken,
             chatId.toString(),
-            `🔄 *Update Status for ${name}*\n📱 Phone: \`${phone}\`\n\n👇 Select status:`,
+            `🔄 *Update Status for ${name}*\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${statusLabels[currentStatus] || currentStatus}*\n\n👇 Select to change:`,
             keyboard
           );
         }
