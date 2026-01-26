@@ -31,7 +31,7 @@ const Status = () => {
   const navigate = useNavigate();
   const { playSuccessChime } = useNotificationSound();
   
-  const bookingId = searchParams.get("id");
+  const bookingId = searchParams.get("booking_id") || searchParams.get("id");
 
   // Core booking state
   const [booking, setBooking] = useState<any>(null);
