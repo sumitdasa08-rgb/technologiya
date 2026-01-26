@@ -213,7 +213,7 @@ async function getBookingByPhone(phone: string) {
   try {
     const { data: bookings, error } = await supabase
       .from("bookings")
-      .select("id, customer_name, phone, repair_status, payment_status")
+      .select("id, customer_name, phone, repair_status, payment_status, short_ref")
       .eq("phone", phone)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -472,6 +472,7 @@ serve(async (req) => {
           // Get current booking status
           const booking = await getBookingByPhone(phone);
           const currentStatus = booking?.repair_status || "pending";
+          const shortRef = booking?.short_ref || "N/A";
 
           const keyboard = generateStatusKeyboard(phone, name, currentStatus);
           const statusLabels: Record<string, string> = {
@@ -485,7 +486,7 @@ serve(async (req) => {
           await sendTelegramMessage(
             botToken,
             chatId.toString(),
-            `🔄 *Update Status for ${name}*\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${statusLabels[currentStatus] || currentStatus}*\n\n👇 Select to change:`,
+            `🔄 *Update Status for ${name}*\n📋 Ref: \`${shortRef}\`\n📱 Phone: \`${phone}\`\n\n✅ *Current: ${statusLabels[currentStatus] || currentStatus}*\n\n👇 Select to change:`,
             keyboard
           );
         }
