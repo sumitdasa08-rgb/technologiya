@@ -3,14 +3,14 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Home, Clock, CheckCircle, XCircle, AlertCircle, Copy, Check, MessageCircle, Building2, Wifi, WifiOff, ChevronDown } from "lucide-react";
+import { Loader2, Home, Clock, CheckCircle, XCircle, AlertCircle, Copy, Check, MessageCircle, Building2, Wifi, WifiOff, ChevronDown, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationSound } from "@/hooks/use-notification-sound";
 
-// Destructure the hook result
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import paymentQrCode from "@/assets/payment-qr.jpg";
 
 // Merchant details
 const MERCHANT_UPI_ID = "sumitdasa99-3@oksbi";
@@ -312,6 +312,32 @@ const Status = () => {
               <div className="text-center py-4 bg-primary/10 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
                 <p className="text-4xl font-bold text-primary">₹{booking.amount}</p>
+              </div>
+
+              {/* Scan to Pay QR Code */}
+              <div className="text-center space-y-3">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <QrCode className="w-4 h-4" />
+                  <p className="text-sm font-medium">Scan to Pay</p>
+                </div>
+                <div className="flex justify-center">
+                  <div className="bg-white p-3 rounded-xl shadow-sm border">
+                    <img 
+                      src={paymentQrCode} 
+                      alt="UPI QR Code for payment" 
+                      className="w-48 h-48 object-contain"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Scan with any UPI app (GPay, PhonePe, Paytm, etc.)
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">or</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
 
               {/* WhatsApp Pay Button */}
