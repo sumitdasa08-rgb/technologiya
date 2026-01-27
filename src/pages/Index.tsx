@@ -26,9 +26,10 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>LogicLabs - Premium Computer & Mobile Repair Services</title>
+        <title>Technologiya - Premium Computer & Mobile Repair Services</title>
         <meta name="description" content="Professional tech repair services for computers and mobiles. Windows upgrades, MS Office installation, storage troubleshooting, and more. Call 8812910655" />
-        <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, phone repair near me, laptop repair service" />
+        <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, phone repair near me, laptop repair service, Technologiya" />
+        <link rel="canonical" href="https://technologiya.lovable.app/" />
       </Helmet>
       <main className="min-h-screen bg-background">
         <Navbar />
