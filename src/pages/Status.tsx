@@ -286,7 +286,7 @@ const Status = () => {
               <div className="text-center space-y-3">
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <QrCode className="w-4 h-4" />
-                  <p className="text-sm font-medium">Scan to Pay or Take a Screenshot and upload to any UPI App</p>
+                  <p className="text-base font-bold">Scan to Pay or Take a Screenshot and upload to any UPI App</p>
                 </div>
                 <div className="flex justify-center">
                   <div className="bg-white p-3 rounded-xl shadow-sm border">
