@@ -26,6 +26,12 @@ const Footer = () => {
                 {item}
               </a>
             ))}
+            <Link 
+              to="/blog"
+              className="text-sm text-background/60 hover:text-background transition-colors"
+            >
+              Blog
+            </Link>
           </div>
 
         <a 

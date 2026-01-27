@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          category: string
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          emoji: string | null
+          excerpt: string
+          fire_count: number
+          id: string
+          is_published: boolean
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          views: number
+        }
+        Insert: {
+          category: string
+          content: string
+          cover_image_url?: string | null
+          created_at?: string
+          emoji?: string | null
+          excerpt: string
+          fire_count?: number
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          views?: number
+        }
+        Update: {
+          category?: string
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          emoji?: string | null
+          excerpt?: string
+          fire_count?: number
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          views?: number
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           amount: number

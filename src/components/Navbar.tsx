@@ -1,4 +1,4 @@
-import { Phone, Menu, X, Package } from "lucide-react";
+import { Phone, Menu, X, Package, Newspaper } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
@@ -65,6 +65,14 @@ const Navbar = () => {
             Track Repair
             <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
           </Link>
+          <Link 
+            to="/blog"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 relative group"
+          >
+            <Newspaper className="w-4 h-4" />
+            Blog
+            <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
+          </Link>
         </div>
 
         <a 
@@ -107,6 +115,14 @@ const Navbar = () => {
           >
             <Package className="w-5 h-5" />
             Track Repair
+          </Link>
+          <Link 
+            to="/blog"
+            className="flex items-center gap-2 text-lg text-foreground hover:opacity-70 transition-opacity"
+            onClick={() => setIsOpen(false)}
+          >
+            <Newspaper className="w-5 h-5" />
+            Blog
           </Link>
           <a href="tel:+913613597940" className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
             <Phone className="w-4 h-4" />
