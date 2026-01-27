@@ -10,6 +10,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import Status from "./pages/Status";
 import Track from "./pages/Track";
 import ScrollToTop from "./components/ScrollToTop";
+import UpdatePrompt from "./components/UpdatePrompt";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <UpdatePrompt />
         <Toaster />
         <Sonner />
         <BrowserRouter>
