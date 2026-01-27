@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://logiclabs.lovable.app/sitemap.xml
+Sitemap: https://technologiya.lovable.app/sitemap.xml
