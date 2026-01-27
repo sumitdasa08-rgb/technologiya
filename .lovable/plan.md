@@ -1,38 +1,55 @@
 
-# Instant Update on Page Load
+# Add Payment Confirmation Buttons to Stale Payment Alerts
 
 ## Overview
-Change the update strategy so that users always get the latest version when they **open** your website, but won't be interrupted with auto-refresh banners while browsing. This provides a cleaner experience.
+Currently, the stale payment alert sends a single summary message listing all bookings waiting for payment confirmation. You want to add "Payment Received" and "Not Received" buttons so you can confirm payments directly from the alert, just like in new booking notifications.
 
-## How It Will Work
-1. When a user opens your website/app, the service worker will immediately check for updates
-2. If a new version is available, it will automatically activate and refresh the page once (silently on initial load)
-3. Users who are already browsing won't be interrupted - they'll get the new version next time they open the app
-4. No countdown banner or manual refresh buttons needed
+## Current Behavior
+- `check-stale-payments` sends one combined message with a list of all stale bookings
+- No interactive buttons - you have to manually find and confirm payments
 
-## Technical Changes
+## Proposed Changes
 
-### 1. Simplify UpdatePrompt Component
-Remove the visible banner, countdown, and periodic update checks. Instead:
-- Check for updates only on initial page load
-- If a new service worker is waiting, immediately activate it and refresh
-- This happens so fast on page load that users won't notice
+### Strategy
+Instead of sending one summary message, send **individual messages for each stale booking** with payment confirmation buttons. This matches the format of new booking notifications and allows you to take action directly.
 
-### 2. Update Strategy
-- Remove the 30-second interval checking
-- Remove the countdown UI and "Refresh Now" button
-- Keep the cache-clearing logic for a clean refresh
-- Trigger refresh immediately when a new version is detected on page load
+### Message Format (per booking)
+```
+⚠️ Stale Payment Reminder
 
-### 3. Service Worker Behavior
-The existing `skipWaiting: true` and `clientsClaim: true` in `vite.config.ts` will continue to ensure the new service worker takes over immediately.
+👤 Name: Sumit Das
+📱 Phone: 8876545667
+🛠 Service: Software Repair
+🆔 Ref: 2B528B62
+💰 Amount: ₹250
+⏰ Waiting: 3 hours
+
+[✅ Payment Received] [❌ Not Received]
+```
+
+### Technical Details
+
+**File to Modify:** `supabase/functions/check-stale-payments/index.ts`
+
+1. **Query additional fields** - Add `service_id` to the select query for service info
+2. **Send individual messages** - Loop through stale bookings and send a separate Telegram message for each one with inline keyboard buttons
+3. **Use same callback format** - `py:SHORT_REF` for payment received and `pn:SHORT_REF` for not received (already handled by `telegram-webhook`)
+4. **Keep summary at the end** - Optionally send a final summary count message
+
+### Button Actions (Already Implemented)
+The `telegram-webhook` function already handles these callback patterns:
+- `py:SHORT_REF` - Marks payment as "confirmed"
+- `pn:SHORT_REF` - Marks payment as "failed"
+
+No changes needed to the webhook - the buttons will work immediately.
 
 ## Files to Modify
+
 | File | Change |
 |------|--------|
-| `src/components/UpdatePrompt.tsx` | Simplify to silent auto-refresh on page load only |
+| `supabase/functions/check-stale-payments/index.ts` | Send individual messages with payment buttons for each stale booking |
 
 ## Result
-- **Opening the app**: Always gets the latest version (auto-refresh if needed)
-- **Already browsing**: No interruptions, gets update on next visit
-- **No visible UI**: The update happens silently during page load
+- Each stale booking gets its own message with action buttons
+- You can confirm or reject payments directly from the reminder
+- Same experience as new booking notifications
