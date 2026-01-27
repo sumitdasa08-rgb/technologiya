@@ -9,7 +9,7 @@ const HeroSection = () => {
     const isMobile = window.innerWidth < 768;
     
     if (isMobile) {
-      // On mobile, scroll to the LogicLabs header card
+      // On mobile, scroll to the Technologiya header card
       const mobileHeader = document.getElementById('booking-mobile-header');
       if (mobileHeader) {
         const offset = 20;
@@ -57,7 +57,7 @@ const HeroSection = () => {
             </div>
 
             <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-[1.1] tracking-tight font-display">
-              LogicLabs
+              Technologiya
             </h1>
             
             {/* Professional tagline */}

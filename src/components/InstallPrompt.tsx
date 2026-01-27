@@ -136,7 +136,7 @@ const InstallPrompt = () => {
 
           <div className="flex-1 min-w-0 pr-4">
             <h3 className="font-semibold text-foreground text-sm">
-              Install LogicLabs
+              Install Technologiya
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
               Add to home screen for quick access & offline use
