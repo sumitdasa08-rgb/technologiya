@@ -41,9 +41,9 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <a href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-            <span className="text-background font-bold text-lg">LL</span>
+            <span className="text-background font-bold text-lg">T</span>
           </div>
-          <span className="text-xl font-semibold text-foreground hidden sm:block">LogicLabs</span>
+          <span className="text-xl font-semibold text-foreground hidden sm:block">Technologiya</span>
         </a>
 
         <div className="hidden md:flex items-center gap-8">

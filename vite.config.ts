@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "sitemap.xml"],
       manifest: {
-        name: "LogicLabs - Tech Repair Services",
-        short_name: "LogicLabs",
+        name: "Technologiya - Tech Repair Services",
+        short_name: "Technologiya",
         description: "Professional tech repair services for computers and mobiles",
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
