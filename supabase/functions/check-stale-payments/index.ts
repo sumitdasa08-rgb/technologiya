@@ -35,7 +35,7 @@ serve(async (req) => {
     
     const { data: staleBookings, error: fetchError } = await supabase
       .from("bookings")
-      .select("id, customer_name, phone, amount, short_ref, created_at")
+      .select("id, customer_name, phone, amount, short_ref, created_at, service_id")
       .eq("payment_status", "processing")
       .lt("created_at", staleThreshold)
       .order("created_at", { ascending: true });
@@ -53,38 +53,51 @@ serve(async (req) => {
       );
     }
 
-    // Build reminder message
-    let message = `⚠️ *Stale Payments Alert*\n\n`;
-    message += `${staleBookings.length} booking(s) waiting for payment confirmation for over ${STALE_THRESHOLD_HOURS} hours:\n\n`;
+    // Fetch service labels for display
+    const { data: services } = await supabase
+      .from("service_pricing")
+      .select("id, label");
+    
+    const serviceMap = new Map(services?.map(s => [s.id, s.label]) || []);
 
-    staleBookings.forEach((b, i) => {
-      const hoursAgo = Math.round((Date.now() - new Date(b.created_at).getTime()) / (1000 * 60 * 60));
-      message += `${i + 1}. *${b.customer_name}*\n`;
-      message += `   📱 \`${b.phone}\` | ₹${b.amount}\n`;
-      message += `   🆔 Ref: \`${b.short_ref || b.id.substring(0, 8).toUpperCase()}\`\n`;
-      message += `   ⏰ ${hoursAgo}h ago\n\n`;
-    });
+    // Send individual messages for each stale booking with action buttons
+    for (const booking of staleBookings) {
+      const hoursAgo = Math.round((Date.now() - new Date(booking.created_at).getTime()) / (1000 * 60 * 60));
+      const shortRef = booking.short_ref || booking.id.substring(0, 8).toUpperCase();
+      const serviceName = booking.service_id ? serviceMap.get(booking.service_id) || booking.service_id : "Unknown";
 
-    message += `_Please check and confirm payments or follow up with customers._`;
+      const message = `⚠️ *Stale Payment Reminder*\n\n` +
+        `👤 Name: *${booking.customer_name}*\n` +
+        `📱 Phone: \`${booking.phone}\`\n` +
+        `🛠 Service: ${serviceName}\n` +
+        `🆔 Ref: \`${shortRef}\`\n` +
+        `💰 Amount: ₹${booking.amount}\n` +
+        `⏰ Waiting: ${hoursAgo}h\n\n` +
+        `_Confirm payment status:_`;
 
-    // Send reminder to admin
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: "Markdown",
-        }),
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "✅ Payment Received", callback_data: `py:${shortRef}` },
+                { text: "❌ Not Received", callback_data: `pn:${shortRef}` }
+              ]]
+            }
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`Failed to send stale payment alert for ${shortRef}:`, error);
       }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Failed to send stale payment alert:", error);
-      throw new Error(error);
     }
 
     // Log this check
