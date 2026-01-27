@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import paymentQrCode from "@/assets/payment-qr.jpg";
 import paymentQrCode100 from "@/assets/payment-qr-100.jpg";
 import paymentQrCode200 from "@/assets/payment-qr-200.jpg";
+import paymentQrCode250 from "@/assets/payment-qr-250.jpg";
 import paymentQrCode300 from "@/assets/payment-qr-300.jpg";
 import paymentQrCode350 from "@/assets/payment-qr-350.jpg";
 
@@ -290,7 +291,7 @@ const Status = () => {
                 </div>
                 <div className="flex justify-center">
                   <div className="bg-white p-3 rounded-xl shadow-sm border">
-                    <img src={booking.amount === 100 ? paymentQrCode100 : booking.amount === 200 ? paymentQrCode200 : booking.amount === 300 ? paymentQrCode300 : booking.amount === 350 ? paymentQrCode350 : paymentQrCode} alt="UPI QR Code for payment" className="w-48 h-48 object-contain" />
+                    <img src={booking.amount === 100 ? paymentQrCode100 : booking.amount === 200 ? paymentQrCode200 : booking.amount === 250 ? paymentQrCode250 : booking.amount === 300 ? paymentQrCode300 : booking.amount === 350 ? paymentQrCode350 : paymentQrCode} alt="UPI QR Code for payment" className="w-48 h-48 object-contain" />
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
