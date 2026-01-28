@@ -5,6 +5,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import { Helmet } from "react-helmet-async";
 
 // Lazy load below-the-fold components for faster initial load
+const AboutSection = lazy(() => import("@/components/AboutSection"));
 const ServicesSection = lazy(() => import("@/components/ServicesSection"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const TeamSection = lazy(() => import("@/components/TeamSection"));
@@ -27,15 +28,18 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Technologiya - Premium Computer & Mobile Repair Services</title>
-        <meta name="description" content="Professional tech repair services for computers and mobiles. Windows upgrades, MS Office installation, storage troubleshooting, and more. Call 8812910655" />
-        <meta name="keywords" content="computer repair, mobile repair, Windows upgrade, MS Office installation, tech support, phone repair near me, laptop repair service, Technologiya" />
+        <title>Technologiya | Device & Computer Solution Platform</title>
+        <meta name="description" content="Technologiya is India's trusted device & computer solution platform. Expert computer repair, laptop repair, device troubleshooting, Windows installation, virus removal & IT support. Call 8812910655" />
+        <meta name="keywords" content="Technologiya, Technologiya computer solution, Technologiya device repair, Technologiya laptop repair, Technologiya IT support, Technologiya technical service, computer repair, laptop repair, device troubleshooting" />
         <link rel="canonical" href="https://technologiya.lovable.app/" />
       </Helmet>
       <main className="min-h-screen bg-background">
         <Navbar />
         <HeroSection />
         <InstallPrompt />
+        <Suspense fallback={<SectionSkeleton />}>
+          <AboutSection />
+        </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <ServicesSection />
         </Suspense>

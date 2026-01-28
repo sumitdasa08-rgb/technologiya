@@ -13,38 +13,38 @@ const services: ServiceItem[] = [
   {
     icon: Monitor,
     id: "windows_upgrade",
-    title: "Windows OS Upgrade",
-    description: "Upgrade to the latest Windows version for enhanced security and performance.",
+    title: "Windows OS Installation",
+    description: "Technologiya provides professional Windows installation and upgrade services for enhanced security and performance.",
   },
   {
     icon: Settings,
     id: "software_repair",
-    title: "OS Changes & Updates",
-    description: "System updates, driver installations, and performance optimization.",
+    title: "Computer Troubleshooting",
+    description: "Expert Technologiya computer repair including system updates, driver installations, and performance optimization.",
   },
   {
     icon: FileText,
     id: "consultation",
-    title: "Microsoft Office",
-    description: "Complete MS Office suite installation with activation.",
+    title: "Microsoft Office Setup",
+    description: "Complete MS Office suite installation with activation by Technologiya technical service experts.",
   },
   {
     icon: HardDrive,
     id: "data_recovery",
-    title: "Storage Solutions",
-    description: "Mobile storage issues, cleanup, and data management solutions.",
+    title: "Data Recovery & Storage",
+    description: "Technologiya device repair specialists handle storage issues, cleanup, and data recovery solutions.",
   },
   {
     icon: Smartphone,
     id: "pc_optimization",
-    title: "Software Fixes",
-    description: "Fix app crashes, system errors, and performance problems.",
+    title: "Laptop Repair & Fixes",
+    description: "Technologiya laptop repair services to fix crashes, system errors, and performance problems.",
   },
   {
     icon: Volume2,
     id: "sound_issues",
-    title: "Audio Repair",
-    description: "Audio driver fixes, speaker problems, and sound optimization.",
+    title: "Hardware Diagnostics",
+    description: "Professional Technologiya IT support for audio, display, and hardware troubleshooting.",
   },
 ];
 
@@ -144,12 +144,12 @@ const ServicesSection = () => {
       
       <div className="container mx-auto px-4 relative">
         <div className={`text-center mb-20 transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <span className="text-sm font-medium text-muted-foreground tracking-widest uppercase">Services</span>
+          <span className="text-sm font-medium text-muted-foreground tracking-widest uppercase">Technologiya Services</span>
           <h2 className="text-4xl md:text-6xl font-semibold text-foreground mt-4 mb-6 tracking-tight">
-            What we offer.
+            Technologiya Computer Solutions
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light">
-            Professional solutions for all your tech needs.
+            Professional Technologiya device repair and IT support solutions for all your tech needs.
           </p>
         </div>
 
@@ -181,7 +181,7 @@ const ServicesSection = () => {
           className={`text-center text-lg md:text-xl text-muted-foreground mt-8 font-light transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
           style={{ transitionDelay: '500ms' }}
         >
-          ...and many more, just contact us!
+          ...and many more Technologiya technical services. Contact us today!
         </p>
 
         {/* Contact CTA */}
@@ -195,15 +195,16 @@ const ServicesSection = () => {
                 <Calendar className="w-8 h-8 text-background" />
               </div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-2 tracking-tight">Need Help?</h3>
-                <p className="text-muted-foreground font-light">For any type of computer/mobile software related issue</p>
+                <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-2 tracking-tight">Contact Technologiya</h3>
+                <p className="text-muted-foreground font-light">For any type of computer repair, laptop repair, or device troubleshooting</p>
               </div>
             </div>
             <Button 
               onClick={handleBookSlot}
               className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8 rounded-full font-medium transition-all duration-500 ease-apple hover:scale-105 hover:shadow-lg"
+              aria-label="Contact Technologiya for device support"
             >
-              Contact Us Now
+              Get Device Support
             </Button>
           </div>
         </div>

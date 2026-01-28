@@ -52,21 +52,21 @@ const HeroSection = () => {
           <div className="flex-1 text-center lg:text-left max-w-2xl">
             <div className="opacity-0 animate-fade-up">
               <span className="inline-block text-sm font-medium text-muted-foreground tracking-widest uppercase mb-6 font-sans">
-                Professional Tech Support
+                Device & Computer Solution Platform
               </span>
             </div>
 
             <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-[1.1] tracking-tight font-display">
-              Technologiya
+              Technologiya – Trusted Device & Computer Solution
             </h1>
             
-            {/* Professional tagline */}
+            {/* Professional tagline with keywords */}
             <p className="opacity-0 animate-fade-up delay-200 text-xl md:text-2xl text-muted-foreground font-light mb-8 max-w-lg mx-auto lg:mx-0 font-sans">
-              Expert device repairs with transparent pricing and fast turnaround.
+              Expert computer repair, laptop repair & device troubleshooting with transparent pricing.
             </p>
             
             <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
-              Starting at just ₹100 · Same-day service available
+              Technologiya IT support starting at ₹100 · Same-day technical service available
             </p>
 
             <div className="opacity-0 animate-fade-up delay-400 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -75,8 +75,8 @@ const HeroSection = () => {
                 className="bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-full hover:scale-105"
                 asChild
               >
-                <a href="#booking" onClick={scrollToBooking}>
-                  Book Now <ArrowRight className="ml-2 w-4 h-4" />
+                <a href="#booking" onClick={scrollToBooking} aria-label="Get Device Support from Technologiya">
+                  Get Device Support <ArrowRight className="ml-2 w-4 h-4" />
                 </a>
               </Button>
               <Button 
@@ -85,7 +85,7 @@ const HeroSection = () => {
                 className="border-foreground/20 text-foreground hover:bg-foreground/5 px-8 py-6 text-base font-medium rounded-full transition-all duration-300 hover:scale-105"
                 asChild
               >
-                <a href="#services" onClick={scrollToServices}>Explore Services</a>
+                <a href="#services" onClick={scrollToServices} aria-label="Explore Technologiya Services">Fix My Computer</a>
               </Button>
             </div>
 
@@ -125,7 +125,7 @@ const HeroSection = () => {
                   />
                   <img 
                     src={heroCharacter} 
-                    alt="3D Tech Repair Character" 
+                    alt="Technologiya computer repair and device solution expert - professional tech support" 
                     className="w-72 md:w-80 lg:w-[420px] h-auto drop-shadow-2xl"
                     loading="eager"
                     fetchPriority="high"
