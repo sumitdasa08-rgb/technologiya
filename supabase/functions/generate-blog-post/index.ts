@@ -6,53 +6,74 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const CATEGORIES = ["AI", "Gadgets", "Coding", "Gaming", "Cybersecurity"] as const;
+const CATEGORIES = ["Smartphones", "Firmware", "AI", "Gadgets", "Tech News"] as const;
 type Category = typeof CATEGORIES[number];
 
 const TOPIC_PROMPTS: Record<Category, string[]> = {
+  Smartphones: [
+    "OnePlus latest OxygenOS update features",
+    "Samsung Galaxy One UI 7 new features",
+    "iPhone iOS 19 beta updates and changes",
+    "Pixel feature drop latest additions",
+    "Xiaomi HyperOS new update breakdown",
+    "Realme UI 6 features and improvements",
+    "Vivo Funtouch OS latest release",
+    "OPPO ColorOS update highlights",
+    "Nothing OS 3 new features revealed",
+    "Motorola Android updates timeline",
+  ],
+  Firmware: [
+    "iOS 19 beta hands-on review",
+    "Android 16 Developer Preview features",
+    "One UI 7 beta update changelog",
+    "OxygenOS 15 stable rollout news",
+    "MIUI to HyperOS migration guide",
+    "ColorOS 15 firmware update details",
+    "Google Pixel firmware security patch",
+    "Samsung Galaxy firmware download guide",
+    "iPhone firmware downgrade tutorial",
+    "Android security patch importance explained",
+  ],
   AI: [
-    "Latest ChatGPT and AI assistant updates",
-    "AI image generators and creative tools",
-    "Machine learning for beginners",
-    "AI in everyday life and smartphones",
-    "Future of AI and what to expect",
+    "Google Gemini latest features on smartphones",
+    "Apple Intelligence iOS updates",
+    "Samsung Galaxy AI new capabilities",
+    "ChatGPT mobile app updates",
+    "AI-powered camera features comparison",
+    "Voice assistants getting smarter",
+    "On-device AI processing explained",
+    "AI photo editing tools ranked",
   ],
   Gadgets: [
-    "Best budget smartphones in 2025",
-    "Laptop buying guide for students",
-    "Smart home devices worth buying",
-    "Wearable tech and fitness trackers",
-    "Gaming accessories and peripherals",
+    "Best budget smartphones under 15000",
+    "Flagship killer phones to buy now",
+    "Best TWS earbuds in India 2026",
+    "Smartwatch vs fitness band comparison",
+    "Best power banks for travel",
+    "Affordable gaming phones ranked",
+    "Best camera phones under 30000",
+    "Tablet buying guide for students",
   ],
-  Coding: [
-    "JavaScript tips and tricks for beginners",
-    "Python projects to build today",
-    "Web development trends in 2025",
-    "Mobile app development basics",
-    "Learning to code: where to start",
-  ],
-  Gaming: [
-    "Best budget gaming GPUs",
-    "Mobile gaming vs PC gaming",
-    "Cloud gaming services compared",
-    "Upcoming game releases to watch",
-    "Gaming setup tips for beginners",
-  ],
-  Cybersecurity: [
-    "Password managers: which to use",
-    "VPN guide for beginners",
-    "Protecting yourself from phishing",
-    "Two-factor authentication explained",
-    "Privacy tips for social media",
+  "Tech News": [
+    "OnePlus 14 launch date and specs leak",
+    "Samsung Galaxy S26 rumors roundup",
+    "iPhone 17 Pro expected features",
+    "Pixel 10 upcoming release news",
+    "Xiaomi 16 series announcement",
+    "Realme GT 7 Pro India launch",
+    "Nothing Phone 3 latest leaks",
+    "OPPO Find X8 specs revealed",
+    "Vivo X200 series India pricing",
+    "Motorola Edge 60 launch details",
   ],
 };
 
 const EMOJIS: Record<Category, string[]> = {
+  Smartphones: ["📱", "🔥", "💫", "⚡", "✨"],
+  Firmware: ["🔄", "📲", "🛠️", "⬆️", "🆕"],
   AI: ["🤖", "🧠", "✨", "💡", "🚀"],
   Gadgets: ["📱", "💻", "⌚", "🎧", "📷"],
-  Coding: ["👨‍💻", "🔧", "⚡", "💻", "🛠️"],
-  Gaming: ["🎮", "🕹️", "🎯", "🏆", "⚔️"],
-  Cybersecurity: ["🔐", "🛡️", "🔒", "👁️", "🔑"],
+  "Tech News": ["📰", "🗞️", "🔔", "💥", "🎯"],
 };
 
 function createSlug(title: string): string {
@@ -114,24 +135,34 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a tech blogger writing for Gen Z audience. Your writing style:
+            content: `You are a tech journalist and blogger writing for Gen Z audience in India. Your writing style:
 - Short paragraphs (2-3 sentences max)
-- Use emojis sparingly but effectively
-- Casual but informative tone
-- Include practical tips and hot takes
-- Be engaging and relatable
-- Use simple language, avoid jargon
+- Use emojis to make it engaging and fun
+- Casual but informative tone like a tech-savvy friend
+- Include practical tips, hot takes, and "should you update?" recommendations
+- Be relatable - mention Indian pricing, availability, and relevance
+- Use simple language, avoid heavy jargon
 - Add relevant hashtags at the end
+- Make it feel like breaking news or insider info
+- Include specific version numbers, dates, and device names when relevant
 
 You must respond with valid JSON only, no markdown code blocks. The response must be a JSON object with these exact keys:
-- title: Catchy headline (max 60 chars)
-- excerpt: Brief summary for card preview (max 150 chars)
-- content: Full article in markdown (500-800 words)
-- tags: Array of 3-5 relevant tags (without #)`,
+- title: Catchy headline (max 60 chars, include device/brand name)
+- excerpt: Brief summary for card preview (max 150 chars, hook the reader)
+- content: Full article in markdown (600-900 words, include subheadings)
+- tags: Array of 4-6 relevant tags (without #, include brand names)`,
           },
           {
             role: "user",
-            content: `Write a tech blog post about: "${topic}" in the ${category} category. Make it fresh, relevant, and engaging for young tech enthusiasts in India.`,
+            content: `Write a fresh, breaking-news style tech blog post about: "${topic}" in the ${category} category. 
+            
+Make it relevant for Indian Gen Z tech enthusiasts. Include:
+- Specific details (version numbers, features, pricing in INR if applicable)
+- "Should you update/buy?" recommendation
+- Comparison with competitors if relevant
+- When to expect in India (if it's a global news)
+
+Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}`,
           },
         ],
         temperature: 0.8,

@@ -3,11 +3,11 @@ import { useHaptic } from "@/hooks/use-haptic";
 
 const CATEGORIES = [
   { id: "all", label: "All", emoji: "🔥" },
+  { id: "Smartphones", label: "Phones", emoji: "📱" },
+  { id: "Firmware", label: "Updates", emoji: "🔄" },
   { id: "AI", label: "AI", emoji: "🤖" },
-  { id: "Gadgets", label: "Gadgets", emoji: "📱" },
-  { id: "Coding", label: "Coding", emoji: "👨‍💻" },
-  { id: "Gaming", label: "Gaming", emoji: "🎮" },
-  { id: "Cybersecurity", label: "Security", emoji: "🔐" },
+  { id: "Gadgets", label: "Gadgets", emoji: "💻" },
+  { id: "Tech News", label: "News", emoji: "📰" },
 ] as const;
 
 interface CategoryFilterProps {

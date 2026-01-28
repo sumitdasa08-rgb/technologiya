@@ -198,27 +198,60 @@ const BlogPost = () => {
         <meta name="keywords" content={post.tags?.join(", ")} />
         <link rel="canonical" href={`https://technologiya.lovable.app/blog/${post.slug}`} />
         
-        {/* Open Graph */}
+        {/* Open Graph for social sharing */}
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={`https://technologiya.lovable.app/blog/${post.slug}`} />
+        <meta property="og:site_name" content="Technologiya" />
+        <meta property="article:published_time" content={post.published_at} />
+        <meta property="article:section" content={post.category} />
+        {post.tags?.map((tag) => (
+          <meta key={tag} property="article:tag" content={tag} />
+        ))}
         
-        {/* Article schema */}
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.excerpt} />
+        
+        {/* Google Discover & News optimization */}
+        <meta name="robots" content="max-image-preview:large" />
+        <meta name="googlebot" content="max-image-preview:large" />
+        
+        {/* Article structured data for Google Discover cards */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Article",
+            "@type": "NewsArticle",
             headline: post.title,
             description: post.excerpt,
             datePublished: post.published_at,
+            dateModified: post.published_at,
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `https://technologiya.lovable.app/blog/${post.slug}`,
+            },
             author: {
               "@type": "Organization",
               name: "Technologiya",
+              url: "https://technologiya.lovable.app",
             },
             publisher: {
               "@type": "Organization",
               name: "Technologiya",
+              url: "https://technologiya.lovable.app",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://technologiya.lovable.app/pwa-512x512.png",
+              },
+            },
+            articleSection: post.category,
+            keywords: post.tags?.join(", "),
+            isAccessibleForFree: true,
+            speakable: {
+              "@type": "SpeakableSpecification",
+              cssSelector: ["h1", ".excerpt"],
             },
           })}
         </script>
