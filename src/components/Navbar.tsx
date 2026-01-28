@@ -47,7 +47,7 @@ const Navbar = () => {
         </a>
 
         <div className="hidden md:flex items-center gap-8">
-          {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
+          {["About", "Services", "Reviews", "Team", "Booking"].map((item) => (
             <a 
               key={item}
               href={`/#${item.toLowerCase()}`} 
@@ -76,17 +76,19 @@ const Navbar = () => {
         </div>
 
         <a 
-          href="tel:+913613597940"
+          href="tel:+918812910655"
           className="hidden md:flex items-center gap-2 text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
+          aria-label="Call Technologiya for computer repair"
         >
           <Phone className="w-4 h-4" />
-          <span>+91 361 359 7940</span>
+          <span>+91 88129 10655</span>
         </a>
 
         <div ref={menuRef} className="md:hidden">
           <button 
             className="text-foreground p-2"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle Technologiya navigation menu"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -98,7 +100,7 @@ const Navbar = () => {
         isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
       }`}>
         <div className="container mx-auto px-4 py-6 space-y-4">
-          {["Services", "Reviews", "Team", "Privacy", "Booking"].map((item) => (
+          {["About", "Services", "Reviews", "Team", "Booking"].map((item) => (
             <a 
               key={item}
               href={`/#${item.toLowerCase()}`}
@@ -124,9 +126,9 @@ const Navbar = () => {
             <Newspaper className="w-5 h-5" />
             Blog
           </Link>
-          <a href="tel:+913613597940" className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
+          <a href="tel:+918812910655" className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
             <Phone className="w-4 h-4" />
-            <span className="font-medium">+91 361 359 7940</span>
+            <span className="font-medium">+91 88129 10655</span>
           </a>
         </div>
       </div>
