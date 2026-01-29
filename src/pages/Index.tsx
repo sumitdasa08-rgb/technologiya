@@ -5,9 +5,16 @@ import InstallPrompt from "@/components/InstallPrompt";
 import { Helmet } from "react-helmet-async";
 
 // Lazy load below-the-fold components for faster initial load
-const AboutSection = lazy(() => import("@/components/AboutSection"));
+const LogoMarquee = lazy(() => import("@/components/LogoMarquee"));
+const WhatWeDoSection = lazy(() => import("@/components/WhatWeDoSection"));
+const WhyChooseSection = lazy(() => import("@/components/WhyChooseSection"));
+const ProcessSection = lazy(() => import("@/components/ProcessSection"));
+const WhatItTakesSection = lazy(() => import("@/components/WhatItTakesSection"));
+const PricingSection = lazy(() => import("@/components/PricingSection"));
 const ServicesSection = lazy(() => import("@/components/ServicesSection"));
+const AboutSection = lazy(() => import("@/components/AboutSection"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
+const FounderSection = lazy(() => import("@/components/FounderSection"));
 const TeamSection = lazy(() => import("@/components/TeamSection"));
 const PrivacySection = lazy(() => import("@/components/PrivacySection"));
 const BookingSection = lazy(() => import("@/components/BookingSection"));
@@ -38,13 +45,34 @@ const Index = () => {
         <HeroSection />
         <InstallPrompt />
         <Suspense fallback={<SectionSkeleton />}>
-          <AboutSection />
+          <LogoMarquee />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <WhatWeDoSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <WhyChooseSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <ProcessSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <WhatItTakesSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <PricingSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <ServicesSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
+          <AboutSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
           <TestimonialsSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <FounderSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <TeamSection />
