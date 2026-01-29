@@ -30,11 +30,11 @@ const CategoryFilter = ({ selected, onSelect }: CategoryFilterProps) => {
           key={cat.id}
           onClick={() => handleSelect(cat.id)}
           className={cn(
-            "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+            "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
             "border flex items-center gap-1.5",
             selected === cat.id
-              ? "bg-foreground text-background border-foreground"
-              : "bg-transparent text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+              ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+              : "bg-secondary text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
           )}
         >
           <span>{cat.emoji}</span>

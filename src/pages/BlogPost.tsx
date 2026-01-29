@@ -40,26 +40,19 @@ function getReadingTime(content: string): number {
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 }
 
-// Simple markdown renderer for basic formatting
 function renderMarkdown(content: string): string {
   return content
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold mt-6 mb-3 text-foreground">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-foreground">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-8 mb-4 text-foreground">$1</h1>')
-    // Bold and italic
+    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold mt-6 mb-3 text-foreground font-display">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-foreground font-display">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-8 mb-4 text-foreground font-display">$1</h1>')
     .replace(/\*\*\*(.*?)\*\*\*/gim, '<strong class="font-bold"><em>$1</em></strong>')
-    .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold">$1</strong>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold text-foreground">$1</strong>')
     .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    // Code blocks
-    .replace(/```([\s\S]*?)```/gim, '<pre class="bg-muted rounded-lg p-4 my-4 overflow-x-auto text-sm"><code>$1</code></pre>')
-    .replace(/`(.*?)`/gim, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm">$1</code>')
-    // Lists
+    .replace(/```([\s\S]*?)```/gim, '<pre class="bg-secondary rounded-xl p-4 my-4 overflow-x-auto text-sm border border-border"><code>$1</code></pre>')
+    .replace(/`(.*?)`/gim, '<code class="bg-secondary px-1.5 py-0.5 rounded text-sm">$1</code>')
     .replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
     .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>')
-    // Links
     .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" class="text-primary underline hover:no-underline" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Paragraphs
     .replace(/\n\n/g, '</p><p class="mb-4 text-muted-foreground leading-relaxed">')
     .replace(/\n/g, '<br/>');
 }
@@ -90,7 +83,6 @@ const BlogPost = () => {
     enabled: !!slug,
   });
 
-  // Fetch related posts
   const { data: relatedPosts } = useQuery({
     queryKey: ["related-posts", post?.category, post?.id],
     queryFn: async () => {
@@ -109,14 +101,12 @@ const BlogPost = () => {
     enabled: !!post,
   });
 
-  // Update local fire count when post loads
   useEffect(() => {
     if (post) {
       setLocalFireCount(post.fire_count);
     }
   }, [post]);
 
-  // Reading progress
   useEffect(() => {
     const handleScroll = () => {
       const windowHeight = window.innerHeight;
@@ -159,7 +149,6 @@ const BlogPost = () => {
       triggerHaptic();
       setLocalFireCount((prev) => prev + 1);
       setHasReacted(true);
-      // TODO: Persist to database
     }
   };
 
@@ -168,7 +157,7 @@ const BlogPost = () => {
       <main className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-32 flex justify-center">
-          <div className="w-10 h-10 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+          <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
       </main>
     );
@@ -180,9 +169,9 @@ const BlogPost = () => {
         <Navbar />
         <div className="pt-32 text-center">
           <div className="text-6xl mb-4">😕</div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Post not found</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2 font-display">Post not found</h1>
           <p className="text-muted-foreground mb-6">This article might have been removed or doesn't exist.</p>
-          <Button asChild>
+          <Button asChild className="rounded-xl">
             <Link to="/blog">Back to Blog</Link>
           </Button>
         </div>
@@ -198,7 +187,6 @@ const BlogPost = () => {
         <meta name="keywords" content={post.tags?.join(", ")} />
         <link rel="canonical" href={`https://technologiya.lovable.app/blog/${post.slug}`} />
         
-        {/* Open Graph for social sharing */}
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
@@ -210,16 +198,13 @@ const BlogPost = () => {
           <meta key={tag} property="article:tag" content={tag} />
         ))}
         
-        {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={post.title} />
         <meta name="twitter:description" content={post.excerpt} />
         
-        {/* Google Discover & News optimization */}
         <meta name="robots" content="max-image-preview:large" />
         <meta name="googlebot" content="max-image-preview:large" />
         
-        {/* Article structured data for Google Discover cards */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -281,16 +266,16 @@ const BlogPost = () => {
             <header className="mb-10">
               <div className="flex items-center gap-3 mb-4">
                 <span className="text-5xl">{post.emoji}</span>
-                <span className="px-3 py-1 rounded-full bg-muted text-sm font-medium">
+                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
                   {post.category}
                 </span>
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-display">
                 {post.title}
               </h1>
 
-              <p className="text-lg text-muted-foreground mb-6">{post.excerpt}</p>
+              <p className="text-lg text-muted-foreground mb-6 excerpt">{post.excerpt}</p>
 
               {/* Meta */}
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -320,7 +305,7 @@ const BlogPost = () => {
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 rounded-full bg-muted text-sm text-muted-foreground"
+                    className="px-3 py-1 rounded-full bg-secondary text-sm text-muted-foreground border border-border"
                   >
                     #{tag}
                   </span>
@@ -333,10 +318,10 @@ const BlogPost = () => {
               <button
                 onClick={handleFireClick}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
+                  "flex items-center gap-2 px-4 py-2 rounded-xl transition-all",
                   hasReacted
-                    ? "bg-orange-500/20 text-orange-400"
-                    : "bg-muted text-muted-foreground hover:bg-orange-500/10 hover:text-orange-400"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 <Flame className="w-5 h-5" />
@@ -344,11 +329,11 @@ const BlogPost = () => {
               </button>
 
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                <Button variant="outline" size="sm" onClick={handleCopyLink} className="rounded-xl">
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span className="ml-2">{copied ? "Copied!" : "Copy Link"}</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleShare}>
+                <Button variant="outline" size="sm" onClick={handleShare} className="rounded-xl">
                   <Share2 className="w-4 h-4" />
                   <span className="ml-2">Share</span>
                 </Button>
@@ -359,9 +344,10 @@ const BlogPost = () => {
 
         {/* Related Posts */}
         {relatedPosts && relatedPosts.length > 0 && (
-          <section className="pb-20 bg-muted/30">
-            <div className="container mx-auto px-4 max-w-5xl">
-              <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
+          <section className="pb-20 bg-card relative">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            <div className="container mx-auto px-4 max-w-5xl pt-16">
+              <h2 className="text-2xl font-bold text-foreground mb-8 text-center font-display">
                 More in {post.category} 🔥
               </h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

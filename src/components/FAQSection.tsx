@@ -34,7 +34,6 @@ const FAQ_DATA = [{
   answer: "Technologiya accepts all major payment methods including cash, UPI (PhonePe, Google Pay, Paytm), credit/debit cards, and online bank transfers for your convenience."
 }];
 
-// Generate JSON-LD structured data for SEO
 const generateFAQSchema = () => {
   return {
     "@context": "https://schema.org",
@@ -52,21 +51,25 @@ const generateFAQSchema = () => {
 
 const FAQSection = () => {
   return (
-    <section id="faq" className="py-16 md:py-24 bg-muted/30">
+    <section id="faq" className="py-20 md:py-24 bg-card relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 glow-accent opacity-20" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      
       <Helmet>
         <script type="application/ld+json">
           {JSON.stringify(generateFAQSchema())}
         </script>
       </Helmet>
       
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             <HelpCircle className="h-4 w-4" />
-            <span className="text-sm font-medium">Technologiya FAQ</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Technologiya - Frequently Asked Questions
+            Technologiya FAQ
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 font-display">
+            Frequently Asked Questions
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Find answers to common questions about Technologiya computer repair, laptop repair, and device troubleshooting services
@@ -74,12 +77,12 @@ const FAQSection = () => {
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion type="single" collapsible className="w-full space-y-3">
             {FAQ_DATA.map((faq, index) => (
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`} 
-                className="bg-card border border-border rounded-lg px-6 data-[state=open]:shadow-md transition-shadow"
+                className="glass-card rounded-xl px-6 data-[state=open]:shadow-lg transition-all duration-300 border-0"
               >
                 <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary hover:no-underline py-4">
                   {faq.question}
@@ -92,12 +95,12 @@ const FAQSection = () => {
           </Accordion>
         </div>
 
-        <div className="text-center mt-10">
+        <div className="text-center mt-12">
           <p className="text-muted-foreground mb-4">
             Still have questions? Contact Technologiya - we're here to help!
           </p>
           <a 
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors" 
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition-all duration-300 hover:scale-105 shadow-lg shadow-primary/20" 
             href="tel:+918812910655"
             aria-label="Call Technologiya for support"
           >

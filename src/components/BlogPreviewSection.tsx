@@ -8,8 +8,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 interface BlogPost {
@@ -40,28 +38,24 @@ const BlogPreviewSection = () => {
     },
   });
 
-  // Don't render section if no posts
   if (!isLoading && (!posts || posts.length === 0)) {
     return null;
   }
 
   return (
     <section className="py-20 relative overflow-hidden" id="blog">
-      {/* Background decoration */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 text-4xl opacity-10 animate-pulse">🔥</div>
-        <div className="absolute bottom-20 right-10 text-4xl opacity-10 animate-pulse delay-300">✨</div>
-        <div className="absolute top-40 right-20 text-3xl opacity-10 animate-pulse delay-500">🚀</div>
-      </div>
+      {/* Background */}
+      <div className="absolute inset-0 glow-accent opacity-20" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-medium">Fresh Tech Drops</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Fresh Tech Drops
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 font-display">
             Stay Updated with Tech 🔥
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto">
@@ -73,11 +67,11 @@ const BlogPreviewSection = () => {
         {/* Loading state */}
         {isLoading && (
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
           </div>
         )}
 
-        {/* Posts carousel for mobile, grid for desktop */}
+        {/* Posts */}
         {posts && posts.length > 0 && (
           <>
             {/* Mobile: Carousel */}
@@ -137,7 +131,7 @@ const BlogPreviewSection = () => {
         {/* View All button */}
         {posts && posts.length > 0 && (
           <div className="flex justify-center mt-10">
-            <Button asChild variant="outline" className="group">
+            <Button asChild variant="outline" className="group rounded-xl border-border hover:border-primary/50 hover:bg-primary/5">
               <Link to="/blog" className="flex items-center gap-2">
                 View All Posts
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

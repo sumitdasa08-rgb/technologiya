@@ -46,7 +46,6 @@ const Blog = () => {
     },
   });
 
-  // Filter by search query
   const filteredPosts = posts?.filter(
     (post) =>
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,20 +76,16 @@ const Blog = () => {
 
         {/* Hero Section */}
         <section className="pt-32 pb-12 relative overflow-hidden">
-          {/* Background decorations */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-40 left-10 text-6xl opacity-5">🤖</div>
-            <div className="absolute top-60 right-20 text-6xl opacity-5">💻</div>
-            <div className="absolute bottom-20 left-1/4 text-6xl opacity-5">🎮</div>
-          </div>
-
-          <div className="container mx-auto px-4">
+          {/* Background */}
+          <div className="absolute inset-0 glow-accent opacity-30" />
+          
+          <div className="container mx-auto px-4 relative">
             <div className="text-center mb-10 animate-fade-in">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
                 <Sparkles className="w-4 h-4" />
-                <span className="text-sm font-medium">AI-Powered Tech Blog</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+                AI-Powered Tech Blog
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 font-display">
                 Fresh Tech Drops 🔥
               </h1>
               <p className="text-muted-foreground max-w-lg mx-auto">
@@ -109,7 +104,7 @@ const Blog = () => {
                   placeholder="Search articles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 rounded-full bg-muted/50 border-border"
+                  className="pl-12 h-12 rounded-xl bg-secondary border-border"
                 />
               </div>
 
@@ -131,7 +126,7 @@ const Blog = () => {
             {/* Loading state */}
             {isLoading && (
               <div className="flex justify-center py-20">
-                <div className="w-10 h-10 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+                <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
               </div>
             )}
 
@@ -139,7 +134,7 @@ const Blog = () => {
             {!isLoading && (!filteredPosts || filteredPosts.length === 0) && (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2 font-display">
                   No posts found
                 </h3>
                 <p className="text-muted-foreground mb-6">
@@ -149,6 +144,7 @@ const Blog = () => {
                 </p>
                 <Button
                   variant="outline"
+                  className="rounded-xl"
                   onClick={() => {
                     setSearchQuery("");
                     setSelectedCategory("all");
@@ -190,7 +186,7 @@ const Blog = () => {
                     <Button
                       variant="outline"
                       onClick={handleLoadMore}
-                      className="group"
+                      className="group rounded-xl"
                     >
                       <RefreshCw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
                       Load More
