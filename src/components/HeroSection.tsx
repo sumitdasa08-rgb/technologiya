@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -24,8 +25,16 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Full-width dark background with subtle texture */}
-      <div className="absolute inset-0 bg-background" />
+      {/* Background image - engine.fm style */}
+      <div className="absolute inset-0">
+        <img 
+          src={heroBg} 
+          alt="Professional device repair service"
+          className="w-full h-full object-cover object-center"
+        />
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-background/80" />
+      </div>
       
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 grid-pattern opacity-20" />
@@ -34,7 +43,7 @@ const HeroSection = () => {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-50" />
       
       {/* Left sidebar - engine.fm style */}
-      <div className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 flex-col items-center justify-between py-8 z-20 border-r border-border/30">
+      <div className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 flex-col items-center justify-between py-8 z-20 border-r border-border/30 bg-background/50 backdrop-blur-sm">
         {/* Logo */}
         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
           <span className="text-primary-foreground font-bold text-lg">T</span>
@@ -65,7 +74,7 @@ const HeroSection = () => {
         <div className="max-w-4xl">
           {/* Pre-headline tag */}
           <div className="opacity-0 animate-fade-up mb-8">
-            <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase px-4 py-2 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               Device & Computer Solution Platform
             </span>
