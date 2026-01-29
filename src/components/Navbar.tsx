@@ -15,7 +15,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -35,18 +34,20 @@ const Navbar = () => {
   }, [isOpen]);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-apple ${
-      scrolled ? "glass border-b border-border/50" : "bg-transparent"
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-apple ${
+      scrolled 
+        ? "bg-background/80 backdrop-blur-glass border-b border-border/50 py-3" 
+        : "bg-transparent py-5"
     }`}>
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 flex items-center justify-between">
         <a href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-            <span className="text-background font-bold text-lg">T</span>
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg shadow-primary/20">
+            <span className="text-primary-foreground font-bold text-lg">T</span>
           </div>
-          <span className="text-xl font-semibold text-foreground hidden sm:block">Technologiya</span>
+          <span className="text-xl font-semibold text-foreground hidden sm:block font-display">Technologiya</span>
         </a>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-10">
           {["About", "Services", "Reviews", "Team", "Booking"].map((item) => (
             <a 
               key={item}
@@ -54,7 +55,7 @@ const Navbar = () => {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 relative group"
             >
               {item}
-              <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
           <Link 
@@ -63,7 +64,7 @@ const Navbar = () => {
           >
             <Package className="w-4 h-4" />
             Track Repair
-            <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full" />
           </Link>
           <Link 
             to="/blog"
@@ -71,22 +72,22 @@ const Navbar = () => {
           >
             <Newspaper className="w-4 h-4" />
             Blog
-            <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground transition-all duration-300 group-hover:w-full" />
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary rounded-full transition-all duration-300 group-hover:w-full" />
           </Link>
         </div>
 
         <a 
           href="tel:+918812910655"
-          className="hidden md:flex items-center gap-2 text-sm font-medium text-foreground hover:opacity-70 transition-opacity"
+          className="hidden md:flex items-center gap-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105"
           aria-label="Call Technologiya for computer repair"
         >
-          <Phone className="w-4 h-4" />
+          <Phone className="w-4 h-4 text-primary" />
           <span>+91 88129 10655</span>
         </a>
 
         <div ref={menuRef} className="md:hidden">
           <button 
-            className="text-foreground p-2"
+            className="text-foreground p-2 rounded-xl hover:bg-secondary transition-colors"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle Technologiya navigation menu"
           >
@@ -96,15 +97,15 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden absolute top-full left-0 right-0 glass border-b border-border/50 transition-all duration-500 ease-apple ${
-        isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
+      <div className={`md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-glass border-b border-border/50 transition-all duration-500 ease-apple ${
+        isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-4"
       }`}>
         <div className="container mx-auto px-4 py-6 space-y-4">
           {["About", "Services", "Reviews", "Team", "Booking"].map((item) => (
             <a 
               key={item}
               href={`/#${item.toLowerCase()}`}
-              className="block text-lg text-foreground hover:opacity-70 transition-opacity"
+              className="block text-lg text-foreground hover:text-primary transition-colors py-2"
               onClick={() => setIsOpen(false)}
             >
               {item}
@@ -112,7 +113,7 @@ const Navbar = () => {
           ))}
           <Link 
             to="/track"
-            className="flex items-center gap-2 text-lg text-foreground hover:opacity-70 transition-opacity"
+            className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2"
             onClick={() => setIsOpen(false)}
           >
             <Package className="w-5 h-5" />
@@ -120,16 +121,18 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/blog"
-            className="flex items-center gap-2 text-lg text-foreground hover:opacity-70 transition-opacity"
+            className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2"
             onClick={() => setIsOpen(false)}
           >
             <Newspaper className="w-5 h-5" />
             Blog
           </Link>
-          <a href="tel:+918812910655" className="pt-4 border-t border-border flex items-center gap-2 text-foreground">
-            <Phone className="w-4 h-4" />
-            <span className="font-medium">+91 88129 10655</span>
-          </a>
+          <div className="pt-4 border-t border-border">
+            <a href="tel:+918812910655" className="flex items-center gap-2 text-foreground">
+              <Phone className="w-4 h-4 text-primary" />
+              <span className="font-medium">+91 88129 10655</span>
+            </a>
+          </div>
         </div>
       </div>
     </nav>

@@ -9,7 +9,6 @@ const HeroSection = () => {
     const isMobile = window.innerWidth < 768;
     
     if (isMobile) {
-      // On mobile, scroll to the Technologiya header card
       const mobileHeader = document.getElementById('booking-mobile-header');
       if (mobileHeader) {
         const offset = 20;
@@ -19,7 +18,6 @@ const HeroSection = () => {
       }
     }
     
-    // Desktop - scroll to booking section
     const bookingSection = document.getElementById('booking');
     if (bookingSection) {
       bookingSection.scrollIntoView({ behavior: 'smooth' });
@@ -35,44 +33,46 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Clean monochrome gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted/30" />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-16">
+      {/* Gradient background with subtle glow */}
+      <div className="absolute inset-0 bg-background" />
+      <div className="absolute inset-0 glow-accent opacity-50" />
       
-      {/* Subtle geometric patterns */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-        backgroundSize: '40px 40px'
-      }} />
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 grid-pattern opacity-30" />
+      
+      {/* Accent glow orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse-soft delay-500" />
 
       <div className="relative z-10 container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-20">
           
-          {/* Text Content - Left Side */}
+          {/* Text Content */}
           <div className="flex-1 text-center lg:text-left max-w-2xl">
             <div className="opacity-0 animate-fade-up">
-              <span className="inline-block text-sm font-medium text-muted-foreground tracking-widest uppercase mb-6 font-sans">
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-8 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 Device & Computer Solution Platform
               </span>
             </div>
 
-            <h1 className="opacity-0 animate-fade-up delay-100 text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-[1.1] tracking-tight font-display">
+            <h1 className="opacity-0 animate-fade-up delay-100 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-8 leading-[1.1] tracking-tight font-display">
               Technologiya – Trusted Device & Computer Solution
             </h1>
             
-            {/* Professional tagline with keywords */}
-            <p className="opacity-0 animate-fade-up delay-200 text-xl md:text-2xl text-muted-foreground font-light mb-8 max-w-lg mx-auto lg:mx-0 font-sans">
+            <p className="opacity-0 animate-fade-up delay-200 text-lg md:text-xl text-muted-foreground mb-6 max-w-xl mx-auto lg:mx-0 leading-relaxed">
               Expert computer repair, laptop repair & device troubleshooting with transparent pricing.
             </p>
             
-            <p className="opacity-0 animate-fade-up delay-300 text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto lg:mx-0 mb-10 font-light font-sans">
+            <p className="opacity-0 animate-fade-up delay-300 text-base text-muted-foreground/80 max-w-lg mx-auto lg:mx-0 mb-10">
               Technologiya IT support starting at ₹100 · Same-day technical service available
             </p>
 
             <div className="opacity-0 animate-fade-up delay-400 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button 
                 size="lg" 
-                className="bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-full hover:scale-105"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-xl hover:scale-105 hover:shadow-xl hover:shadow-primary/20"
                 asChild
               >
                 <a href="#booking" onClick={scrollToBooking} aria-label="Get Device Support from Technologiya">
@@ -82,15 +82,15 @@ const HeroSection = () => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-foreground/20 text-foreground hover:bg-foreground/5 px-8 py-6 text-base font-medium rounded-full transition-all duration-300 hover:scale-105"
+                className="border-border text-foreground hover:bg-secondary px-8 py-6 text-base font-medium rounded-xl transition-all duration-300 hover:scale-105 hover:border-primary/50"
                 asChild
               >
                 <a href="#services" onClick={scrollToServices} aria-label="Explore Technologiya Services">Fix My Computer</a>
               </Button>
             </div>
 
-            {/* Stats - Clean professional style */}
-            <div className="opacity-0 animate-fade-up delay-500 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {/* Stats */}
+            <div className="opacity-0 animate-fade-up delay-500 mt-16 grid grid-cols-2 sm:grid-cols-4 gap-8">
               {[
                 { number: "500+", label: "Devices Fixed" },
                 { number: "100%", label: "Transparent" },
@@ -98,10 +98,10 @@ const HeroSection = () => {
                 { number: "5★", label: "Rating" },
               ].map((stat, index) => (
                 <div key={index} className="text-center lg:text-left">
-                  <div className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-foreground tracking-tight font-display">
                     {stat.number}
                   </div>
-                  <div className="text-xs text-muted-foreground tracking-wide uppercase mt-1">
+                  <div className="text-xs text-muted-foreground tracking-wide uppercase mt-2">
                     {stat.label}
                   </div>
                 </div>
@@ -109,14 +109,14 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* 3D Character - Right Side */}
+          {/* Character Image */}
           <div className="flex-1 flex justify-center lg:justify-end opacity-0 animate-fade-up delay-300">
             <div className="relative">
-              {/* Subtle shadow/glow behind character */}
-              <div className="absolute inset-0 bg-foreground/5 blur-3xl scale-90 rounded-full" />
+              {/* Glow behind character */}
+              <div className="absolute inset-0 bg-primary/20 blur-3xl scale-75 rounded-full" />
               
-              {/* Character image with floating animation - responsive loading */}
-              <div className="relative animate-[float_6s_ease-in-out_infinite]">
+              {/* Character with floating animation */}
+              <div className="relative animate-float">
                 <picture>
                   <source 
                     media="(max-width: 768px)" 
@@ -136,8 +136,8 @@ const HeroSection = () => {
                 </picture>
               </div>
               
-              {/* Minimal floating badge */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-foreground text-background text-xs font-medium px-4 py-2 rounded-full shadow-lg">
+              {/* Badge */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-medium px-5 py-2.5 rounded-full shadow-lg shadow-primary/30">
                 Available 24/7
               </div>
             </div>
@@ -147,17 +147,10 @@ const HeroSection = () => {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 opacity-0 animate-fade-in delay-600">
-        <div className="w-6 h-10 border-2 border-foreground/20 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-foreground/40 rounded-full mt-2 animate-bounce" />
+        <div className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-primary rounded-full mt-2 animate-bounce" />
         </div>
       </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-      `}</style>
     </section>
   );
 };

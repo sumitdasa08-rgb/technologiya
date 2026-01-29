@@ -41,7 +41,6 @@ const BookingSection = () => {
 
   const selectedService = services.find((s) => s.id === selectedServiceId);
 
-  // Smart location collection - request once when user starts interacting
   const requestLocation = () => {
     if (locationRequestedRef.current || userLocation) return;
     locationRequestedRef.current = true;
@@ -53,13 +52,12 @@ const BookingSection = () => {
           setUserLocation(`${latitude.toFixed(6)},${longitude.toFixed(6)}`);
         },
         () => {
-          // Silently fail - location is optional
           setUserLocation(null);
         },
         { 
           enableHighAccuracy: false, 
           timeout: 10000, 
-          maximumAge: 300000 // Cache for 5 minutes
+          maximumAge: 300000
         }
       );
     }
@@ -82,7 +80,6 @@ const BookingSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Fetch active services from service_pricing
   useEffect(() => {
     const fetchServices = async () => {
       const { data, error } = await supabase
@@ -99,18 +96,15 @@ const BookingSection = () => {
     fetchServices();
   }, []);
 
-  // Listen for prefill events from services section
   useEffect(() => {
     const handlePrefill = (e: CustomEvent<{ issue: string; message: string; serviceId?: string }>) => {
       setFormData((prev) => ({
         ...prev,
         issue: e.detail.issue || e.detail.message,
       }));
-      // If a serviceId is provided, select it
       if (e.detail.serviceId) {
         setSelectedServiceId(e.detail.serviceId);
       }
-      // Request location when user is directed to booking
       requestLocation();
     };
 
@@ -125,7 +119,6 @@ const BookingSection = () => {
   };
 
   const handleInputFocus = () => {
-    // Request location when user starts filling the form
     requestLocation();
   };
 
@@ -138,13 +131,11 @@ const BookingSection = () => {
     const trimmedEmail = formData.email.trim();
     const trimmedIssue = formData.issue.trim();
 
-    // Name and phone are required, issue and email are optional
     if (!trimmedName || !trimmedPhone) {
       toast.error("Please fill in name and phone number");
       return;
     }
 
-    // Validate email format if provided
     if (trimmedEmail) {
       const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
       if (!emailRegex.test(trimmedEmail)) {
@@ -167,7 +158,6 @@ const BookingSection = () => {
     setIsLoading(true);
 
     try {
-      // Create booking via secure Edge Function (server-side price validation)
       const { data: response, error: createError } = await supabase.functions.invoke("create-booking", {
         body: {
           customer_name: trimmedName,
@@ -185,8 +175,6 @@ const BookingSection = () => {
       }
 
       const booking = response.booking;
-
-      // Navigate immediately - Telegram notification is handled server-side
       navigate(`/status?booking_id=${booking.id}`);
     } catch (error) {
       console.error("Booking error:", error);
@@ -198,27 +186,31 @@ const BookingSection = () => {
   };
 
   return (
-    <section id="booking" ref={sectionRef} className="py-16 md:py-32 bg-secondary/30">
-      <div className="container mx-auto px-4">
+    <section id="booking" ref={sectionRef} className="py-20 md:py-32 bg-background relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 glow-accent opacity-30" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      
+      <div className="container mx-auto px-4 relative">
         <div
-          className={`text-center mb-16 transition-all duration-700 ${
+          className={`text-center mb-12 md:mb-16 transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-          <span className="text-sm font-medium text-muted-foreground tracking-widest uppercase">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             Book Now
           </span>
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight font-display">
             Schedule Repair
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light">
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
             Book your repair slot in seconds.
           </p>
         </div>
 
         <div className="max-w-md mx-auto">
           <div
-            className={`glass-card p-8 rounded-3xl transition-all duration-700 ${
+            className={`glass-card p-8 rounded-2xl transition-all duration-700 ${
               isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
             }`}
           >
@@ -234,7 +226,7 @@ const BookingSection = () => {
                   requestLocation();
                 }}
               >
-                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl h-12">
+                <SelectTrigger className="bg-secondary border-border rounded-xl h-12">
                   <SelectValue placeholder="Choose a service" />
                 </SelectTrigger>
                 <SelectContent>
@@ -247,13 +239,13 @@ const BookingSection = () => {
               </Select>
             </div>
 
-            {/* Price Display - Show only when service is selected */}
+            {/* Price Display */}
             {selectedService && (
-              <div className="text-center mb-8 p-4 bg-foreground/5 rounded-2xl">
+              <div className="text-center mb-8 p-4 bg-primary/10 rounded-xl border border-primary/20">
                 <p className="text-sm text-muted-foreground mb-1">Service Charge</p>
                 <div className="flex items-center justify-center gap-1">
-                  <IndianRupee className="w-8 h-8 text-foreground" />
-                  <span className="text-4xl font-bold text-foreground">{selectedService.price}</span>
+                  <IndianRupee className="w-8 h-8 text-primary" />
+                  <span className="text-4xl font-bold text-foreground font-display">{selectedService.price}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">{selectedService.label}</p>
                 {selectedService.description && (
@@ -262,7 +254,7 @@ const BookingSection = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Your Name *
@@ -273,7 +265,7 @@ const BookingSection = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   onFocus={handleInputFocus}
                   required
-                  className="bg-background/50 border-border/50 rounded-xl h-12"
+                  className="bg-secondary border-border rounded-xl h-12"
                 />
               </div>
 
@@ -287,7 +279,7 @@ const BookingSection = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   onFocus={handleInputFocus}
                   required
-                  className="bg-background/50 border-border/50 rounded-xl h-12"
+                  className="bg-secondary border-border rounded-xl h-12"
                 />
               </div>
 
@@ -301,7 +293,7 @@ const BookingSection = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   onFocus={handleInputFocus}
-                  className="bg-background/50 border-border/50 rounded-xl h-12"
+                  className="bg-secondary border-border rounded-xl h-12"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Get payment confirmations and repair updates via email
@@ -318,14 +310,14 @@ const BookingSection = () => {
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                   onFocus={handleInputFocus}
                   rows={3}
-                  className="bg-background/50 border-border/50 rounded-xl resize-none"
+                  className="bg-secondary border-border rounded-xl resize-none"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading || !selectedService}
-                className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full font-medium"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 rounded-xl font-medium shadow-lg shadow-primary/20"
               >
                 {isLoading ? (
                   <>
