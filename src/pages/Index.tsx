@@ -9,12 +9,14 @@ const LogoMarquee = lazy(() => import("@/components/LogoMarquee"));
 const WhatWeDoSection = lazy(() => import("@/components/WhatWeDoSection"));
 const WhyChooseSection = lazy(() => import("@/components/WhyChooseSection"));
 const ProcessSection = lazy(() => import("@/components/ProcessSection"));
+const StatsSection = lazy(() => import("@/components/StatsSection"));
 const WhatItTakesSection = lazy(() => import("@/components/WhatItTakesSection"));
 const PricingSection = lazy(() => import("@/components/PricingSection"));
 const ServicesSection = lazy(() => import("@/components/ServicesSection"));
 const AboutSection = lazy(() => import("@/components/AboutSection"));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
 const FounderSection = lazy(() => import("@/components/FounderSection"));
+const TeamGridSection = lazy(() => import("@/components/TeamGridSection"));
 const TeamSection = lazy(() => import("@/components/TeamSection"));
 const PrivacySection = lazy(() => import("@/components/PrivacySection"));
 const BookingSection = lazy(() => import("@/components/BookingSection"));
@@ -57,6 +59,9 @@ const Index = () => {
           <ProcessSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
+          <StatsSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
           <WhatItTakesSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
@@ -73,6 +78,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <FounderSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <TeamGridSection />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <TeamSection />
