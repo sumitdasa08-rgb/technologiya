@@ -13,6 +13,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import ScrollToTop from "./components/ScrollToTop";
 import UpdatePrompt from "./components/UpdatePrompt";
+import FrameBorder from "./components/FrameBorder";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
         <UpdatePrompt />
         <Toaster />
         <Sonner />
+        <FrameBorder />
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
