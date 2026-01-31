@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -25,8 +24,8 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen bg-background">
-      {/* Main bordered container - engine.fm style */}
-      <div className="relative min-h-screen border border-border/40 m-2 md:m-3 lg:m-4 rounded-lg overflow-hidden">
+      {/* Main container with border inset matching the frame */}
+      <div className="relative min-h-screen">
         {/* Background image */}
         <div className="absolute inset-0">
           <img 
@@ -35,53 +34,51 @@ const HeroSection = () => {
             className="w-full h-full object-cover object-center"
           />
           {/* Dark overlay for readability */}
-          <div className="absolute inset-0 bg-background/75" />
+          <div className="absolute inset-0 bg-background/70" />
         </div>
         
         {/* Grid pattern overlay */}
-        <div className="absolute inset-0 grid-pattern opacity-10" />
-        
-        {/* Gradient glow effects */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[120px] opacity-50" />
+        <div className="absolute inset-0 grid-pattern opacity-5" />
         
         {/* Left sidebar - engine.fm style */}
-        <div className="hidden lg:flex absolute left-0 top-0 bottom-0 w-16 flex-col items-center justify-between py-8 z-20 border-r border-border/30 bg-background/30 backdrop-blur-sm">
+        <div className="hidden lg:flex fixed left-[20px] top-[20px] bottom-[20px] w-[60px] flex-col items-center justify-between py-8 z-40">
           {/* Top - tagline vertical */}
-          <span className="text-[10px] font-medium text-muted-foreground tracking-[0.25em] whitespace-nowrap transform -rotate-180 origin-center" style={{ writingMode: 'vertical-rl' }}>
+          <span className="text-[11px] font-normal text-white/70 tracking-[0.2em] whitespace-nowrap transform -rotate-180" style={{ writingMode: 'vertical-rl' }}>
             We Fix Devices Fast
           </span>
           
-          {/* Scroll indicators */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />
-            <div className="w-2 h-2 rounded-full border border-muted-foreground/50" />
+          {/* Scroll indicators - engine.fm style dots */}
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full border border-white/40" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <div className="w-1.5 h-1.5 rounded-full border border-white/40" />
+            <div className="w-1.5 h-1.5 rounded-full border border-white/40" />
           </div>
           
           {/* Brand name vertical */}
-          <span className="text-[10px] font-medium text-muted-foreground tracking-[0.2em] transform -rotate-180 origin-center" style={{ writingMode: 'vertical-rl' }}>
+          <span className="text-[11px] font-normal text-white/70 tracking-[0.15em] transform -rotate-180" style={{ writingMode: 'vertical-rl' }}>
             technologiya
           </span>
         </div>
 
-        {/* Main content - offset for sidebar on desktop */}
+        {/* Main content */}
         <div className="relative z-10 flex flex-col min-h-screen">
           {/* Spacer for navbar */}
-          <div className="h-20 lg:h-24" />
+          <div className="h-20 lg:h-28" />
           
-          {/* Content area */}
-          <div className="flex-1 flex items-center lg:pl-24 px-6 md:px-12 lg:px-16">
+          {/* Content area - offset for sidebar on desktop */}
+          <div className="flex-1 flex items-center lg:pl-[140px] px-8 md:px-16 lg:px-20">
             <div className="max-w-3xl">
               {/* Main headline - engine.fm italic style */}
-              <h1 className="opacity-0 animate-fade-up text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-foreground mb-8 leading-[1.05] tracking-tight font-display">
-                <span className="block font-light italic">Transform Your Device</span>
-                <span className="block font-light italic">Problems into Solutions.</span>
+              <h1 className="opacity-0 animate-fade-up text-[2.5rem] sm:text-5xl md:text-6xl lg:text-[5rem] xl:text-[5.5rem] text-foreground mb-6 leading-[1.1] tracking-tight font-display">
+                <span className="block font-light italic">Transform Your</span>
+                <span className="block font-light italic">Expertise into</span>
+                <span className="block font-light italic">Influence.</span>
               </h1>
               
               {/* Subheadline */}
-              <p className="opacity-0 animate-fade-up delay-200 text-base md:text-lg text-muted-foreground mb-10 max-w-xl leading-relaxed font-light tracking-wide">
+              <p className="opacity-0 animate-fade-up delay-200 text-sm md:text-base text-muted-foreground mb-8 max-w-lg leading-relaxed font-light tracking-wide">
                 We provide expert computer repair, laptop repair, and device troubleshooting services, helping individuals and businesses fix their tech issues quickly and affordably.
               </p>
 
@@ -89,11 +86,11 @@ const HeroSection = () => {
               <div className="opacity-0 animate-fade-up delay-300">
                 <Button 
                   size="lg" 
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-lg hover:scale-105"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 px-8 py-5 text-sm font-medium rounded-md"
                   asChild
                 >
                   <a href="#booking" onClick={scrollToBooking} aria-label="Get Started with Technologiya">
-                    Get Started <ArrowRight className="ml-2 w-4 h-4" />
+                    Get Started
                   </a>
                 </Button>
               </div>
