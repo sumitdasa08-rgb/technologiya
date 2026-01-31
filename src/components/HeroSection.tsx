@@ -76,9 +76,8 @@ const HeroSection = () => {
             <div className="max-w-3xl">
               {/* Main headline - engine.fm italic style */}
               <h1 className="opacity-0 animate-fade-up text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-foreground mb-8 leading-[1.05] tracking-tight font-display">
-                <span className="block font-light italic">Transform Your</span>
-                <span className="block font-light italic text-foreground/90">Device Problems</span>
-                <span className="block font-light italic">into Solutions.</span>
+                <span className="block font-light italic">Transform Your Device</span>
+                <span className="block font-light italic">Problems into Solutions.</span>
               </h1>
               
               {/* Subheadline */}
