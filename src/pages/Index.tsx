@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
-import SplineHero from "@/components/SplineHero";
+import Hero from "@/components/Hero";
 import InstallPrompt from "@/components/InstallPrompt";
 import { Helmet } from "react-helmet-async";
 
@@ -44,7 +44,7 @@ const Index = () => {
       </Helmet>
       <main className="min-h-screen bg-background">
         <Navbar />
-        <SplineHero />
+        <Hero />
         <InstallPrompt />
         <Suspense fallback={<SectionSkeleton />}>
           <LogoMarquee />
