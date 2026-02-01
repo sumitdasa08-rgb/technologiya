@@ -1,114 +1,37 @@
-import { lazy, Suspense } from "react";
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import InstallPrompt from "@/components/InstallPrompt";
-import { Helmet } from "react-helmet-async";
+'use client'
 
-// Lazy load below-the-fold components for faster initial load
-const LogoMarquee = lazy(() => import("@/components/LogoMarquee"));
-const WhatWeDoSection = lazy(() => import("@/components/WhatWeDoSection"));
-const WhyChooseSection = lazy(() => import("@/components/WhyChooseSection"));
-const ProcessSection = lazy(() => import("@/components/ProcessSection"));
-const StatsSection = lazy(() => import("@/components/StatsSection"));
-const WhatItTakesSection = lazy(() => import("@/components/WhatItTakesSection"));
-const PricingSection = lazy(() => import("@/components/PricingSection"));
-const ServicesSection = lazy(() => import("@/components/ServicesSection"));
-const AboutSection = lazy(() => import("@/components/AboutSection"));
-const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"));
-const FounderSection = lazy(() => import("@/components/FounderSection"));
-const TeamGridSection = lazy(() => import("@/components/TeamGridSection"));
-const TeamSection = lazy(() => import("@/components/TeamSection"));
-const PrivacySection = lazy(() => import("@/components/PrivacySection"));
-const BookingSection = lazy(() => import("@/components/BookingSection"));
-const FAQSection = lazy(() => import("@/components/FAQSection"));
-const TrackRepairSection = lazy(() => import("@/components/TrackRepairSection"));
-const BlogPreviewSection = lazy(() => import("@/components/BlogPreviewSection"));
-const Footer = lazy(() => import("@/components/Footer"));
-const WhatsAppChannelBanner = lazy(() => import("@/components/WhatsAppChannelBanner"));
+import { SplineScene } from "@/components/ui/splite";
+import { Card } from "@/components/ui/card";
+import { Spotlight } from "@/components/ui/spotlight";
 
-// Minimal skeleton loader for lazy components
-const SectionSkeleton = () => (
-  <div className="py-16 flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
-  </div>
-);
-
-const Index = () => {
+export default function Index() {
   return (
-    <>
-      <Helmet>
-        <title>Technologiya | Device & Computer Solution Platform</title>
-        <meta name="description" content="Technologiya is India's trusted device & computer solution platform. Expert computer repair, laptop repair, device troubleshooting, Windows installation, virus removal & IT support. Call 8812910655" />
-        <meta name="keywords" content="Technologiya, Technologiya computer solution, Technologiya device repair, Technologiya laptop repair, Technologiya IT support, Technologiya technical service, computer repair, laptop repair, device troubleshooting" />
-        <link rel="canonical" href="https://technologiya.lovable.app/" />
-      </Helmet>
-      <main className="min-h-screen bg-background">
-        <Navbar />
-        <Hero />
-        <InstallPrompt />
-        <Suspense fallback={<SectionSkeleton />}>
-          <LogoMarquee />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <WhatWeDoSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <WhyChooseSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <ProcessSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <StatsSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <WhatItTakesSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <PricingSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <ServicesSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <AboutSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <TestimonialsSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <FounderSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <TeamGridSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <TeamSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <PrivacySection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <BookingSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <FAQSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <TrackRepairSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <BlogPreviewSection />
-        </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>
-          <Footer />
-        </Suspense>
-        <Suspense fallback={null}>
-          <WhatsAppChannelBanner />
-        </Suspense>
-      </main>
-    </>
-  );
-};
+    <Card className="w-full min-h-screen bg-black/[0.96] relative overflow-hidden border-0 rounded-none">
+      <Spotlight
+        className="-top-40 left-0 md:left-60 md:-top-20"
+        fill="white"
+      />
+      
+      <div className="flex h-full min-h-screen flex-col md:flex-row items-center">
+        {/* Left content */}
+        <div className="flex-1 p-8 md:p-16 relative z-10 flex flex-col justify-center">
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400">
+            Interactive 3D
+          </h1>
+          <p className="mt-4 text-neutral-300 max-w-lg">
+            Bring your UI to life with beautiful 3D scenes. Create immersive experiences 
+            that capture attention and enhance your design.
+          </p>
+        </div>
 
-export default Index;
+        {/* Right content */}
+        <div className="flex-1 relative h-full min-h-[400px] md:min-h-screen">
+          <SplineScene 
+            scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+            className="w-full h-full"
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
