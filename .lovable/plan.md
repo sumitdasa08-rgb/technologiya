@@ -1,191 +1,214 @@
 
-# AI-Powered Tech Blog for Gen Z Engagement
+# Technologiya Website - Complete Rebuild Plan
 
 ## Overview
-Create an engaging, AI-powered blog section that automatically generates daily posts about the latest developments in computers, AI, and technology. The blog will attract Gen Z visitors with modern aesthetics, interactive elements, and fresh, relevant content.
-
-## Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND                                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │  Blog Page  │  │ Post Detail │  │ Blog Preview Section    │  │
-│  │  /blog      │  │ /blog/:slug │  │ (Homepage)              │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        BACKEND                                   │
-│  ┌─────────────────────┐  ┌───────────────────────────────────┐ │
-│  │ generate-blog-post  │  │ blog_posts table                  │ │
-│  │ (Edge Function)     │  │ - id, title, content, slug        │ │
-│  │ Uses Lovable AI     │  │ - category, tags, emoji           │ │
-│  └─────────────────────┘  │ - views, published_at             │ │
-│                           └───────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Features
-
-### 1. AI Content Generation
-- Uses Lovable AI (google/gemini-3-flash-preview) - no API key needed
-- Generates engaging, Gen Z-friendly tech articles
-- Topics: AI breakthroughs, gadget reviews, coding tips, cybersecurity, gaming tech
-- Auto-generates catchy titles, emojis, and relevant tags
-
-### 2. Gen Z-Focused Design
-- TikTok/Instagram-inspired card layouts with rounded corners
-- Floating emojis and micro-animations
-- Swipe-enabled mobile carousel (using existing Embla)
-- Haptic feedback on interactions (already implemented in your codebase)
-- Gradient backgrounds and glassmorphism effects
-- "Fire" reaction system with animated counters
-
-### 3. Blog Homepage Preview
-- "Fresh Tech Drops" section on the main page
-- 3-4 latest posts in a horizontal scroll
-- Animated entrance with your existing fade-up effects
-- "View All" button linking to full blog
-
-### 4. Full Blog Page (/blog)
-- Grid layout with category filters (AI, Gadgets, Coding, Gaming)
-- Search functionality
-- Infinite scroll or "Load More" pattern
-- Reading time estimates
-- Share to WhatsApp/Twitter buttons
-
-### 5. Individual Post Page (/blog/:slug)
-- Clean, readable typography
-- Markdown rendering with code blocks
-- Related posts section
-- Social sharing
-- "Back to Blog" navigation
+Building a complete Technologiya landing page with an interactive 3D robot hero featuring gradient glow effects, using a custom Black and Grays color palette, glassmorphism navigation, and all service sections.
 
 ---
 
-## Implementation Steps
+## Color Palette Implementation
 
-### Phase 1: Database Setup
-Create a `blog_posts` table with the following structure:
-- `id` (UUID, primary key)
-- `title` (text) - Article headline
-- `slug` (text, unique) - URL-friendly identifier
-- `content` (text) - Full article in markdown
-- `excerpt` (text) - Short preview text
-- `category` (text) - AI, Gadgets, Coding, Gaming, Cybersecurity
-- `tags` (text array) - Searchable keywords
-- `emoji` (text) - Featured emoji for the card
-- `cover_image_url` (text, nullable) - Optional cover image
-- `views` (integer) - View counter
-- `is_published` (boolean) - Draft/Published status
-- `published_at` (timestamp) - Publication date
-- `created_at` (timestamp)
+The new design uses the **Black and Grays** color scheme:
 
-RLS policies will allow public read access (no auth required for viewing).
+| Color Name | Hex Code | Usage |
+|------------|----------|-------|
+| Authentic Black | `#080808` | Primary background |
+| Sport Black | `#141414` | Card backgrounds, secondary surfaces |
+| Bold Grey | `#676767` | Muted text, subtle borders |
+| Gray | `#808080` | Secondary text |
+| Dark Gray | `#A9A9A9` | Primary text highlights |
+| Gray (X11) | `#BEBEBE` | Headings, important text |
 
-### Phase 2: AI Edge Function
-Create `generate-blog-post` edge function that:
-1. Accepts a topic/category parameter
-2. Calls Lovable AI to generate article content
-3. Creates a unique slug from the title
-4. Saves the post to the database
-5. Can be triggered manually or via scheduled cron job
+Accent color: Keep the existing purple (`hsl(258 90% 66%)`) for CTAs and highlights.
 
-### Phase 3: Frontend Components
-1. **BlogPreviewSection** - Homepage widget showing latest 4 posts
-2. **BlogPage** - Full blog listing with filters
-3. **BlogPostPage** - Individual article view
-4. **BlogCard** - Reusable card component with Gen Z styling
-5. **CategoryFilter** - Pill-style category selector
+---
 
-### Phase 4: Navigation & Routing
-- Add "Blog" link to Navbar (both desktop and mobile)
-- Create routes: `/blog` and `/blog/:slug`
-- Update sitemap.xml for SEO
+## File Changes
 
-### Phase 5: Gen Z UX Enhancements
-- Add reaction animations (fire emoji counter)
-- Implement reading progress bar
-- Add "Copy link" with toast feedback
-- Mobile swipe gestures with haptic feedback
+### 1. Update CSS Variables (`src/index.css`)
+
+Replace the current color system with the Black and Grays palette:
+
+```text
+CSS Variable Mapping:
+--background: #080808 (Authentic Black)
+--card: #141414 (Sport Black)
+--foreground: #BEBEBE (Gray X11)
+--muted-foreground: #808080 (Gray)
+--border: #676767 at 30% opacity
+--primary: Keep purple accent
+```
+
+---
+
+### 2. Hero Section with 3D Robot + Glow Effects (`src/pages/Index.tsx`)
+
+Transform into a full landing page with all sections.
+
+**Hero Layout:**
+
+```text
++----------------------------------------------------------+
+|  [Navbar - glassmorphism]                                |
++----------------------------------------------------------+
+|                                                          |
+|  +------------------------+  +------------------------+  |
+|  |                        |  |                        |  |
+|  | "Transform Your        |  |  ┌─────────────────┐  |  |
+|  |  Device Problems       |  |  │ PURPLE GLOW     │  |  |
+|  |  into Solutions"       |  |  │  ┌───────────┐  │  |  |
+|  |                        |  |  │  │ 3D ROBOT  │  │  |  |
+|  | Premium computer       |  |  │  │ (Spline)  │  │  |  |
+|  | repair services        |  |  │  └───────────┘  │  |  |
+|  |                        |  |  │ BLUE ACCENT     │  |  |
+|  | [Get Started] [Track]  |  |  └─────────────────┘  |  |
+|  |                        |  |                        |  |
+|  +------------------------+  +------------------------+  |
+|                                                          |
++----------------------------------------------------------+
+```
+
+**Glow Effect Layers (behind robot):**
+1. **Large purple radial gradient** - 600x600px, blur-3xl, opacity 40%, centered
+2. **Blue accent glow** - 400x400px, blur-2xl, opacity 30%, offset bottom-right
+3. **Animated pulsing orb** - 300x300px, subtle pulse animation, opacity 20%
+
+---
+
+### 3. Navigation Updates (`src/components/Navbar.tsx`)
+
+Update with new color palette:
+- Background: `#080808` with 90% opacity when scrolled
+- Border: `#676767` at 30% opacity
+- Text: `#808080` (muted) transitioning to `#BEBEBE` on hover
+- Logo box: `#141414` background with `#676767` border
+
+---
+
+### 4. Frame Border Updates (`src/components/FrameBorder.tsx`)
+
+Change from white border to subtle gray:
+- Border color: `#676767` at 40% opacity
+- Creates a refined, premium frame effect
+
+---
+
+### 5. Section Components Updates
+
+All existing sections need color updates to match the new palette:
+
+**Components to update:**
+- `AboutSection.tsx` - Background colors, text colors
+- `ServicesSection.tsx` - Card backgrounds, hover states
+- `PricingSection.tsx` - Tier cards, popular badge
+- `FAQSection.tsx` - Accordion styling
+- `BookingSection.tsx` - Form inputs, buttons
+- `Footer.tsx` - Background, link colors
+
+**Color changes for all sections:**
+- Section backgrounds: Alternate between `#080808` and `#141414`
+- Text: `#BEBEBE` for headings, `#808080` for body
+- Cards: `#141414` background with `#676767` subtle border
+- Hover effects: Border transitions to purple accent
+
+---
+
+## Page Structure
+
+```text
+Index.tsx Layout:
+├── FrameBorder (fixed gray border overlay)
+├── Navbar (glassmorphism with gray palette)
+├── ScrollToTop
+│
+├── <main>
+│   ├── Hero Section
+│   │   ├── Left: Headline + CTA buttons
+│   │   └── Right: 3D Robot + Glow effects
+│   │
+│   ├── LogoMarquee (trusted brands)
+│   ├── AboutSection
+│   ├── ServicesSection
+│   ├── PricingSection
+│   ├── ProcessSection (how it works)
+│   ├── FAQSection
+│   └── BookingSection
+│
+└── Footer
+```
 
 ---
 
 ## Technical Details
 
-### Edge Function Structure
-The AI edge function will use your existing LOVABLE_API_KEY secret (already configured) to call the Lovable AI gateway with streaming disabled for content generation.
+### Animation Classes (from existing CSS)
+- `animate-fade-up` - Entrance animation
+- `animate-pulse-soft` - Glow pulsing
+- `hover-lift` - Card hover effect
+- `glass-card` - Glassmorphism styling
 
-### Database Queries
-- Fetch latest posts: Order by `published_at DESC`, limit 10
-- Filter by category: WHERE clause on category column
-- Increment views: Update on post page load
-- Search: Full-text search on title and content
+### Responsive Breakpoints
+- Mobile: Full-width stacked layout
+- Tablet (md): Two-column hero
+- Desktop (lg): Full layout with larger robot
 
-### Styling Approach
-- Reuse existing glassmorphism classes (.glass, .glass-card)
-- Apply existing animations (fade-up, scale-up, float)
-- Match the monochrome color scheme with emoji accents
-- Use Inter font family (already loaded)
+### Glow Effect CSS
 
-### SEO Optimization
-- Dynamic meta tags using react-helmet-async
-- Structured data for blog posts (Article schema)
-- Automatic sitemap updates
+```css
+/* Primary glow behind robot */
+.robot-glow-primary {
+  background: radial-gradient(
+    circle at center,
+    rgba(139, 92, 246, 0.4) 0%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  width: 600px;
+  height: 600px;
+}
+
+/* Secondary blue accent */
+.robot-glow-accent {
+  background: radial-gradient(
+    circle at center,
+    rgba(59, 130, 246, 0.3) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  width: 400px;
+  height: 400px;
+}
+```
 
 ---
 
 ## Files to Create/Modify
 
-### New Files
-- `src/pages/Blog.tsx` - Blog listing page
-- `src/pages/BlogPost.tsx` - Individual post page  
-- `src/components/BlogPreviewSection.tsx` - Homepage preview
-- `src/components/BlogCard.tsx` - Reusable post card
-- `src/components/CategoryFilter.tsx` - Category pills
-- `supabase/functions/generate-blog-post/index.ts` - AI generation
-
-### Modified Files
-- `src/App.tsx` - Add new routes
-- `src/pages/Index.tsx` - Add BlogPreviewSection
-- `src/components/Navbar.tsx` - Add Blog link
-- `src/components/Footer.tsx` - Add Blog link
-- `public/sitemap.xml` - Add blog URLs
-- `supabase/config.toml` - Register new edge function
-
----
-
-## Sample Blog Categories & Topics
-
-| Category | Example Topics |
-|----------|----------------|
-| AI | ChatGPT updates, AI image generators, Machine learning basics |
-| Gadgets | Latest iPhone features, Budget laptops 2025, Smart home devices |
-| Coding | JavaScript tips, Python for beginners, Web dev trends |
-| Gaming | GPU comparisons, Mobile gaming, Cloud gaming services |
-| Cybersecurity | Password managers, VPN guide, Phishing protection |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/index.css` | Modify | Update CSS variables with Black and Grays palette |
+| `src/pages/Index.tsx` | Rewrite | Full landing page with hero + all sections |
+| `src/components/Navbar.tsx` | Modify | Update colors to new palette |
+| `src/components/FrameBorder.tsx` | Modify | Change to gray border |
+| `src/components/AboutSection.tsx` | Modify | Update colors |
+| `src/components/ServicesSection.tsx` | Modify | Update colors |
+| `src/components/PricingSection.tsx` | Modify | Update colors |
+| `src/components/FAQSection.tsx` | Modify | Update colors |
+| `src/components/BookingSection.tsx` | Modify | Update colors |
+| `src/components/Footer.tsx` | Modify | Update colors |
+| `src/components/LogoMarquee.tsx` | Modify | Update colors |
+| `src/components/ProcessSection.tsx` | Modify | Update colors |
 
 ---
 
-## Content Generation Approach
+## Expected Result
 
-The AI will be prompted to write in a Gen Z-friendly voice:
-- Short paragraphs (2-3 sentences max)
-- Use of emojis where appropriate
-- Casual but informative tone
-- Include practical tips and "hot takes"
-- Reference trending topics and memes (when relevant)
+A polished Technologiya landing page with:
 
----
-
-## Outcome
-
-After implementation, Technologiya will have:
-1. A dynamic blog that updates with fresh AI-generated tech content
-2. Increased organic traffic from tech-related searches
-3. Higher engagement from Gen Z visitors
-4. A reason for visitors to return regularly
-5. Improved SEO through regular content updates
-6. Shareable content for social media reach
+1. Interactive 3D robot hero with beautiful layered gradient glow effects (purple + blue)
+2. Custom Black and Grays color palette creating a sleek, modern aesthetic
+3. All service sections: About, Services, Pricing, Process, FAQ, Booking
+4. Subtle gray fixed border frame
+5. Glassmorphism navigation with smooth scroll behavior
+6. Smooth animations on scroll (fade-up, scale, hover effects)
+7. Fully mobile-responsive design
