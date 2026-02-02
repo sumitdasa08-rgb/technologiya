@@ -139,10 +139,10 @@ const ServicesSection = () => {
   };
 
   return (
-    <section id="services" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
+    <section id="services" ref={sectionRef} className="py-24 md:py-32 bg-card relative overflow-hidden">
       {/* Subtle background elements */}
       <div className="absolute inset-0 glow-accent opacity-30" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
       
       <div className="container mx-auto px-4 relative">
         <div className={`text-center mb-16 md:mb-20 transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>

@@ -28,7 +28,7 @@ const LogoMarquee = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-20 bg-card relative overflow-hidden border-y border-border/50">
+    <section ref={sectionRef} className="py-16 md:py-20 bg-card relative overflow-hidden border-y border-border/30">
       {/* Background */}
       <div className="absolute inset-0 glow-accent opacity-10" />
       

@@ -42,16 +42,16 @@ const Navbar = () => {
 
   return (
     <nav className={`fixed top-2 md:top-3 lg:top-4 left-2 md:left-3 lg:left-4 right-2 md:right-3 lg:right-4 z-50 transition-all duration-500 ease-apple`}>
-      {/* Inner container with border - engine.fm style */}
-      <div className={`rounded-lg border transition-all duration-500 ${
+      {/* Inner container with glassmorphism */}
+      <div className={`rounded-xl border transition-all duration-500 ${
         scrolled 
-          ? "bg-background/90 backdrop-blur-xl border-border/50" 
+          ? "bg-card/90 backdrop-blur-xl border-border/30" 
           : "bg-transparent border-transparent"
       }`}>
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center gap-3 group z-10">
-            <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center transition-all duration-300 group-hover:border-primary/50">
+            <div className="w-10 h-10 rounded-xl bg-card border border-border/30 flex items-center justify-center transition-all duration-300 group-hover:border-primary/40 group-hover:bg-primary/10">
               <span className="text-foreground font-bold text-lg font-display">T</span>
             </div>
           </a>
@@ -103,7 +103,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden absolute top-full left-0 right-0 mt-2 bg-background/95 backdrop-blur-xl border border-border/50 rounded-lg transition-all duration-500 ease-apple ${
+      <div className={`md:hidden absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl transition-all duration-500 ease-apple ${
         isOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-4"
       }`}>
         <div className="px-4 py-6 space-y-4">

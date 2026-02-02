@@ -23,7 +23,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-card border-t border-border relative overflow-hidden">
+    <footer className="bg-background border-t border-border/30 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 glow-accent opacity-10" />
       
@@ -116,7 +116,7 @@ const Footer = () => {
               </ul>
 
               {/* Contact */}
-              <div className="mt-6 pt-6 border-t border-border/50">
+              <div className="mt-6 pt-6 border-t border-border/30">
                 <a 
                   href="tel:+918812910655"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -130,7 +130,7 @@ const Footer = () => {
         </div>
 
         {/* WhatsApp Channel */}
-        <div className="py-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="py-8 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">Stay updated with Technologiya</p>
           <a
             href="https://whatsapp.com/channel/0029Vb79ecnC6Zvgs8lGhn0v"
@@ -146,7 +146,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div className="py-6 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© 2025 Technologiya. All rights reserved.</p>
           <p>Trusted by 500+ customers across India.</p>
         </div>
