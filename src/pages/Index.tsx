@@ -25,11 +25,13 @@ export default function Index() {
         </div>
 
         {/* Right content */}
-        <div className="flex-1 relative h-full min-h-[400px] md:min-h-screen">
-          <SplineScene 
-            scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-            className="w-full h-full"
-          />
+        <div className="flex-1 relative h-full min-h-[500px] md:min-h-screen flex items-center justify-center">
+          <div className="w-full h-[600px] md:h-[800px] lg:h-[900px]">
+            <SplineScene 
+              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+              className="w-full h-full scale-125 md:scale-150"
+            />
+          </div>
         </div>
       </div>
     </Card>
