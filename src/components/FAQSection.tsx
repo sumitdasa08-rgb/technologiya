@@ -51,10 +51,10 @@ const generateFAQSchema = () => {
 
 const FAQSection = () => {
   return (
-    <section id="faq" className="py-20 md:py-24 bg-card relative overflow-hidden">
+    <section id="faq" className="py-20 md:py-24 bg-background relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 glow-accent opacity-20" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
       
       <Helmet>
         <script type="application/ld+json">

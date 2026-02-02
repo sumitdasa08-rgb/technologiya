@@ -59,11 +59,11 @@ const AboutSection = () => {
     <section 
       id="about" 
       ref={sectionRef} 
-      className="py-24 md:py-32 bg-card relative overflow-hidden"
+      className="py-24 md:py-32 bg-background relative overflow-hidden"
     >
       {/* Background elements */}
       <div className="absolute inset-0 glow-accent opacity-20" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
       
       <div className="container mx-auto px-4 relative">
         {/* Section Header */}
