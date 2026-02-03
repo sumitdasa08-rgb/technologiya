@@ -10,7 +10,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import LogoMarquee from "@/components/LogoMarquee";
 import AboutSection from "@/components/AboutSection";
 import ServicesSection from "@/components/ServicesSection";
-import PricingSection from "@/components/PricingSection";
+
 import ProcessSection from "@/components/ProcessSection";
 import FAQSection from "@/components/FAQSection";
 import BookingSection from "@/components/BookingSection";
@@ -140,8 +140,6 @@ export default function Index() {
       {/* Services Section */}
       <ServicesSection />
 
-      {/* Pricing Section */}
-      <PricingSection />
 
       {/* Process Section */}
       <ProcessSection />
