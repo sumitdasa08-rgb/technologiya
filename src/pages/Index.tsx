@@ -140,15 +140,14 @@ export default function Index() {
       {/* Services Section */}
       <ServicesSection />
 
-
       {/* Process Section */}
       <ProcessSection />
 
-      {/* FAQ Section */}
-      <FAQSection />
-
       {/* Booking Section */}
       <BookingSection />
+
+      {/* FAQ Section - Last before footer */}
+      <FAQSection />
 
       {/* Footer */}
       <Footer />

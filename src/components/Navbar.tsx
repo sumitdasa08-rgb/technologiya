@@ -1,6 +1,7 @@
 import { Phone, Menu, X, Package, Newspaper } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -81,13 +82,16 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Get Started Button */}
-          <a 
-            href="/#booking"
-            className="hidden md:flex items-center gap-2 text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-lg transition-all duration-300 hover:bg-primary/90"
-          >
-            Get Started
-          </a>
+          {/* Theme Toggle & Get Started Button */}
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
+            <a 
+              href="/#booking"
+              className="flex items-center gap-2 text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-lg transition-all duration-300 hover:bg-primary/90"
+            >
+              Get Started
+            </a>
+          </div>
 
           {/* Mobile menu button */}
           <div ref={menuRef} className="md:hidden">
@@ -133,7 +137,11 @@ const Navbar = () => {
             <Newspaper className="w-5 h-5" />
             Blog
           </Link>
-          <div className="pt-4 border-t border-border">
+          <div className="pt-4 border-t border-border flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Theme</span>
+              <ThemeToggle />
+            </div>
             <a 
               href="/#booking" 
               className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium"
@@ -141,7 +149,7 @@ const Navbar = () => {
             >
               Get Started
             </a>
-            <a href="tel:+918812910655" className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
+            <a href="tel:+918812910655" className="flex items-center justify-center gap-2 text-muted-foreground mt-2">
               <Phone className="w-4 h-4 text-primary" />
               <span className="font-medium">+91 88129 10655</span>
             </a>
