@@ -130,41 +130,34 @@
     <!-- Inline critical CSS for Gen Z style loader -->
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
-      body{background:#0a0a0a;overflow:hidden}
+       body{background:#080808;overflow:hidden}
       
       #initial-loader{
         position:fixed;inset:0;z-index:9999;
         display:flex;align-items:center;justify-content:center;
-        background:#0a0a0a;
+         background:#080808;
         opacity:1;transition:opacity .4s ease-out
       }
       #initial-loader.fade-out{opacity:0;pointer-events:none}
       
-      /* Animated gradient background */
-      .genz-bg{
+       /* Silver glass background */
+       .glass-bg{
         position:absolute;inset:0;
-        background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);
+         background:linear-gradient(135deg,#080808 0%,#121212 50%,#080808 100%);
         overflow:hidden
       }
-      .genz-bg::before{
-        content:'';position:absolute;inset:-50%;
-        background:conic-gradient(from 0deg,transparent,#8B5CF6 10%,transparent 20%,#06B6D4 30%,transparent 40%,#EC4899 50%,transparent 60%);
-        animation:bgRotate 8s linear infinite;
-        opacity:0.15
-      }
-      @keyframes bgRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
       
-      /* Glow orbs */
-      .orb{
+       /* Silver glow orbs */
+       .silver-orb{
         position:absolute;border-radius:50%;filter:blur(60px);
         animation:orbFloat 4s ease-in-out infinite
       }
-      .orb-1{width:200px;height:200px;background:#8B5CF6;top:20%;left:10%;animation-delay:0s}
-      .orb-2{width:150px;height:150px;background:#06B6D4;bottom:30%;right:15%;animation-delay:1s}
-      .orb-3{width:100px;height:100px;background:#EC4899;top:60%;left:60%;animation-delay:2s}
+       .silver-orb-1{width:200px;height:200px;background:rgba(200,200,200,0.15);top:20%;left:10%;animation-delay:0s}
+       .silver-orb-2{width:150px;height:150px;background:rgba(180,180,180,0.12);bottom:30%;right:15%;animation-delay:1s}
+       .silver-orb-3{width:100px;height:100px;background:rgba(220,220,220,0.1);top:60%;left:60%;animation-delay:2s}
       @keyframes orbFloat{
-        0%,100%{transform:translateY(0) scale(1);opacity:0.3}
-        50%{transform:translateY(-20px) scale(1.1);opacity:0.5}
+         0%,100%{transform:translateY(0) scale(1);opacity:0.4}
+         50%{transform:translateY(-20px) scale(1.1);opacity:0.6}
       }
       
       /* Loader content */
@@ -179,101 +172,75 @@
       }
       
       /* Logo with glow */
-      .logo-wrapper{
-        position:relative;width:80px;height:80px;margin:0 auto 24px
-      }
-      .logo-glow{
-        position:absolute;inset:-10px;
-        background:linear-gradient(135deg,#8B5CF6,#06B6D4,#EC4899);
-        border-radius:24px;filter:blur(20px);
-        animation:glowPulse 2s ease-in-out infinite;opacity:0.6
+       .logo-3d-wrapper{
+         position:relative;width:96px;height:96px;margin:0 auto 32px;
+         perspective:1000px
+       }
+       .logo-silver-glow{
+         position:absolute;inset:-20px;
+         background:radial-gradient(circle,rgba(200,200,200,0.3) 0%,transparent 70%);
+         filter:blur(30px);
+         animation:glowPulse 3s ease-in-out infinite
       }
       @keyframes glowPulse{
-        0%,100%{opacity:0.4;transform:scale(1)}
-        50%{opacity:0.7;transform:scale(1.1)}
-      }
-      .logo-box{
-        position:relative;width:80px;height:80px;
-        background:linear-gradient(135deg,#fafafa,#e0e0e0);
-        border-radius:20px;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 10px 40px rgba(139,92,246,0.3)
-      }
-      .logo-box span{
-        font-size:32px;font-weight:800;
-        background:linear-gradient(135deg,#8B5CF6,#06B6D4);
-        -webkit-background-clip:text;background-clip:text;
-        -webkit-text-fill-color:transparent;
-        font-family:system-ui,-apple-system,sans-serif
-      }
-      
-      /* Progress bar */
-      .progress-wrap{
-        width:160px;height:4px;margin:0 auto 16px;
-        background:rgba(255,255,255,0.1);border-radius:4px;
-        overflow:hidden
-      }
-      .progress-fill{
-        height:100%;width:0%;
-        background:linear-gradient(90deg,#8B5CF6,#06B6D4,#EC4899);
-        border-radius:4px;
-        animation:progressLoad 1s ease-out forwards
-      }
-      @keyframes progressLoad{
-        0%{width:0%}
-        100%{width:100%}
-      }
-      
-      /* Loading text */
-      .loading-text{
-        font-size:14px;color:#a1a1aa;
-        font-family:system-ui,-apple-system,sans-serif;
-        letter-spacing:0.5px;
-        animation:textPulse 1.5s ease-in-out infinite
-      }
-      @keyframes textPulse{
-        0%,100%{opacity:0.6}
-        50%{opacity:1}
-      }
-      
-      /* Sparkles */
-      .sparkle{
-        position:absolute;width:4px;height:4px;
-        background:#fff;border-radius:50%;
-        animation:sparkle 2s ease-in-out infinite
-      }
-      .sparkle-1{top:30%;left:25%;animation-delay:0s}
-      .sparkle-2{top:20%;right:30%;animation-delay:0.5s}
-      .sparkle-3{bottom:35%;left:35%;animation-delay:1s}
-      .sparkle-4{bottom:25%;right:25%;animation-delay:1.5s}
-      @keyframes sparkle{
-        0%,100%{opacity:0;transform:scale(0)}
-        50%{opacity:1;transform:scale(1)}
+         0%,100%{opacity:0.3;transform:scale(1)}
+         50%{opacity:0.5;transform:scale(1.05)}
+       }
+       .logo-3d{
+         position:relative;width:96px;height:96px;
+         transform:rotateY(-5deg) rotateX(5deg);
+         transform-style:preserve-3d;
+         animation:logoFloat 4s ease-in-out infinite
+       }
+       @keyframes logoFloat{
+         0%,100%{transform:rotateY(-5deg) rotateX(5deg) translateY(0)}
+         50%{transform:rotateY(-5deg) rotateX(5deg) translateY(-8px)}
+       }
+       .logo-3d img{
+         width:100%;height:100%;object-fit:contain;
+         filter:drop-shadow(0 10px 30px rgba(200,200,200,0.2)) invert(1)
+       }
+       
+       /* Bouncing dots loader */
+       .dots-loader{
+         display:flex;align-items:center;justify-content:center;gap:6px
+       }
+       .dot{
+         width:8px;height:8px;
+         background:rgba(200,200,200,0.8);
+         border-radius:50%;
+         animation:dotBounce 0.6s ease-in-out infinite
+       }
+       .dot:nth-child(1){animation-delay:0s}
+       .dot:nth-child(2){animation-delay:0.1s}
+       .dot:nth-child(3){animation-delay:0.2s}
+       @keyframes dotBounce{
+         0%,100%{transform:translateY(0)}
+         50%{transform:translateY(-8px)}
       }
     </style>
   </head>
   <body>
     <div id="root">
-      <!-- Gen Z style initial loader -->
+       <!-- Silver glass initial loader -->
       <div id="initial-loader">
-        <div class="genz-bg">
-          <div class="orb orb-1"></div>
-          <div class="orb orb-2"></div>
-          <div class="orb orb-3"></div>
-          <div class="sparkle sparkle-1"></div>
-          <div class="sparkle sparkle-2"></div>
-          <div class="sparkle sparkle-3"></div>
-          <div class="sparkle sparkle-4"></div>
+         <div class="glass-bg">
+           <div class="silver-orb silver-orb-1"></div>
+           <div class="silver-orb silver-orb-2"></div>
+           <div class="silver-orb silver-orb-3"></div>
         </div>
         <div class="loader-content">
-          <div class="logo-wrapper">
-            <div class="logo-glow"></div>
-            <div class="logo-box"><span>T</span></div>
+           <div class="logo-3d-wrapper">
+             <div class="logo-silver-glow"></div>
+             <div class="logo-3d">
+               <img src="/src/assets/logo.png" alt="Technologiya" />
+             </div>
           </div>
-          <div class="progress-wrap">
-            <div class="progress-fill"></div>
+           <div class="dots-loader">
+             <div class="dot"></div>
+             <div class="dot"></div>
+             <div class="dot"></div>
           </div>
-          <p class="loading-text">hang tight...</p>
         </div>
       </div>
     </div>
