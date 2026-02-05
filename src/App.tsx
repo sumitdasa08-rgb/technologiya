@@ -7,6 +7,10 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+ import Track from "./pages/Track";
+ import Status from "./pages/Status";
+ import Blog from "./pages/Blog";
+ import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +24,10 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+               <Route path="/track" element={<Track />} />
+               <Route path="/status" element={<Status />} />
+               <Route path="/blog" element={<Blog />} />
+               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
