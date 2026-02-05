@@ -2,7 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Fade out loader instantly when React is ready
+// Development delay for testing loader (set to 0 for production)
+const LOADER_DELAY_MS = 2000; // 2 seconds delay for development
+
+// Fade out loader after delay
 const fadeOutLoader = () => {
   const loader = document.getElementById("initial-loader");
   if (loader) {
@@ -11,6 +14,8 @@ const fadeOutLoader = () => {
   }
 };
 
-// Render immediately - no artificial delay
+// Render React app
 createRoot(document.getElementById("root")!).render(<App />);
-fadeOutLoader();
+
+// Add delay for development testing of loader
+setTimeout(fadeOutLoader, LOADER_DELAY_MS);
