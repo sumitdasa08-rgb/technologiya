@@ -38,9 +38,46 @@ export default function Index() {
           fill="white"
         />
         
-        <div className="flex min-h-screen flex-col md:flex-row items-center relative">
-          {/* Left content */}
-          <div className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center">
+      <div className="relative min-h-screen flex items-center">
+          {/* Right content - 3D Robot (positioned absolute to overlap) */}
+          <div className="absolute inset-0 flex items-center justify-end pointer-events-none">
+            <div className="w-full md:w-[65%] h-full relative">
+              {/* Silver Glass Effects Container */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div 
+                  className="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full opacity-30"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, rgba(180, 180, 180, 0.15) 40%, transparent 70%)',
+                    filter: 'blur(60px)',
+                  }}
+                />
+                <div 
+                  className="absolute w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-full opacity-20 translate-x-12 translate-y-12"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(220, 220, 220, 0.5) 0%, rgba(180, 180, 180, 0.2) 40%, transparent 70%)',
+                    filter: 'blur(40px)',
+                  }}
+                />
+                <div 
+                  className="absolute w-[200px] h-[200px] md:w-[300px] md:h-[300px] rounded-full opacity-15 animate-pulse-soft"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(240, 240, 240, 0.5) 0%, transparent 60%)',
+                    filter: 'blur(30px)',
+                  }}
+                />
+              </div>
+
+              <div className="w-full h-[500px] md:h-[700px] lg:h-[800px] relative z-10 pointer-events-auto">
+                <SplineScene 
+                  scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                  className="w-full h-full scale-110 md:scale-125 lg:scale-150"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Left content - overlaps robot */}
+          <div className="flex-1 p-8 md:p-16 lg:pl-24 relative z-20 flex flex-col justify-center max-w-2xl">
             {/* Badge */}
             <span className="opacity-0 animate-fade-up inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 w-fit">
               Technologiya
@@ -79,47 +116,6 @@ export default function Index() {
                   Track Repair
                 </Link>
               </Button>
-            </div>
-          </div>
-
-          {/* Right content - 3D Robot with Silver Glass Effects */}
-          <div className="flex-1 relative h-full min-h-[400px] md:min-h-screen flex items-center justify-center">
-            {/* Silver Glass Effects Container */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              {/* Primary Silver Glow */}
-              <div 
-                className="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full opacity-30"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, rgba(180, 180, 180, 0.15) 40%, transparent 70%)',
-                  filter: 'blur(60px)',
-                }}
-              />
-              
-              {/* Secondary Silver Glass Accent */}
-              <div 
-                className="absolute w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-full opacity-20 translate-x-12 translate-y-12"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(220, 220, 220, 0.5) 0%, rgba(180, 180, 180, 0.2) 40%, transparent 70%)',
-                  filter: 'blur(40px)',
-                }}
-              />
-              
-              {/* Animated Pulsing Silver Orb */}
-              <div 
-                className="absolute w-[200px] h-[200px] md:w-[300px] md:h-[300px] rounded-full opacity-15 animate-pulse-soft"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(240, 240, 240, 0.5) 0%, transparent 60%)',
-                  filter: 'blur(30px)',
-                }}
-              />
-            </div>
-
-            {/* 3D Robot */}
-            <div className="w-full h-[500px] md:h-[700px] lg:h-[800px] relative z-10">
-              <SplineScene 
-                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                className="w-full h-full scale-110 md:scale-125 lg:scale-150"
-              />
             </div>
           </div>
         </div>
