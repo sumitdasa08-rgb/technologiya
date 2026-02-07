@@ -90,13 +90,11 @@ function getRandomItem<T>(arr: T[]): T {
 }
 
 async function checkTodayPostExists(supabase: ReturnType<typeof createClient>): Promise<boolean> {
-  // Check if a post was already created today (IST = UTC+5:30)
   const now = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istNow = new Date(now.getTime() + istOffset);
-  const istDateStr = istNow.toISOString().split("T")[0]; // YYYY-MM-DD in IST
+  const istDateStr = istNow.toISOString().split("T")[0];
 
-  // Convert IST start/end of day to UTC
   const istDayStart = new Date(`${istDateStr}T00:00:00+05:30`);
   const istDayEnd = new Date(`${istDateStr}T23:59:59+05:30`);
 
@@ -126,7 +124,6 @@ async function callAIWithRetry(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
       console.log(`Retry attempt ${attempt}/${maxRetries}...`);
-      // Wait before retry: 2s, then 5s
       await new Promise((r) => setTimeout(r, attempt * 3000));
     }
 
@@ -149,14 +146,17 @@ async function callAIWithRetry(
 - Include practical tips, hot takes, and "should you update?" recommendations
 - Be relatable - mention Indian pricing, availability, and relevance
 - Use simple language, avoid heavy jargon
-- Add relevant hashtags at the end
 - Make it feel like breaking news or insider info
 - Include specific version numbers, dates, and device names when relevant
+
+IMPORTANT: For every product or device mentioned, include buy/check links from Amazon India and Flipkart. 
+Format buy links as: [Buy on Amazon](https://www.amazon.in/s?k=PRODUCT+NAME) | [Check on Flipkart](https://www.flipkart.com/search?q=PRODUCT+NAME)
+Include max 3 buy link sections for the top products.
 
 You must respond with valid JSON only, no markdown code blocks. The response must be a JSON object with these exact keys:
 - title: Catchy headline (max 60 chars, include device/brand name)
 - excerpt: Brief summary for card preview (max 150 chars, hook the reader)
-- content: Full article in markdown (600-900 words, include subheadings)
+- content: Full article in markdown (600-900 words, include subheadings, buy links)
 - tags: Array of 4-6 relevant tags (without #, include brand names)`,
             },
             {
@@ -168,6 +168,7 @@ Make it relevant for Indian Gen Z tech enthusiasts. Include:
 - "Should you update/buy?" recommendation
 - Comparison with competitors if relevant
 - When to expect in India (if it's a global news)
+- Buy links for the top 3 products mentioned (Amazon India + Flipkart search URLs)
 
 Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}`,
             },
@@ -180,12 +181,10 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
         const errorText = await aiResponse.text();
         console.error(`AI API error (attempt ${attempt}):`, aiResponse.status, errorText);
 
-        // Don't retry on payment/credits issues
         if (aiResponse.status === 402) {
           throw new Error("AI credits exhausted. Please add credits.");
         }
 
-        // Retry on rate limits and server errors
         if (aiResponse.status === 429 || aiResponse.status >= 500) {
           lastError = new Error(`AI API error: ${aiResponse.status}`);
           continue;
@@ -204,7 +203,6 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
 
       console.log("Raw AI response:", rawContent.substring(0, 200));
 
-      // Parse the AI response
       let cleanContent = rawContent.trim();
       if (cleanContent.startsWith("```json")) {
         cleanContent = cleanContent.replace(/^```json\n?/, "").replace(/\n?```$/, "");
@@ -223,7 +221,6 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
       return { title, excerpt, content, tags: tags || [] };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      // If it's a non-retryable error, throw immediately
       if (
         lastError.message.includes("credits exhausted") ||
         lastError.message.includes("not configured")
@@ -237,6 +234,157 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
   throw lastError || new Error("All retry attempts failed");
 }
 
+async function generateCoverImage(
+  apiKey: string,
+  title: string,
+  category: string,
+  supabase: ReturnType<typeof createClient>
+): Promise<string | null> {
+  try {
+    console.log("Generating cover image for:", title);
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Generate a modern, eye-catching 16:9 blog cover image for a tech article titled "${title}" in the ${category} category. The image should be clean, professional, and vibrant with modern tech aesthetics. Include relevant tech imagery like devices, circuits, or digital elements. No text in the image. Ultra high resolution.`,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Image generation API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl || !imageUrl.startsWith("data:image")) {
+      console.error("No valid image in response");
+      return null;
+    }
+
+    // Extract base64 data
+    const base64Data = imageUrl.split(",")[1];
+    if (!base64Data) return null;
+
+    const binaryStr = atob(base64Data);
+    const binaryData = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      binaryData[i] = binaryStr.charCodeAt(i);
+    }
+
+    // Upload to storage
+    const fileName = `cover-${Date.now()}.png`;
+    const { error: uploadError } = await supabase.storage
+      .from("blog-covers")
+      .upload(fileName, binaryData, {
+        contentType: "image/png",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      return null;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from("blog-covers")
+      .getPublicUrl(fileName);
+
+    console.log("Cover image uploaded:", urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (err) {
+    console.error("Cover image generation failed:", err);
+    return null;
+  }
+}
+
+async function postToTwitter(
+  title: string,
+  slug: string,
+  excerpt: string,
+  category: string
+): Promise<void> {
+  const consumerKey = Deno.env.get("TWITTER_CONSUMER_KEY");
+  const consumerSecret = Deno.env.get("TWITTER_CONSUMER_SECRET");
+  const accessToken = Deno.env.get("TWITTER_ACCESS_TOKEN");
+  const accessTokenSecret = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET");
+
+  if (!consumerKey || !consumerSecret || !accessToken || !accessTokenSecret) {
+    console.log("Twitter API keys not configured, skipping tweet.");
+    return;
+  }
+
+  try {
+    const blogUrl = `https://technologiya.lovable.app/blog/${slug}`;
+    const tweetText = `🔥 New Blog: ${title}\n\n${excerpt}\n\n📖 Read more: ${blogUrl}\n\n#${category.replace(/\s+/g, "")} #TechNews #Technologiya`;
+
+    // OAuth 1.0a signature generation
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const nonce = crypto.randomUUID().replace(/-/g, "");
+
+    const params: Record<string, string> = {
+      oauth_consumer_key: consumerKey,
+      oauth_nonce: nonce,
+      oauth_signature_method: "HMAC-SHA1",
+      oauth_timestamp: timestamp,
+      oauth_token: accessToken,
+      oauth_version: "1.0",
+    };
+
+    const sortedParams = Object.keys(params)
+      .sort()
+      .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
+      .join("&");
+
+    const baseString = `POST&${encodeURIComponent("https://api.x.com/2/tweets")}&${encodeURIComponent(sortedParams)}`;
+    const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(accessTokenSecret)}`;
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(signingKey),
+      { name: "HMAC", hash: "SHA-1" },
+      false,
+      ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(baseString));
+    const signature = btoa(String.fromCharCode(...new Uint8Array(sig)));
+
+    const authHeader = `OAuth oauth_consumer_key="${encodeURIComponent(consumerKey)}", oauth_nonce="${encodeURIComponent(nonce)}", oauth_signature="${encodeURIComponent(signature)}", oauth_signature_method="HMAC-SHA1", oauth_timestamp="${timestamp}", oauth_token="${encodeURIComponent(accessToken)}", oauth_version="1.0"`;
+
+    const tweetResponse = await fetch("https://api.x.com/2/tweets", {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: tweetText }),
+    });
+
+    if (!tweetResponse.ok) {
+      const errorData = await tweetResponse.text();
+      console.error("Twitter API error:", tweetResponse.status, errorData);
+      return;
+    }
+
+    console.log("Tweet posted successfully!");
+  } catch (err) {
+    console.error("Failed to post tweet:", err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -247,16 +395,11 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase credentials are not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase credentials are not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Parse request body for optional category and skip_check flag
     let requestedCategory: Category | undefined;
     let skipDuplicateCheck = false;
     try {
@@ -264,14 +407,11 @@ serve(async (req) => {
       if (body.category && CATEGORIES.includes(body.category)) {
         requestedCategory = body.category as Category;
       }
-      if (body.skip_check) {
-        skipDuplicateCheck = true;
-      }
+      if (body.skip_check) skipDuplicateCheck = true;
     } catch {
-      // No body or invalid JSON, use random category
+      // No body or invalid JSON
     }
 
-    // Check if today's post already exists (unless explicitly skipped)
     if (!skipDuplicateCheck) {
       const alreadyExists = await checkTodayPostExists(supabase);
       if (alreadyExists) {
@@ -289,14 +429,13 @@ serve(async (req) => {
 
     console.log(`Generating blog post for category: ${category}, topic: ${topic}`);
 
-    // Generate content with retry logic
-    const { title, excerpt, content, tags } = await callAIWithRetry(
-      LOVABLE_API_KEY,
-      category,
-      topic
-    );
+    // Generate content and cover image in parallel
+    const [blogContent, coverImageUrl] = await Promise.all([
+      callAIWithRetry(LOVABLE_API_KEY, category, topic),
+      generateCoverImage(LOVABLE_API_KEY, topic, category, supabase),
+    ]);
 
-    // Create slug from title with timestamp for uniqueness
+    const { title, excerpt, content, tags } = blogContent;
     const timestamp = Date.now().toString(36);
     const slug = `${createSlug(title)}-${timestamp}`;
 
@@ -310,6 +449,7 @@ serve(async (req) => {
         category,
         tags,
         emoji,
+        cover_image_url: coverImageUrl,
         is_published: true,
         published_at: new Date().toISOString(),
       })
@@ -323,6 +463,11 @@ serve(async (req) => {
 
     console.log("Blog post created successfully:", post.id);
 
+    // Post to Twitter (non-blocking)
+    postToTwitter(title, slug, excerpt, category).catch((err) =>
+      console.error("Twitter post failed:", err)
+    );
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -331,6 +476,7 @@ serve(async (req) => {
           title: post.title,
           slug: post.slug,
           category: post.category,
+          cover_image_url: coverImageUrl,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -338,9 +484,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error generating blog post:", error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-      }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
