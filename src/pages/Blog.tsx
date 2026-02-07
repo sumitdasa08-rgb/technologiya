@@ -18,17 +18,18 @@
    PaginationPrevious,
  } from "@/components/ui/pagination";
  
- interface BlogPost {
-   id: string;
-   title: string;
-   excerpt: string;
-   slug: string;
-   category: string;
-   emoji: string;
-   published_at: string;
-   views: number;
-   fire_count: number;
- }
+interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  slug: string;
+  category: string;
+  emoji: string;
+  published_at: string;
+  views: number;
+  fire_count: number;
+  cover_image_url: string | null;
+}
  
  const POSTS_PER_PAGE = 9;
  const CATEGORIES = [
@@ -47,11 +48,11 @@
    const { data: posts, isLoading } = useQuery({
      queryKey: ["blog-posts", selectedCategory, currentPage],
      queryFn: async () => {
-       let query = supabase
-         .from("blog_posts")
-         .select("id, title, excerpt, slug, category, emoji, published_at, views, fire_count")
-         .eq("is_published", true)
-         .order("published_at", { ascending: false });
+        let query = supabase
+          .from("blog_posts")
+          .select("id, title, excerpt, slug, category, emoji, published_at, views, fire_count, cover_image_url")
+          .eq("is_published", true)
+          .order("published_at", { ascending: false });
  
        if (selectedCategory !== "all") {
          query = query.eq("category", selectedCategory);
@@ -152,17 +153,18 @@
                      className="animate-fade-in"
                      style={{ animationDelay: `${index * 50}ms` }}
                    >
-                     <BlogCard
-                       id={post.id}
-                       title={post.title}
-                       excerpt={post.excerpt}
-                       slug={post.slug}
-                       category={post.category}
-                       emoji={post.emoji}
-                       publishedAt={post.published_at}
-                       views={post.views}
-                       fireCount={post.fire_count}
-                     />
+                      <BlogCard
+                        id={post.id}
+                        title={post.title}
+                        excerpt={post.excerpt}
+                        slug={post.slug}
+                        category={post.category}
+                        emoji={post.emoji}
+                        publishedAt={post.published_at}
+                        views={post.views}
+                        fireCount={post.fire_count}
+                        coverImageUrl={post.cover_image_url}
+                      />
                    </div>
                  ))}
                </div>

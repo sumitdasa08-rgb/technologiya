@@ -14,6 +14,7 @@ interface BlogCardProps {
   publishedAt: string;
   views: number;
   fireCount: number;
+  coverImageUrl?: string | null;
   className?: string;
 }
 
@@ -60,6 +61,7 @@ const BlogCard = ({
   publishedAt,
   views,
   fireCount,
+  coverImageUrl,
   className,
 }: BlogCardProps) => {
   const [localFireCount, setLocalFireCount] = useState(fireCount);
@@ -89,29 +91,47 @@ const BlogCard = ({
         className
       )}
     >
-      {/* Emoji Header */}
-      <div className="relative h-32 bg-gradient-to-br from-secondary to-background flex items-center justify-center overflow-hidden">
-        <span 
-          className="text-6xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
-          role="img" 
-          aria-label={category}
-        >
-          {emoji}
-        </span>
-        
-        {/* Floating decoration */}
-        <div className="absolute top-2 right-2 opacity-20 text-4xl animate-pulse">
-          {emoji}
+      {/* Cover Image or Emoji Header */}
+      {coverImageUrl ? (
+        <div className="relative h-40 overflow-hidden">
+          <img
+            src={coverImageUrl}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+          {/* Category badge */}
+          <span className={cn(
+            "absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-sm",
+            CATEGORY_COLORS[category] || "bg-secondary text-foreground border-border"
+          )}>
+            {category}
+          </span>
         </div>
-        
-        {/* Category badge */}
-        <span className={cn(
-          "absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium border",
-          CATEGORY_COLORS[category] || "bg-secondary text-foreground border-border"
-        )}>
-          {category}
-        </span>
-      </div>
+      ) : (
+        <div className="relative h-32 bg-gradient-to-br from-secondary to-background flex items-center justify-center overflow-hidden">
+          <span 
+            className="text-6xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+            role="img" 
+            aria-label={category}
+          >
+            {emoji}
+          </span>
+          
+          {/* Floating decoration */}
+          <div className="absolute top-2 right-2 opacity-20 text-4xl animate-pulse">
+            {emoji}
+          </div>
+          
+          {/* Category badge */}
+          <span className={cn(
+            "absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-medium border",
+            CATEGORY_COLORS[category] || "bg-secondary text-foreground border-border"
+          )}>
+            {category}
+          </span>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4 space-y-3">
