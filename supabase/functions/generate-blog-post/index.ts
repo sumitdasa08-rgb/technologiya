@@ -89,6 +89,154 @@ function getRandomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+async function checkTodayPostExists(supabase: ReturnType<typeof createClient>): Promise<boolean> {
+  // Check if a post was already created today (IST = UTC+5:30)
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istNow = new Date(now.getTime() + istOffset);
+  const istDateStr = istNow.toISOString().split("T")[0]; // YYYY-MM-DD in IST
+
+  // Convert IST start/end of day to UTC
+  const istDayStart = new Date(`${istDateStr}T00:00:00+05:30`);
+  const istDayEnd = new Date(`${istDateStr}T23:59:59+05:30`);
+
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("id")
+    .gte("published_at", istDayStart.toISOString())
+    .lte("published_at", istDayEnd.toISOString())
+    .limit(1);
+
+  if (error) {
+    console.error("Error checking today's posts:", error);
+    return false;
+  }
+
+  return data && data.length > 0;
+}
+
+async function callAIWithRetry(
+  apiKey: string,
+  category: Category,
+  topic: string,
+  maxRetries = 2
+): Promise<{ title: string; excerpt: string; content: string; tags: string[] }> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      console.log(`Retry attempt ${attempt}/${maxRetries}...`);
+      // Wait before retry: 2s, then 5s
+      await new Promise((r) => setTimeout(r, attempt * 3000));
+    }
+
+    try {
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: `You are a tech journalist and blogger writing for Gen Z audience in India. Your writing style:
+- Short paragraphs (2-3 sentences max)
+- Use emojis to make it engaging and fun
+- Casual but informative tone like a tech-savvy friend
+- Include practical tips, hot takes, and "should you update?" recommendations
+- Be relatable - mention Indian pricing, availability, and relevance
+- Use simple language, avoid heavy jargon
+- Add relevant hashtags at the end
+- Make it feel like breaking news or insider info
+- Include specific version numbers, dates, and device names when relevant
+
+You must respond with valid JSON only, no markdown code blocks. The response must be a JSON object with these exact keys:
+- title: Catchy headline (max 60 chars, include device/brand name)
+- excerpt: Brief summary for card preview (max 150 chars, hook the reader)
+- content: Full article in markdown (600-900 words, include subheadings)
+- tags: Array of 4-6 relevant tags (without #, include brand names)`,
+            },
+            {
+              role: "user",
+              content: `Write a fresh, breaking-news style tech blog post about: "${topic}" in the ${category} category. 
+            
+Make it relevant for Indian Gen Z tech enthusiasts. Include:
+- Specific details (version numbers, features, pricing in INR if applicable)
+- "Should you update/buy?" recommendation
+- Comparison with competitors if relevant
+- When to expect in India (if it's a global news)
+
+Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}`,
+            },
+          ],
+          temperature: 0.8,
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error(`AI API error (attempt ${attempt}):`, aiResponse.status, errorText);
+
+        // Don't retry on payment/credits issues
+        if (aiResponse.status === 402) {
+          throw new Error("AI credits exhausted. Please add credits.");
+        }
+
+        // Retry on rate limits and server errors
+        if (aiResponse.status === 429 || aiResponse.status >= 500) {
+          lastError = new Error(`AI API error: ${aiResponse.status}`);
+          continue;
+        }
+
+        throw new Error(`AI API error: ${aiResponse.status}`);
+      }
+
+      const aiData = await aiResponse.json();
+      const rawContent = aiData.choices?.[0]?.message?.content;
+
+      if (!rawContent) {
+        lastError = new Error("No content received from AI");
+        continue;
+      }
+
+      console.log("Raw AI response:", rawContent.substring(0, 200));
+
+      // Parse the AI response
+      let cleanContent = rawContent.trim();
+      if (cleanContent.startsWith("```json")) {
+        cleanContent = cleanContent.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+      } else if (cleanContent.startsWith("```")) {
+        cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
+      }
+
+      const parsedContent = JSON.parse(cleanContent);
+      const { title, excerpt, content, tags } = parsedContent;
+
+      if (!title || !excerpt || !content) {
+        lastError = new Error("AI response missing required fields");
+        continue;
+      }
+
+      return { title, excerpt, content, tags: tags || [] };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // If it's a non-retryable error, throw immediately
+      if (
+        lastError.message.includes("credits exhausted") ||
+        lastError.message.includes("not configured")
+      ) {
+        throw lastError;
+      }
+      console.error(`Attempt ${attempt} failed:`, lastError.message);
+    }
+  }
+
+  throw lastError || new Error("All retry attempts failed");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -106,15 +254,33 @@ serve(async (req) => {
       throw new Error("Supabase credentials are not configured");
     }
 
-    // Parse request body for optional category
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Parse request body for optional category and skip_check flag
     let requestedCategory: Category | undefined;
+    let skipDuplicateCheck = false;
     try {
       const body = await req.json();
       if (body.category && CATEGORIES.includes(body.category)) {
         requestedCategory = body.category as Category;
       }
+      if (body.skip_check) {
+        skipDuplicateCheck = true;
+      }
     } catch {
       // No body or invalid JSON, use random category
+    }
+
+    // Check if today's post already exists (unless explicitly skipped)
+    if (!skipDuplicateCheck) {
+      const alreadyExists = await checkTodayPostExists(supabase);
+      if (alreadyExists) {
+        console.log("Today's blog post already exists. Skipping generation.");
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: "Post already exists for today" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const category = requestedCategory || getRandomItem([...CATEGORIES]);
@@ -123,108 +289,16 @@ serve(async (req) => {
 
     console.log(`Generating blog post for category: ${category}, topic: ${topic}`);
 
-    // Generate content using Lovable AI
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a tech journalist and blogger writing for Gen Z audience in India. Your writing style:
-- Short paragraphs (2-3 sentences max)
-- Use emojis to make it engaging and fun
-- Casual but informative tone like a tech-savvy friend
-- Include practical tips, hot takes, and "should you update?" recommendations
-- Be relatable - mention Indian pricing, availability, and relevance
-- Use simple language, avoid heavy jargon
-- Add relevant hashtags at the end
-- Make it feel like breaking news or insider info
-- Include specific version numbers, dates, and device names when relevant
-
-You must respond with valid JSON only, no markdown code blocks. The response must be a JSON object with these exact keys:
-- title: Catchy headline (max 60 chars, include device/brand name)
-- excerpt: Brief summary for card preview (max 150 chars, hook the reader)
-- content: Full article in markdown (600-900 words, include subheadings)
-- tags: Array of 4-6 relevant tags (without #, include brand names)`,
-          },
-          {
-            role: "user",
-            content: `Write a fresh, breaking-news style tech blog post about: "${topic}" in the ${category} category. 
-            
-Make it relevant for Indian Gen Z tech enthusiasts. Include:
-- Specific details (version numbers, features, pricing in INR if applicable)
-- "Should you update/buy?" recommendation
-- Comparison with competitors if relevant
-- When to expect in India (if it's a global news)
-
-Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}`,
-          },
-        ],
-        temperature: 0.8,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI API error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content;
-
-    if (!rawContent) {
-      throw new Error("No content received from AI");
-    }
-
-    console.log("Raw AI response:", rawContent.substring(0, 200));
-
-    // Parse the AI response
-    let parsedContent;
-    try {
-      // Clean the response - remove markdown code blocks if present
-      let cleanContent = rawContent.trim();
-      if (cleanContent.startsWith("```json")) {
-        cleanContent = cleanContent.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-      } else if (cleanContent.startsWith("```")) {
-        cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
-      }
-      parsedContent = JSON.parse(cleanContent);
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
-      throw new Error("Failed to parse AI response as JSON");
-    }
-
-    const { title, excerpt, content, tags } = parsedContent;
-
-    if (!title || !excerpt || !content) {
-      throw new Error("AI response missing required fields");
-    }
+    // Generate content with retry logic
+    const { title, excerpt, content, tags } = await callAIWithRetry(
+      LOVABLE_API_KEY,
+      category,
+      topic
+    );
 
     // Create slug from title with timestamp for uniqueness
     const timestamp = Date.now().toString(36);
     const slug = `${createSlug(title)}-${timestamp}`;
-
-    // Insert into database using service role
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: post, error: insertError } = await supabase
       .from("blog_posts")
@@ -234,7 +308,7 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
         content,
         excerpt,
         category,
-        tags: tags || [],
+        tags,
         emoji,
         is_published: true,
         published_at: new Date().toISOString(),
@@ -250,23 +324,22 @@ Current date context: ${new Date().toLocaleDateString("en-IN", { year: "numeric"
     console.log("Blog post created successfully:", post.id);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         post: {
           id: post.id,
           title: post.title,
           slug: post.slug,
           category: post.category,
-        }
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     console.error("Error generating blog post:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error occurred" 
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
