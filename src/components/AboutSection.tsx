@@ -1,163 +1,223 @@
 import { useEffect, useRef, useState } from "react";
 
-const AboutSection = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+const zigzagItems = [
+  {
+    emoji: "🚀",
+    title: "Technologiya",
+    subtitle: "Your Tech Bestie",
+    description: "We're not just another repair shop — we're your go-to tech squad that actually gets it. Gen Z energy, professional results.",
+    color: "from-primary/20 to-primary/5 border-primary/40",
+    glowColor: "bg-primary/20",
+  },
+  {
+    emoji: "🔧",
+    title: "Device Repair",
+    subtitle: "Laptops, PCs, Phones",
+    description: "Cracked screen? Dead laptop? We fix it all. Hardware or software — bring it in and we'll make it slap again.",
+    color: "from-purple-500/20 to-purple-500/5 border-purple-500/40",
+    glowColor: "bg-purple-500/20",
+  },
+  {
+    emoji: "⚡",
+    title: "24hr Turnaround",
+    subtitle: "Speed is our thing",
+    description: "We know you can't survive without your device. Most repairs done within 24 hours — no cap.",
+    color: "from-blue-500/20 to-blue-500/5 border-blue-500/40",
+    glowColor: "bg-blue-500/20",
+  },
+  {
+    emoji: "💯",
+    title: "500+ Happy Customers",
+    subtitle: "No cap, fr fr",
+    description: "Our community trusts us because we deliver results. Check the reviews — people are actually happy.",
+    color: "from-green-500/20 to-green-500/5 border-green-500/40",
+    glowColor: "bg-green-500/20",
+  },
+  {
+    emoji: "💸",
+    title: "Budget Friendly",
+    subtitle: "We don't gatekeep",
+    description: "Quality repairs shouldn't cost a kidney. We keep prices real so everyone can afford good tech service.",
+    color: "from-yellow-500/20 to-yellow-500/5 border-yellow-500/40",
+    glowColor: "bg-yellow-500/20",
+  },
+  {
+    emoji: "🤝",
+    title: "1:1 Support",
+    subtitle: "We got you",
+    description: "No bots, no hold music. You talk to a real human who actually understands your problem.",
+    color: "from-pink-500/20 to-pink-500/5 border-pink-500/40",
+    glowColor: "bg-pink-500/20",
+  },
+  {
+    emoji: "🏆",
+    title: "Certified Techs",
+    subtitle: "Actually know stuff",
+    description: "Our team is trained and certified. We don't just YouTube fixes — we actually know what we're doing.",
+    color: "from-orange-500/20 to-orange-500/5 border-orange-500/40",
+    glowColor: "bg-orange-500/20",
+  },
+  {
+    emoji: "🌐",
+    title: "Remote Help",
+    subtitle: "Wherever you are",
+    description: "Can't come to us? We'll fix it remotely. Software issues, setup, troubleshooting — all from your couch.",
+    color: "from-cyan-500/20 to-cyan-500/5 border-cyan-500/40",
+    glowColor: "bg-cyan-500/20",
+  },
+];
+
+const serviceChips = [
+  { text: "Windows Install", emoji: "💻" },
+  { text: "Virus Removal", emoji: "🦠" },
+  { text: "Data Recovery", emoji: "💾" },
+  { text: "Hardware Fix", emoji: "🔩" },
+  { text: "Software Debug", emoji: "🐛" },
+  { text: "Speed Boost", emoji: "🚀" },
+  { text: "Screen Repair", emoji: "📱" },
+];
+
+const ZigzagCard = ({
+  item,
+  index,
+  isLeft,
+}: {
+  item: (typeof zigzagItems)[0];
+  index: number;
+  isLeft: boolean;
+}) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setVisible(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.2 }
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (cardRef.current) observer.observe(cardRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // Mind map nodes data
-  const mindMapNodes = [
-    {
-      id: "center",
-      emoji: "🚀",
-      title: "Technologiya",
-      subtitle: "Your Tech Bestie",
-      position: "center",
-      size: "large",
-      color: "primary"
-    },
-    {
-      id: "repair",
-      emoji: "🔧",
-      title: "Device Repair",
-      subtitle: "Laptops, PCs, Phones",
-      position: "top-left",
-      size: "medium",
-      color: "purple"
-    },
-    {
-      id: "fast",
-      emoji: "⚡",
-      title: "24hr Turnaround",
-      subtitle: "Speed is our thing",
-      position: "top-right",
-      size: "medium",
-      color: "blue"
-    },
-    {
-      id: "trusted",
-      emoji: "💯",
-      title: "500+ Happy Customers",
-      subtitle: "No cap, fr fr",
-      position: "right",
-      size: "medium",
-      color: "green"
-    },
-    {
-      id: "affordable",
-      emoji: "💸",
-      title: "Budget Friendly",
-      subtitle: "We don't gatekeep",
-      position: "bottom-right",
-      size: "medium",
-      color: "yellow"
-    },
-    {
-      id: "support",
-      emoji: "🤝",
-      title: "1:1 Support",
-      subtitle: "We got you",
-      position: "bottom",
-      size: "medium",
-      color: "pink"
-    },
-    {
-      id: "certified",
-      emoji: "🏆",
-      title: "Certified Techs",
-      subtitle: "Actually know stuff",
-      position: "bottom-left",
-      size: "medium",
-      color: "orange"
-    },
-    {
-      id: "remote",
-      emoji: "🌐",
-      title: "Remote Help",
-      subtitle: "Wherever you are",
-      position: "left",
-      size: "medium",
-      color: "cyan"
-    }
-  ];
+  return (
+    <div
+      ref={cardRef}
+      className={`flex items-center w-full gap-4 md:gap-8 transition-all duration-700 ${
+        visible
+          ? "opacity-100 translate-x-0"
+          : isLeft
+          ? "opacity-0 -translate-x-16"
+          : "opacity-0 translate-x-16"
+      }`}
+      style={{ transitionDelay: `${index * 80}ms` }}
+    >
+      {/* Left spacer on right-aligned cards */}
+      {!isLeft && <div className="hidden md:block md:w-1/2" />}
 
-  // Services as floating tags
-  const floatingTags = [
-    { text: "Windows Install", emoji: "💻" },
-    { text: "Virus Removal", emoji: "🦠" },
-    { text: "Data Recovery", emoji: "💾" },
-    { text: "Hardware Fix", emoji: "🔩" },
-    { text: "Software Debug", emoji: "🐛" },
-    { text: "Speed Boost", emoji: "🚀" },
-    { text: "Screen Repair", emoji: "📱" }
-  ];
+      {/* Card */}
+      <div
+        className={`relative w-full md:w-1/2 group cursor-pointer ${
+          isLeft ? "md:pr-12" : "md:pl-12"
+        }`}
+      >
+        <div
+          className={`relative rounded-2xl border-2 bg-gradient-to-br ${item.color} backdrop-blur-sm p-6 md:p-8 shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-[1.02]`}
+        >
+          {/* Roadmap dot on the timeline */}
+          <div
+            className={`hidden md:flex absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/40 z-20 ${
+              isLeft ? "-right-[2.1rem]" : "-left-[2.1rem]"
+            }`}
+          />
 
-  const getNodePosition = (position: string) => {
-    const positions: Record<string, string> = {
-      "center": "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-      "top-left": "left-[10%] md:left-[15%] top-[15%] md:top-[10%]",
-      "top-right": "right-[10%] md:right-[15%] top-[15%] md:top-[10%]",
-      "right": "right-[5%] md:right-[8%] top-1/2 -translate-y-1/2",
-      "bottom-right": "right-[10%] md:right-[15%] bottom-[15%] md:bottom-[10%]",
-      "bottom": "left-1/2 -translate-x-1/2 bottom-[5%] md:bottom-[8%]",
-      "bottom-left": "left-[10%] md:left-[15%] bottom-[15%] md:bottom-[10%]",
-      "left": "left-[5%] md:left-[8%] top-1/2 -translate-y-1/2"
-    };
-    return positions[position] || positions["center"];
-  };
+          {/* Connector line from card to dot */}
+          <div
+            className={`hidden md:block absolute top-1/2 -translate-y-1/2 h-0.5 w-6 bg-gradient-to-r from-primary/60 to-primary/20 ${
+              isLeft ? "-right-6" : "-left-6"
+            }`}
+          />
 
-  const getNodeColor = (color: string) => {
-    const colors: Record<string, string> = {
-      "primary": "from-primary/20 to-primary/5 border-primary/40 shadow-primary/20",
-      "purple": "from-purple-500/20 to-purple-500/5 border-purple-500/40 shadow-purple-500/20",
-      "blue": "from-blue-500/20 to-blue-500/5 border-blue-500/40 shadow-blue-500/20",
-      "green": "from-green-500/20 to-green-500/5 border-green-500/40 shadow-green-500/20",
-      "yellow": "from-yellow-500/20 to-yellow-500/5 border-yellow-500/40 shadow-yellow-500/20",
-      "pink": "from-pink-500/20 to-pink-500/5 border-pink-500/40 shadow-pink-500/20",
-      "orange": "from-orange-500/20 to-orange-500/5 border-orange-500/40 shadow-orange-500/20",
-      "cyan": "from-cyan-500/20 to-cyan-500/5 border-cyan-500/40 shadow-cyan-500/20"
-    };
-    return colors[color] || colors["primary"];
-  };
+          <div className="flex items-start gap-4">
+            <span className="text-4xl md:text-5xl flex-shrink-0 mt-1">
+              {item.emoji}
+            </span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg md:text-xl font-bold text-foreground leading-tight">
+                {item.title}
+              </h3>
+              <span className="text-sm text-primary font-medium">
+                {item.subtitle}
+              </span>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Hover glow */}
+          <div
+            className={`absolute inset-0 rounded-2xl ${item.glowColor} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10`}
+          />
+        </div>
+      </div>
+
+      {/* Right spacer on left-aligned cards */}
+      {isLeft && <div className="hidden md:block md:w-1/2" />}
+    </div>
+  );
+};
+
+const AboutSection = () => {
+  const [headerVisible, setHeaderVisible] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setHeaderVisible(true);
+      },
+      { threshold: 0.1 }
+    );
+    if (headerRef.current) observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section 
-      id="about" 
-      ref={sectionRef} 
+    <section
+      id="about"
       className="py-24 md:py-32 bg-card relative overflow-hidden"
     >
       {/* Animated background grid */}
       <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0)`,
-          backgroundSize: '40px 40px'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
       </div>
 
       {/* Floating gradient orbs */}
       <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" />
-      <div className="absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+      <div
+        className="absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse-soft"
+        style={{ animationDelay: "1s" }}
+      />
 
       <div className="container mx-auto px-4 relative">
-        {/* Section Header - Gen Z style */}
-        <div className={`text-center mb-8 md:mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* Section Header */}
+        <div
+          ref={headerRef}
+          className={`text-center mb-16 md:mb-24 transition-all duration-700 ${
+            headerVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+        >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-4 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             ✨ About Us ✨
           </span>
@@ -165,103 +225,124 @@ const AboutSection = () => {
             the <span className="gradient-text">lowdown</span> on us 🧠
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            here's everything you need to know about technologiya <span className="text-primary">no cap</span> ⬇️
+            here's everything you need to know about technologiya{" "}
+            <span className="text-primary">no cap</span> ⬇️
           </p>
         </div>
 
-        {/* Mind Map Container */}
-        <div className={`relative h-[600px] md:h-[700px] lg:h-[800px] transition-all duration-1000 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          
-          {/* SVG Connection Lines */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-            <defs>
-              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-              </linearGradient>
-            </defs>
-            {/* Animated dashed lines from center to nodes */}
-            <g className={`transition-all duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-              <line x1="50%" y1="50%" x2="20%" y2="15%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" />
-              <line x1="50%" y1="50%" x2="80%" y2="15%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '0.2s' }} />
-              <line x1="50%" y1="50%" x2="92%" y2="50%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '0.4s' }} />
-              <line x1="50%" y1="50%" x2="80%" y2="85%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '0.6s' }} />
-              <line x1="50%" y1="50%" x2="50%" y2="92%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '0.8s' }} />
-              <line x1="50%" y1="50%" x2="20%" y2="85%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '1s' }} />
-              <line x1="50%" y1="50%" x2="8%" y2="50%" stroke="url(#lineGradient)" strokeWidth="2" strokeDasharray="8,8" className="animate-pulse-soft" style={{ animationDelay: '1.2s' }} />
-            </g>
-          </svg>
+        {/* Zig-Zag Road */}
+        <div className="relative max-w-5xl mx-auto">
+          {/* Central road line (desktop) */}
+          <div className="hidden md:block absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/10 via-primary/30 to-primary/10 rounded-full" />
 
-          {/* Mind Map Nodes */}
-          {mindMapNodes.map((node, index) => (
+          {/* Animated road dashes (desktop) */}
+          <div className="hidden md:block absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 overflow-hidden rounded-full">
             <div
-              key={node.id}
-              className={`absolute ${getNodePosition(node.position)} z-10 transition-all duration-700 hover:scale-110 cursor-pointer group ${
-                isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
-              }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <div className={`
-                ${node.size === 'large' ? 'w-40 h-40 md:w-52 md:h-52' : 'w-28 h-28 md:w-36 md:h-36'}
-                rounded-full bg-gradient-to-br ${getNodeColor(node.color)}
-                border-2 backdrop-blur-sm
-                flex flex-col items-center justify-center text-center
-                shadow-lg group-hover:shadow-2xl
-                transition-all duration-300
-                ${node.size === 'large' ? 'animate-pulse-soft' : ''}
-              `}>
-                <span className={`${node.size === 'large' ? 'text-4xl md:text-5xl' : 'text-2xl md:text-3xl'} mb-1 md:mb-2`}>
-                  {node.emoji}
-                </span>
-                <span className={`${node.size === 'large' ? 'text-sm md:text-lg' : 'text-xs md:text-sm'} font-bold text-foreground leading-tight px-2`}>
-                  {node.title}
-                </span>
-                <span className={`${node.size === 'large' ? 'text-xs md:text-sm' : 'text-[10px] md:text-xs'} text-muted-foreground mt-0.5 px-2`}>
-                  {node.subtitle}
-                </span>
-              </div>
-              
-              {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
-            </div>
-          ))}
+              className="w-full h-full"
+              style={{
+                backgroundImage: `repeating-linear-gradient(to bottom, hsl(var(--primary)) 0px, hsl(var(--primary)) 12px, transparent 12px, transparent 28px)`,
+                animation: "roadScroll 2s linear infinite",
+              }}
+            />
+          </div>
 
-          {/* Floating service tags */}
-          <div className="absolute inset-0 pointer-events-none">
-            {floatingTags.map((tag, index) => {
-              const positions = [
-                "top-[30%] left-[30%]",
-                "top-[25%] right-[25%]",
-                "top-[60%] right-[20%]",
-                "bottom-[30%] right-[30%]",
-                "bottom-[25%] left-[25%]",
-                "top-[65%] left-[18%]",
-                "top-[40%] right-[12%]"
-              ];
+          {/* Mobile road line */}
+          <div className="md:hidden absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/10 via-primary/30 to-primary/10 rounded-full" />
+
+          {/* Cards */}
+          <div className="flex flex-col gap-8 md:gap-12 relative">
+            {zigzagItems.map((item, index) => {
+              const isLeft = index % 2 === 0;
+
               return (
-                <div
-                  key={tag.text}
-                  className={`absolute ${positions[index]} hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/80 border border-border/30 backdrop-blur-sm text-xs text-muted-foreground transition-all duration-700 hover:scale-110 hover:text-foreground pointer-events-auto cursor-default ${
-                    isVisible ? 'opacity-70 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
-                  style={{ 
-                    transitionDelay: `${800 + index * 100}ms`,
-                    animation: isVisible ? `float 4s ease-in-out infinite ${index * 0.5}s` : 'none'
-                  }}
-                >
-                  <span>{tag.emoji}</span>
-                  <span>{tag.text}</span>
+                <div key={item.title} className="relative">
+                  {/* Mobile dot */}
+                  <div className="md:hidden absolute left-[1.15rem] top-8 w-4 h-4 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/40 z-20" />
+
+                  {/* Mobile card wrapper with left padding */}
+                  <div className="md:hidden pl-14">
+                    <div
+                      className={`relative rounded-2xl border-2 bg-gradient-to-br ${item.color} backdrop-blur-sm p-5 shadow-lg`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-3xl flex-shrink-0 mt-1">
+                          {item.emoji}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-foreground leading-tight">
+                            {item.title}
+                          </h3>
+                          <span className="text-xs text-primary font-medium">
+                            {item.subtitle}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop zig-zag card */}
+                  <div className="hidden md:block">
+                    <ZigzagCard
+                      item={item}
+                      index={index}
+                      isLeft={isLeft}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Road start indicator */}
+          <div className="hidden md:flex absolute -top-4 left-1/2 -translate-x-1/2 items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center">
+              <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+            </div>
+          </div>
+
+          {/* Road end indicator */}
+          <div className="hidden md:flex absolute -bottom-4 left-1/2 -translate-x-1/2 items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center">
+              <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Service chips */}
+        <div
+          className={`flex flex-wrap justify-center gap-3 mt-16 transition-all duration-700 ${
+            headerVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+          style={{ transitionDelay: "600ms" }}
+        >
+          {serviceChips.map((chip) => (
+            <span
+              key={chip.text}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-border/30 backdrop-blur-sm text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300 hover:scale-105 cursor-default"
+            >
+              <span>{chip.emoji}</span>
+              <span>{chip.text}</span>
+            </span>
+          ))}
         </div>
 
         {/* Bottom tagline */}
-        <div className={`text-center mt-8 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transitionDelay: '1200ms' }}>
+        <div
+          className={`text-center mt-12 transition-all duration-700 ${
+            headerVisible
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-10"
+          }`}
+          style={{ transitionDelay: "800ms" }}
+        >
           <p className="text-lg md:text-xl text-muted-foreground">
-            <span className="text-foreground font-semibold">tldr;</span> we fix your tech fast, cheap, and right 
+            <span className="text-foreground font-semibold">tldr;</span> we fix
+            your tech fast, cheap, and right
             <span className="inline-block ml-2 animate-bounce">👊</span>
           </p>
           <p className="text-sm text-muted-foreground/60 mt-2">
@@ -269,6 +350,14 @@ const AboutSection = () => {
           </p>
         </div>
       </div>
+
+      {/* Road scroll animation */}
+      <style>{`
+        @keyframes roadScroll {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(28px); }
+        }
+      `}</style>
     </section>
   );
 };
