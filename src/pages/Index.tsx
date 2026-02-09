@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState, useCallback } from "react";
 import { SplineScene } from "@/components/ui/splite";
 import { Spotlight } from "@/components/ui/spotlight";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,31 @@ import FAQSection from "@/components/FAQSection";
 import BookingSection from "@/components/BookingSection";
 import Footer from "@/components/Footer";
 
+function useScrollBlur() {
+  const [blurAmount, setBlurAmount] = useState(0);
+  const [scrollOpacity, setScrollOpacity] = useState(1);
+
+  const handleScroll = useCallback(() => {
+    if (window.innerWidth >= 768) {
+      setBlurAmount(0);
+      setScrollOpacity(1);
+      return;
+    }
+    const scrollY = window.scrollY;
+    const maxScroll = 500;
+    const progress = Math.min(scrollY / maxScroll, 1);
+    setBlurAmount(progress * 10);
+    setScrollOpacity(1 - progress * 0.35);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  return { blurAmount, scrollOpacity };
+}
+
 export default function Index() {
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -24,6 +50,8 @@ export default function Index() {
       bookingSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const { blurAmount, scrollOpacity } = useScrollBlur();
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,9 +66,17 @@ export default function Index() {
           fill="white"
         />
         
-        <div className="flex min-h-screen flex-col md:flex-row items-center relative">
-          {/* Left content */}
-          <div className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center">
+        {/* flex-col-reverse on mobile so 3D robot is on top, normal row on desktop */}
+        <div className="flex min-h-screen flex-col-reverse md:flex-row items-center relative">
+          {/* Left content - blurs on mobile scroll */}
+          <div
+            className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center"
+            style={{
+              filter: blurAmount > 0 ? `blur(${blurAmount}px)` : undefined,
+              opacity: scrollOpacity,
+              transition: "filter 0.1s ease-out, opacity 0.1s ease-out",
+            }}
+          >
             {/* Badge */}
             <span className="opacity-0 animate-fade-up inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 w-fit">
               Technologiya
@@ -82,8 +118,15 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Right content - 3D Robot with Silver Glass Effects */}
-          <div className="flex-1 relative h-full min-h-[400px] md:min-h-screen flex items-center justify-center">
+          {/* Right content - 3D Robot with Silver Glass Effects (appears on top in mobile) */}
+          <div
+            className="flex-1 relative h-full min-h-[350px] md:min-h-screen flex items-center justify-center"
+            style={{
+              filter: blurAmount > 0 ? `blur(${blurAmount * 0.5}px)` : undefined,
+              opacity: scrollOpacity,
+              transition: "filter 0.1s ease-out, opacity 0.1s ease-out",
+            }}
+          >
             {/* Silver Glass Effects Container */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               {/* Primary Silver Glow */}
@@ -115,7 +158,7 @@ export default function Index() {
             </div>
 
             {/* 3D Robot */}
-            <div className="w-full h-[500px] md:h-[700px] lg:h-[800px] relative z-10">
+            <div className="w-full h-[400px] md:h-[700px] lg:h-[800px] relative z-10">
               <SplineScene 
                 scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
                 className="w-full h-full scale-110 md:scale-125 lg:scale-150"
