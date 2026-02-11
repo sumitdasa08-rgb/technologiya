@@ -10,42 +10,12 @@ interface ServiceItem {
 }
 
 const services: ServiceItem[] = [
-  {
-    icon: Monitor,
-    id: "windows_upgrade",
-    title: "Windows OS Installation",
-    description: "Technologiya provides professional Windows installation and upgrade services for enhanced security and performance.",
-  },
-  {
-    icon: Settings,
-    id: "software_repair",
-    title: "Computer Troubleshooting",
-    description: "Expert Technologiya computer repair including system updates, driver installations, and performance optimization.",
-  },
-  {
-    icon: FileText,
-    id: "consultation",
-    title: "Microsoft Office Setup",
-    description: "Complete MS Office suite installation with activation by Technologiya technical service experts.",
-  },
-  {
-    icon: HardDrive,
-    id: "data_recovery",
-    title: "Data Recovery & Storage",
-    description: "Technologiya device repair specialists handle storage issues, cleanup, and data recovery solutions.",
-  },
-  {
-    icon: Smartphone,
-    id: "pc_optimization",
-    title: "Laptop Repair & Fixes",
-    description: "Technologiya laptop repair services to fix crashes, system errors, and performance problems.",
-  },
-  {
-    icon: Volume2,
-    id: "sound_issues",
-    title: "Hardware Diagnostics",
-    description: "Professional Technologiya IT support for audio, display, and hardware troubleshooting.",
-  },
+  { icon: Monitor, id: "windows_upgrade", title: "Windows OS Installation", description: "Technologiya provides professional Windows installation and upgrade services for enhanced security and performance." },
+  { icon: Settings, id: "software_repair", title: "Computer Troubleshooting", description: "Expert Technologiya computer repair including system updates, driver installations, and performance optimization." },
+  { icon: FileText, id: "consultation", title: "Microsoft Office Setup", description: "Complete MS Office suite installation with activation by Technologiya technical service experts." },
+  { icon: HardDrive, id: "data_recovery", title: "Data Recovery & Storage", description: "Technologiya device repair specialists handle storage issues, cleanup, and data recovery solutions." },
+  { icon: Smartphone, id: "pc_optimization", title: "Laptop Repair & Fixes", description: "Technologiya laptop repair services to fix crashes, system errors, and performance problems." },
+  { icon: Volume2, id: "sound_issues", title: "Hardware Diagnostics", description: "Professional Technologiya IT support for audio, display, and hardware troubleshooting." },
 ];
 
 const ServicesSection = () => {
@@ -54,18 +24,10 @@ const ServicesSection = () => {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
       { threshold: 0.1 }
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
@@ -82,13 +44,9 @@ const ServicesSection = () => {
 
     const animation = (currentTime: number) => {
       if (startTime === null) startTime = currentTime;
-
       const timeElapsed = currentTime - startTime;
       const progress = Math.min(timeElapsed / duration, 1);
-      const ease = easeInOutCubic(progress);
-
-      window.scrollTo(0, startPosition + distance * ease);
-
+      window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
       if (progress < 1) requestAnimationFrame(animation);
     };
 
@@ -96,9 +54,7 @@ const ServicesSection = () => {
   };
 
   const triggerHaptic = () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10);
-    }
+    if ('vibrate' in navigator) navigator.vibrate(10);
   };
 
   const handleServiceClick = (service: ServiceItem) => {
@@ -106,16 +62,10 @@ const ServicesSection = () => {
     const bookingSection = document.getElementById("booking");
     if (bookingSection) {
       smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
-
       setTimeout(() => {
-        window.dispatchEvent(
-          new CustomEvent("prefillContact", {
-            detail: {
-              issue: service.title,
-              message: service.description,
-            },
-          })
-        );
+        window.dispatchEvent(new CustomEvent("prefillContact", {
+          detail: { issue: service.title, message: service.description },
+        }));
       }, SCROLL_DURATION_MS + 100);
     }
   };
@@ -124,28 +74,21 @@ const ServicesSection = () => {
     const bookingSection = document.getElementById("booking");
     if (bookingSection) {
       smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
-
       setTimeout(() => {
-        window.dispatchEvent(
-          new CustomEvent("prefillContact", {
-            detail: {
-              issue: "Consultation",
-              message: "I want to book a slot for computer/mobile software related issue consultation.",
-            },
-          })
-        );
+        window.dispatchEvent(new CustomEvent("prefillContact", {
+          detail: { issue: "Consultation", message: "I want to book a slot for computer/mobile software related issue consultation." },
+        }));
       }, SCROLL_DURATION_MS + 100);
     }
   };
 
   return (
     <section id="services" ref={sectionRef} className="py-24 md:py-32 bg-card relative overflow-hidden">
-      {/* Subtle background elements */}
       <div className="absolute inset-0 glow-accent opacity-30" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
       
       <div className="container mx-auto px-4 relative">
-        <div className={`text-center mb-16 md:mb-20 transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`text-center mb-16 md:mb-20 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             Technologiya Services
           </span>
@@ -162,13 +105,13 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer transition-all duration-500 ease-apple ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer transition-opacity duration-500 ${
+                isVisible ? 'opacity-100' : 'opacity-0'
               }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
+              style={{ transitionDelay: `${index * 80}ms` }}
             >
               <div className="flex items-center gap-4 md:block">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center md:mb-6 flex-shrink-0 transition-all duration-500 ease-apple group-hover:bg-primary group-hover:scale-110">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center md:mb-6 flex-shrink-0 transition-colors duration-300 group-hover:bg-primary">
                   <service.icon className="w-5 h-5 md:w-6 md:h-6 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                 </div>
                 <div className="flex-1 md:hidden">
@@ -182,16 +125,16 @@ const ServicesSection = () => {
         </div>
 
         <p 
-          className={`text-center text-lg md:text-xl text-muted-foreground mt-10 transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-          style={{ transitionDelay: '500ms' }}
+          className={`text-center text-lg md:text-xl text-muted-foreground mt-10 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transitionDelay: '400ms' }}
         >
           ...and many more Technologiya technical services. Contact us today!
         </p>
 
         {/* CTA Card */}
         <div 
-          className={`mt-16 glass-card p-8 md:p-12 rounded-2xl transition-all duration-700 ease-apple ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} 
-          style={{ transitionDelay: '600ms' }}
+          className={`mt-16 glass-card p-8 md:p-12 rounded-2xl transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
+          style={{ transitionDelay: '500ms' }}
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
@@ -205,7 +148,7 @@ const ServicesSection = () => {
             </div>
             <Button 
               onClick={handleBookSlot}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-xl font-medium transition-all duration-500 ease-apple hover:scale-105 hover:shadow-lg hover:shadow-primary/30"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-xl font-medium transition-colors duration-300 shadow-lg shadow-primary/30"
               aria-label="Contact Technologiya for device support"
             >
               Get Device Support

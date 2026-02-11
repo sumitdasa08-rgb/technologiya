@@ -7,7 +7,6 @@ const zigzagItems = [
     subtitle: "Your Tech Bestie",
     description: "We're not just another repair shop — we're your go-to tech squad that actually gets it. Gen Z energy, professional results.",
     color: "from-primary/20 to-primary/5 border-primary/40",
-    glowColor: "bg-primary/20",
   },
   {
     emoji: "🔧",
@@ -15,7 +14,6 @@ const zigzagItems = [
     subtitle: "Laptops, PCs, Phones",
     description: "Cracked screen? Dead laptop? We fix it all. Hardware or software — bring it in and we'll make it slap again.",
     color: "from-purple-500/20 to-purple-500/5 border-purple-500/40",
-    glowColor: "bg-purple-500/20",
   },
   {
     emoji: "⚡",
@@ -23,7 +21,6 @@ const zigzagItems = [
     subtitle: "Speed is our thing",
     description: "We know you can't survive without your device. Most repairs done within 24 hours — no cap.",
     color: "from-blue-500/20 to-blue-500/5 border-blue-500/40",
-    glowColor: "bg-blue-500/20",
   },
   {
     emoji: "💯",
@@ -31,7 +28,6 @@ const zigzagItems = [
     subtitle: "No cap, fr fr",
     description: "Our community trusts us because we deliver results. Check the reviews — people are actually happy.",
     color: "from-green-500/20 to-green-500/5 border-green-500/40",
-    glowColor: "bg-green-500/20",
   },
   {
     emoji: "💸",
@@ -39,7 +35,6 @@ const zigzagItems = [
     subtitle: "We don't gatekeep",
     description: "Quality repairs shouldn't cost a kidney. We keep prices real so everyone can afford good tech service.",
     color: "from-yellow-500/20 to-yellow-500/5 border-yellow-500/40",
-    glowColor: "bg-yellow-500/20",
   },
   {
     emoji: "🤝",
@@ -47,7 +42,6 @@ const zigzagItems = [
     subtitle: "We got you",
     description: "No bots, no hold music. You talk to a real human who actually understands your problem.",
     color: "from-pink-500/20 to-pink-500/5 border-pink-500/40",
-    glowColor: "bg-pink-500/20",
   },
   {
     emoji: "🏆",
@@ -55,7 +49,6 @@ const zigzagItems = [
     subtitle: "Actually know stuff",
     description: "Our team is trained and certified. We don't just YouTube fixes — we actually know what we're doing.",
     color: "from-orange-500/20 to-orange-500/5 border-orange-500/40",
-    glowColor: "bg-orange-500/20",
   },
   {
     emoji: "🌐",
@@ -63,7 +56,6 @@ const zigzagItems = [
     subtitle: "Wherever you are",
     description: "Can't come to us? We'll fix it remotely. Software issues, setup, troubleshooting — all from your couch.",
     color: "from-cyan-500/20 to-cyan-500/5 border-cyan-500/40",
-    glowColor: "bg-cyan-500/20",
   },
 ];
 
@@ -88,19 +80,16 @@ const HorizontalCard = ({
 }) => {
   return (
     <div
-      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer transition-all duration-700 ${
-        isVisible
-          ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 translate-y-8 scale-95"
+      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer transition-opacity duration-500 ${
+        isVisible ? "opacity-100" : "opacity-0"
       }`}
-      style={{ transitionDelay: `${index * 100}ms` }}
+      style={{ transitionDelay: `${index * 80}ms` }}
     >
-      {/* Card */}
       <div
-        className={`relative rounded-2xl border-2 bg-gradient-to-br ${item.color} backdrop-blur-sm p-6 shadow-lg group-hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:scale-[1.03] h-full`}
+        className={`relative rounded-2xl border-2 bg-gradient-to-br ${item.color} p-6 shadow-lg md:group-hover:shadow-2xl md:group-hover:-translate-y-3 md:group-hover:scale-[1.03] transition-transform duration-300 h-full`}
       >
         {/* Number badge */}
-        <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-bold text-primary backdrop-blur-sm">
+        <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-bold text-primary">
           {String(index + 1).padStart(2, "0")}
         </div>
 
@@ -122,15 +111,10 @@ const HorizontalCard = ({
         {/* Bottom progress line */}
         <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary/60 to-primary/20 transition-all duration-500 group-hover:from-primary group-hover:to-primary/40"
+            className="h-full bg-gradient-to-r from-primary/60 to-primary/20"
             style={{ width: `${((index + 1) / zigzagItems.length) * 100}%` }}
           />
         </div>
-
-        {/* Hover glow */}
-        <div
-          className={`absolute inset-0 rounded-2xl ${item.glowColor} blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10`}
-        />
       </div>
 
       {/* Connector line between cards */}
@@ -173,7 +157,6 @@ const AboutSection = () => {
     };
   }, []);
 
-  // Track scroll progress
   const handleScroll = useCallback(() => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft: sl, scrollWidth, clientWidth } = scrollContainerRef.current;
@@ -181,7 +164,6 @@ const AboutSection = () => {
     setScrollProgress(maxScroll > 0 ? sl / maxScroll : 0);
   }, []);
 
-  // Mouse drag to scroll
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scrollContainerRef.current) return;
     setIsDragging(true);
@@ -200,11 +182,8 @@ const AboutSection = () => {
   const handleMouseUp = () => setIsDragging(false);
 
   return (
-    <section
-      id="about"
-      className="py-16 md:py-24 bg-card relative overflow-hidden"
-    >
-      {/* Animated background grid */}
+    <section id="about" className="py-16 md:py-24 bg-card relative overflow-hidden">
+      {/* Static background grid - no animation */}
       <div className="absolute inset-0 opacity-30">
         <div
           className="absolute inset-0"
@@ -215,21 +194,12 @@ const AboutSection = () => {
         />
       </div>
 
-      {/* Floating gradient orbs */}
-      <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" />
-      <div
-        className="absolute bottom-20 right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse-soft"
-        style={{ animationDelay: "1s" }}
-      />
-
       <div className="container mx-auto px-4 relative">
         {/* Section Header */}
         <div
           ref={headerRef}
-          className={`text-center mb-10 md:mb-14 transition-all duration-700 ${
-            headerVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-10"
+          className={`text-center mb-10 md:mb-14 transition-opacity duration-500 ${
+            headerVisible ? "opacity-100" : "opacity-0"
           }`}
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-4 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
@@ -246,22 +216,21 @@ const AboutSection = () => {
 
         {/* Scroll hint */}
         <div
-          className={`flex items-center justify-center gap-2 mb-6 transition-all duration-700 ${
+          className={`flex items-center justify-center gap-2 mb-6 transition-opacity duration-500 ${
             cardsVisible ? "opacity-100" : "opacity-0"
           }`}
-          style={{ transitionDelay: "200ms" }}
         >
           <span className="text-xs text-muted-foreground/60 uppercase tracking-widest">
             Swipe to explore
           </span>
-          <span className="inline-block animate-bounce text-primary">→</span>
+          <span className="inline-block text-primary">→</span>
         </div>
 
         {/* Horizontal scroll container */}
         <div ref={cardsRef} className="relative">
           <div
             ref={scrollContainerRef}
-            className={`flex gap-6 overflow-x-auto pb-6 scroll-smooth snap-x snap-mandatory ${
+            className={`flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory ${
               isDragging ? "cursor-grabbing" : "cursor-grab"
             }`}
             style={{
@@ -275,32 +244,21 @@ const AboutSection = () => {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            {/* Left padding spacer */}
             <div className="flex-shrink-0 w-2 md:w-8" />
-
             {zigzagItems.map((item, index) => (
               <div key={item.title} className="snap-start">
-                <HorizontalCard
-                  item={item}
-                  index={index}
-                  isVisible={cardsVisible}
-                />
+                <HorizontalCard item={item} index={index} isVisible={cardsVisible} />
               </div>
             ))}
-
-            {/* Right padding spacer */}
             <div className="flex-shrink-0 w-2 md:w-8" />
           </div>
 
-          {/* Hide scrollbar */}
-          <style>{`
-            div::-webkit-scrollbar { display: none; }
-          `}</style>
+          <style>{`div::-webkit-scrollbar { display: none; }`}</style>
 
           {/* Scroll progress bar */}
           <div className="mt-4 mx-auto max-w-xs h-1 rounded-full bg-border/30 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary"
               style={{ width: `${Math.max(10, scrollProgress * 100)}%` }}
             />
           </div>
@@ -312,17 +270,14 @@ const AboutSection = () => {
 
         {/* Service chips */}
         <div
-          className={`flex flex-wrap justify-center gap-3 mt-12 transition-all duration-700 ${
-            headerVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-10"
+          className={`flex flex-wrap justify-center gap-3 mt-12 transition-opacity duration-500 ${
+            headerVisible ? "opacity-100" : "opacity-0"
           }`}
-          style={{ transitionDelay: "600ms" }}
         >
           {serviceChips.map((chip) => (
             <span
               key={chip.text}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-border/30 backdrop-blur-sm text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300 hover:scale-105 cursor-default"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-border/30 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors duration-300 cursor-default"
             >
               <span>{chip.emoji}</span>
               <span>{chip.text}</span>
@@ -332,17 +287,13 @@ const AboutSection = () => {
 
         {/* Bottom tagline */}
         <div
-          className={`text-center mt-10 transition-all duration-700 ${
-            headerVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-10"
+          className={`text-center mt-10 transition-opacity duration-500 ${
+            headerVisible ? "opacity-100" : "opacity-0"
           }`}
-          style={{ transitionDelay: "800ms" }}
         >
           <p className="text-lg md:text-xl text-muted-foreground">
             <span className="text-foreground font-semibold">tldr;</span> we fix
-            your tech fast, cheap, and right
-            <span className="inline-block ml-2 animate-bounce">👊</span>
+            your tech fast, cheap, and right 👊
           </p>
           <p className="text-sm text-muted-foreground/60 mt-2">
             (and we're actually nice about it)

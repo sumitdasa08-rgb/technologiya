@@ -1,6 +1,6 @@
 'use client'
 
-import { SplineScene } from "@/components/ui/splite";
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { Spotlight } from "@/components/ui/spotlight";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -10,13 +10,18 @@ import ScrollToTop from "@/components/ScrollToTop";
 import LogoMarquee from "@/components/LogoMarquee";
 import AboutSection from "@/components/AboutSection";
 import ServicesSection from "@/components/ServicesSection";
-
 import ProcessSection from "@/components/ProcessSection";
 import FAQSection from "@/components/FAQSection";
 import BookingSection from "@/components/BookingSection";
 import Footer from "@/components/Footer";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Lazy load Spline only on desktop
+const SplineScene = lazy(() => import('@/components/ui/splite').then(m => ({ default: m.SplineScene })));
 
 export default function Index() {
+  const isMobile = useIsMobile();
+
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const bookingSection = document.getElementById('booking');
@@ -33,37 +38,34 @@ export default function Index() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen overflow-hidden">
-        <Spotlight
-          className="-top-40 left-0 md:left-60 md:-top-20"
-          fill="white"
-        />
+        {!isMobile && (
+          <Spotlight
+            className="-top-40 left-0 md:left-60 md:-top-20"
+            fill="white"
+          />
+        )}
         
-        {/* flex-col-reverse on mobile so 3D robot is on top, normal row on desktop */}
         <div className="flex min-h-screen flex-col-reverse md:flex-row items-center relative">
           {/* Left content */}
           <div className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center">
-            {/* Badge */}
             <span className="opacity-0 animate-fade-up inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 w-fit">
               Technologiya
             </span>
 
-            {/* Main headline */}
             <h1 className="opacity-0 animate-fade-up delay-100 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight font-display mb-6">
               <span className="block text-foreground">Transform Your</span>
               <span className="block text-foreground">Device Problems</span>
               <span className="block gradient-text">into Solutions.</span>
             </h1>
             
-            {/* Subheadline */}
             <p className="opacity-0 animate-fade-up delay-200 text-base md:text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
               Expert computer repair, laptop repair, and device troubleshooting services. Fast, affordable, and transparent—helping individuals and businesses fix their tech issues.
             </p>
 
-            {/* CTA Buttons */}
             <div className="opacity-0 animate-fade-up delay-300 flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 px-8 py-6 text-base font-medium rounded-xl shadow-lg shadow-primary/20 hover:scale-105"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 px-8 py-6 text-base font-medium rounded-xl shadow-lg shadow-primary/20"
                 asChild
               >
                 <a href="#booking" onClick={scrollToBooking}>
@@ -73,7 +75,7 @@ export default function Index() {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="border-border/50 bg-card/50 text-foreground hover:bg-card hover:border-primary/30 transition-all duration-300 px-8 py-6 text-base font-medium rounded-xl"
+                className="border-border/50 bg-card/50 text-foreground hover:bg-card hover:border-primary/30 transition-colors duration-300 px-8 py-6 text-base font-medium rounded-xl"
                 asChild
               >
                 <Link to="/track">
@@ -83,45 +85,47 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Right content - 3D Robot with Silver Glass Effects (appears on top in mobile) */}
-          <div className="flex-1 relative h-full min-h-[350px] md:min-h-screen flex items-center justify-center">
-            {/* Silver Glass Effects Container */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              {/* Primary Silver Glow */}
-              <div 
-                className="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full opacity-30"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, rgba(180, 180, 180, 0.15) 40%, transparent 70%)',
-                  filter: 'blur(60px)',
-                }}
-              />
-              
-              {/* Secondary Silver Glass Accent */}
-              <div 
-                className="absolute w-[300px] h-[300px] md:w-[400px] md:h-[400px] rounded-full opacity-20 translate-x-12 translate-y-12"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(220, 220, 220, 0.5) 0%, rgba(180, 180, 180, 0.2) 40%, transparent 70%)',
-                  filter: 'blur(40px)',
-                }}
-              />
-              
-              {/* Animated Pulsing Silver Orb */}
-              <div 
-                className="absolute w-[200px] h-[200px] md:w-[300px] md:h-[300px] rounded-full opacity-15 animate-pulse-soft"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(240, 240, 240, 0.5) 0%, transparent 60%)',
-                  filter: 'blur(30px)',
-                }}
-              />
-            </div>
+          {/* Right content - 3D Robot (desktop only) / Static fallback (mobile) */}
+          <div className="flex-1 relative h-full min-h-[250px] md:min-h-screen flex items-center justify-center">
+            {isMobile ? (
+              /* Lightweight mobile fallback - simple gradient orb */
+              <div className="relative w-full h-[250px] flex items-center justify-center">
+                <div 
+                  className="w-[200px] h-[200px] rounded-full opacity-30"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, transparent 70%)',
+                  }}
+                />
+                <span className="absolute text-7xl">🤖</span>
+              </div>
+            ) : (
+              <>
+                {/* Silver Glass Effects - desktop only */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div 
+                    className="absolute w-[600px] h-[600px] rounded-full opacity-30"
+                    style={{
+                      background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, rgba(180, 180, 180, 0.15) 40%, transparent 70%)',
+                      filter: 'blur(60px)',
+                    }}
+                  />
+                </div>
 
-            {/* 3D Robot */}
-            <div className="w-full h-[400px] md:h-[700px] lg:h-[800px] relative z-10">
-              <SplineScene 
-                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                className="w-full h-full scale-110 md:scale-125 lg:scale-150"
-              />
-            </div>
+                {/* 3D Robot - desktop only */}
+                <div className="w-full h-[700px] lg:h-[800px] relative z-10">
+                  <Suspense fallback={
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="loader"></span>
+                    </div>
+                  }>
+                    <SplineScene 
+                      scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                      className="w-full h-full scale-125 lg:scale-150"
+                    />
+                  </Suspense>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -132,25 +136,12 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Logo Marquee */}
       <LogoMarquee />
-
-      {/* About Section */}
       <AboutSection />
-
-      {/* Services Section */}
       <ServicesSection />
-
-      {/* Process Section */}
       <ProcessSection />
-
-      {/* Booking Section */}
       <BookingSection />
-
-      {/* FAQ Section - Last before footer */}
       <FAQSection />
-
-      {/* Footer */}
       <Footer />
     </div>
   );
