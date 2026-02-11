@@ -24,8 +24,8 @@ Allow: /
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://technologiya.lovable.app/sitemap.xml
+# Sitemap location (dynamic, includes all blog posts)
+Sitemap: https://ryehkycxyhdpufigcotc.supabase.co/functions/v1/sitemap
 
 # Host
 Host: https://technologiya.lovable.app
