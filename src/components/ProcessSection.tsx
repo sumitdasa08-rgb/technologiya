@@ -81,8 +81,8 @@ const ProcessSection = () => {
               return (
                 <div
                   key={index}
-                  className={`relative flex items-center md:justify-center transition-opacity duration-500 ${
-                    isVisible ? 'opacity-100' : 'opacity-0'
+                  className={`relative flex items-center md:justify-center transition-all duration-500 ${
+                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                   style={{ transitionDelay: `${index * 150}ms` }}
                 >

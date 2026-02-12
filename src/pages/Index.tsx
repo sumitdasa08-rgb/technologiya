@@ -85,18 +85,25 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Right content - 3D Robot (desktop only) / Static fallback (mobile) */}
+          {/* Right content - 3D Robot (desktop only) / Animated fallback (mobile) */}
           <div className="flex-1 relative h-full min-h-[250px] md:min-h-screen flex items-center justify-center">
             {isMobile ? (
-              /* Lightweight mobile fallback - simple gradient orb */
-              <div className="relative w-full h-[250px] flex items-center justify-center">
+              <div className="relative w-full h-[280px] flex items-center justify-center">
+                {/* Animated glow ring - GPU accelerated */}
                 <div 
-                  className="w-[200px] h-[200px] rounded-full opacity-30"
+                  className="absolute w-[180px] h-[180px] rounded-full opacity-40 animate-[spin_8s_linear_infinite]"
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent, hsl(var(--primary) / 0.3), transparent, hsl(var(--primary) / 0.15), transparent)',
+                  }}
+                />
+                {/* Static gradient orb */}
+                <div 
+                  className="absolute w-[160px] h-[160px] rounded-full opacity-30"
                   style={{
                     background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, transparent 70%)',
                   }}
                 />
-                <span className="absolute text-7xl">🤖</span>
+                <span className="absolute text-7xl animate-[scale-in_0.5s_ease-out_forwards]">🤖</span>
               </div>
             ) : (
               <>
@@ -129,10 +136,10 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
+        {/* Scroll indicator - subtle bounce */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-[fade-in_1s_ease-out_1s_forwards]" style={{ opacity: 0 }}>
           <span className="text-xs text-muted-foreground tracking-wider uppercase">Scroll</span>
-          <div className="w-px h-8 bg-gradient-to-b from-muted-foreground to-transparent" />
+          <div className="w-px h-8 bg-gradient-to-b from-muted-foreground to-transparent animate-[fade-in_2s_ease-in-out_infinite_alternate]" />
         </div>
       </section>
 

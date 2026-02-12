@@ -105,8 +105,8 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer transition-opacity duration-500 ${
-                isVisible ? 'opacity-100' : 'opacity-0'
+              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer transition-all duration-500 ${
+                isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.97]'
               }`}
               style={{ transitionDelay: `${index * 80}ms` }}
             >
