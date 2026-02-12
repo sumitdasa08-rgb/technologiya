@@ -80,8 +80,8 @@ const HorizontalCard = ({
 }) => {
   return (
     <div
-      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer transition-opacity duration-500 ${
-        isVisible ? "opacity-100" : "opacity-0"
+      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer transition-all duration-500 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
       style={{ transitionDelay: `${index * 80}ms` }}
     >
@@ -198,8 +198,8 @@ const AboutSection = () => {
         {/* Section Header */}
         <div
           ref={headerRef}
-          className={`text-center mb-10 md:mb-14 transition-opacity duration-500 ${
-            headerVisible ? "opacity-100" : "opacity-0"
+          className={`text-center mb-10 md:mb-14 transition-all duration-600 ${
+            headerVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-4 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">

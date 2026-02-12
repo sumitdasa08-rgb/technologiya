@@ -49,7 +49,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-2 md:top-3 lg:top-4 left-2 md:left-3 lg:left-4 right-2 md:right-3 lg:right-4 z-50">
+    <nav className="fixed top-2 md:top-3 lg:top-4 left-2 md:left-3 lg:left-4 right-2 md:right-3 lg:right-4 z-[60]">
       <div className={`rounded-xl border transition-colors duration-300 ${
         scrolled 
           ? "bg-card/90 backdrop-blur-xl border-border/30" 

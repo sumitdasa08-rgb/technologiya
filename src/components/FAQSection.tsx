@@ -44,7 +44,7 @@ const FAQSection = () => {
 
   const FAQItem = ({ faq, idx, fromRight = false }: { faq: typeof FAQ_DATA[0]; idx: number; fromRight?: boolean }) => (
     <div 
-      className={`transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
       style={{ transitionDelay: `${idx * 80}ms` }}
     >
       <button
