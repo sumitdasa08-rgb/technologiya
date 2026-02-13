@@ -32,12 +32,12 @@ const Navbar = () => {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener('touchend', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('touchend', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -83,7 +83,7 @@ const Navbar = () => {
             </a>
           </div>
 
-          <div ref={menuRef} className="md:hidden">
+          <div ref={menuRef} className="md:hidden relative z-[60]">
             <button 
               className="text-foreground p-2 rounded-lg hover:bg-secondary transition-colors"
               onClick={() => setIsOpen(!isOpen)}
@@ -91,40 +91,48 @@ const Navbar = () => {
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile Menu - removed backdrop-blur on mobile for performance */}
-      <div className={`md:hidden absolute top-full left-0 right-0 mt-2 bg-card border border-border/30 rounded-xl transition-opacity duration-300 ${
-        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-      }`}>
-        <div className="px-4 py-6 space-y-4">
-          {navItems.map((item) => (
-            <a key={item.name} href={item.href} className="block text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
-              {item.name}
-            </a>
-          ))}
-          <Link to="/track" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
-            <Package className="w-5 h-5" />
-            Track Repair
-          </Link>
-          <Link to="/blog" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
-            <Newspaper className="w-5 h-5" />
-            Blog
-          </Link>
-          <div className="pt-4 border-t border-border flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Theme</span>
-              <ThemeToggle />
-            </div>
-            <a href="/#booking" className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium" onClick={() => setIsOpen(false)}>
-              Get Started
-            </a>
-            <a href="tel:+918812910655" className="flex items-center justify-center gap-2 text-muted-foreground mt-2">
-              <Phone className="w-4 h-4 text-primary" />
-              <span className="font-medium">+91 88129 10655</span>
-            </a>
+            {/* Mobile Menu - fixed position for reliable touch handling */}
+            {isOpen && (
+              <div 
+                className="fixed left-2 right-2 bg-card border border-border/30 rounded-xl z-[70]"
+                style={{ top: '70px' }}
+              >
+                <div className="px-4 py-6 space-y-4">
+                  {navItems.map((item) => (
+                    <a 
+                      key={item.name} 
+                      href={item.href} 
+                      className="block text-lg text-foreground hover:text-primary transition-colors py-2 font-medium"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                  <Link to="/track" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
+                    <Package className="w-5 h-5" />
+                    Track Repair
+                  </Link>
+                  <Link to="/blog" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
+                    <Newspaper className="w-5 h-5" />
+                    Blog
+                  </Link>
+                  <div className="pt-4 border-t border-border flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Theme</span>
+                      <ThemeToggle />
+                    </div>
+                    <a href="/#booking" className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium" onClick={() => setIsOpen(false)}>
+                      Get Started
+                    </a>
+                    <a href="tel:+918812910655" className="flex items-center justify-center gap-2 text-muted-foreground mt-2">
+                      <Phone className="w-4 h-4 text-primary" />
+                      <span className="font-medium">+91 88129 10655</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
