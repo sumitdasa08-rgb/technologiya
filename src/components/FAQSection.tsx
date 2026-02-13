@@ -25,34 +25,46 @@ const generateFAQSchema = () => ({
   }))
 });
 
-const FAQSection = () => {
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
-
+// Per-element reveal hook — GPU-friendly
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold: 0.1 }
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15, rootMargin: '0px 0px -30px 0px' }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
+  return { ref, visible };
+}
 
-  const leftBranch = FAQ_DATA.slice(0, 5);
-  const rightBranch = FAQ_DATA.slice(5, 10);
+const FAQItem = ({ faq, idx, fromRight = false, activeId, setActiveId }: {
+  faq: typeof FAQ_DATA[0]; idx: number; fromRight?: boolean;
+  activeId: string | null; setActiveId: (id: string | null) => void;
+}) => {
+  const { ref, visible } = useReveal();
+  const isActive = activeId === faq.id;
 
-  const FAQItem = ({ faq, idx, fromRight = false }: { faq: typeof FAQ_DATA[0]; idx: number; fromRight?: boolean }) => (
-    <div 
-      className={`transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
-      style={{ transitionDelay: `${idx * 80}ms` }}
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        transition: 'opacity 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.4s cubic-bezier(0.4,0,0.2,1)',
+        willChange: 'opacity, transform',
+      }}
     >
       <button
-        onClick={() => setActiveId(activeId === faq.id ? null : faq.id)}
+        onClick={() => setActiveId(isActive ? null : faq.id)}
         className="w-full text-left"
       >
-        <div className={`relative p-4 rounded-2xl border transition-colors duration-300 ${
-          activeId === faq.id
+        <div className={`relative p-4 rounded-2xl border transition-colors duration-200 ${
+          isActive
             ? 'bg-card border-primary/40 shadow-lg'
             : 'bg-card/50 border-border/30 hover:border-primary/20 hover:bg-card/80'
         }`}>
@@ -61,27 +73,42 @@ const FAQSection = () => {
           </span>
           
           <div className="flex items-center gap-3">
-            <span className="text-2xl md:text-2xl">{faq.emoji}</span>
+            <span className="text-2xl">{faq.emoji}</span>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{faq.question}</h3>
             </div>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-300 ${
-              activeId === faq.id ? 'rotate-180' : ''
+            <ChevronDown className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${
+              isActive ? 'rotate-180' : ''
             }`} />
           </div>
           
-          <div className={`overflow-hidden transition-all duration-300 ${
-            activeId === faq.id ? 'max-h-40 mt-3 opacity-100' : 'max-h-0 opacity-0'
-          }`}>
-            <p className="text-muted-foreground text-sm leading-relaxed pl-11 md:pl-11">{faq.answer}</p>
+          <div
+            className="overflow-hidden"
+            style={{
+              maxHeight: isActive ? '160px' : '0px',
+              opacity: isActive ? 1 : 0,
+              marginTop: isActive ? '12px' : '0px',
+              transition: 'max-height 0.3s ease-out, opacity 0.25s ease-out, margin-top 0.3s ease-out',
+            }}
+          >
+            <p className="text-muted-foreground text-sm leading-relaxed pl-11">{faq.answer}</p>
           </div>
         </div>
       </button>
     </div>
   );
+};
+
+const FAQSection = () => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const { ref: headerRef, visible: headerVisible } = useReveal();
+  const { ref: ctaRef, visible: ctaVisible } = useReveal();
+
+  const leftBranch = FAQ_DATA.slice(0, 5);
+  const rightBranch = FAQ_DATA.slice(5, 10);
 
   return (
-    <section ref={sectionRef} id="faq" className="py-20 md:py-32 bg-background relative overflow-hidden">
+    <section id="faq" className="py-20 md:py-32 bg-background relative overflow-hidden">
       <div className="absolute inset-0 glow-accent opacity-10" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
       
@@ -91,7 +118,15 @@ const FAQSection = () => {
       
       <div className="container mx-auto px-4 relative">
         {/* Header */}
-        <div className={`text-center mb-16 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div
+          ref={headerRef}
+          className="text-center mb-16"
+          style={{
+            opacity: headerVisible ? 1 : 0,
+            transform: headerVisible ? 'translateY(0)' : 'translateY(16px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+          }}
+        >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             <HelpCircle className="h-4 w-4" />
             got questions? 🤷‍♂️
@@ -101,13 +136,13 @@ const FAQSection = () => {
         </div>
 
         {/* Tree Mind Map Layout */}
-        <div className={`relative max-w-6xl mx-auto transition-opacity duration-500 delay-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="relative max-w-6xl mx-auto">
           
           {/* Desktop: Two column tree layout */}
           <div className="hidden md:grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
             <div className="space-y-4 pr-8">
               {leftBranch.map((faq, idx) => (
-                <FAQItem key={faq.id} faq={faq} idx={idx} />
+                <FAQItem key={faq.id} faq={faq} idx={idx} activeId={activeId} setActiveId={setActiveId} />
               ))}
             </div>
 
@@ -124,7 +159,7 @@ const FAQSection = () => {
 
             <div className="space-y-4 pl-8">
               {rightBranch.map((faq, idx) => (
-                <FAQItem key={faq.id} faq={faq} idx={idx + 5} fromRight />
+                <FAQItem key={faq.id} faq={faq} idx={idx + 5} fromRight activeId={activeId} setActiveId={setActiveId} />
               ))}
             </div>
           </div>
@@ -136,7 +171,7 @@ const FAQSection = () => {
               {FAQ_DATA.map((faq, idx) => (
                 <div key={faq.id} className="relative">
                   <div className="absolute -left-[2.65rem] top-6 w-3 h-3 rounded-full bg-primary/30 border border-primary/50" />
-                  <FAQItem faq={faq} idx={idx} />
+                  <FAQItem faq={faq} idx={idx} activeId={activeId} setActiveId={setActiveId} />
                 </div>
               ))}
             </div>
@@ -144,7 +179,15 @@ const FAQSection = () => {
         </div>
 
         {/* CTA */}
-        <div className={`text-center mt-16 transition-opacity duration-500 delay-700 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div
+          ref={ctaRef}
+          className="text-center mt-16"
+          style={{
+            opacity: ctaVisible ? 1 : 0,
+            transform: ctaVisible ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+          }}
+        >
           <p className="text-muted-foreground mb-4 text-lg">still confused? hit us up, we don't bite 😄</p>
           <a 
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors duration-300 shadow-lg" 
