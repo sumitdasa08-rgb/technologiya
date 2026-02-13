@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 const processSteps = [
   { emoji: "📱", milestone: "START", title: "hit us up", description: "slide into our DMs (or just fill the form lol)", tag: "easy peasy" },
@@ -9,23 +9,147 @@ const processSteps = [
   { emoji: "🏆", milestone: "FINISH", title: "warranty vibes", description: "we got your back even after, bestie", tag: "always here" },
 ];
 
-const ProcessSection = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
+// Hook for per-element visibility
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
-      { threshold: 0.1 }
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return { ref, visible };
+}
+
+const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index: number; isLeft: boolean }) => {
+  const { ref, visible } = useReveal();
+
+  return (
+    <div
+      ref={ref}
+      className="relative flex items-center md:justify-center"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.97)',
+        transition: 'opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1)',
+        willChange: 'opacity, transform',
+      }}
+    >
+      {/* Desktop Layout */}
+      <div className={`hidden md:flex items-center w-full ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>
+        <div className={`w-[calc(50%-40px)] ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
+          <div className="group glass-card p-6 rounded-2xl md:hover:scale-105 transition-transform duration-300 cursor-pointer relative overflow-hidden border-primary/30">
+            <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-3 px-2 py-1 rounded-full ${
+              step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
+              step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-primary/20 text-primary'
+            }`}>
+              {step.milestone}
+            </div>
+            
+            <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2 font-display flex items-center gap-2 justify-end">
+              {isLeft ? (
+                <>{step.title}<span className="text-2xl">{step.emoji}</span></>
+              ) : (
+                <><span className="text-2xl">{step.emoji}</span>{step.title}</>
+              )}
+            </h3>
+            
+            <p className="text-sm text-muted-foreground mb-3">{step.description}</p>
+            
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-card border border-border/50 text-muted-foreground">
+              #{step.tag}
+            </span>
+          </div>
+        </div>
+
+        {/* Center Node */}
+        <div className="relative z-10 flex-shrink-0">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/40"
+            style={{
+              transform: visible ? 'scale(1.1)' : 'scale(0.7)',
+              transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+            }}
+          >
+            {step.emoji}
+          </div>
+        </div>
+
+        <div className="w-[calc(50%-40px)]" />
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden flex items-start gap-6 pl-4">
+        <div className="relative z-10 flex-shrink-0">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/40"
+            style={{
+              transform: visible ? 'scale(1)' : 'scale(0.6)',
+              transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+            }}
+          >
+            {step.emoji}
+          </div>
+        </div>
+
+        <div className="flex-1 pb-8">
+          <div className="glass-card p-5 rounded-xl">
+            <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-2 px-2 py-1 rounded-full ${
+              step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
+              step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-primary/20 text-primary'
+            }`}>
+              {step.milestone}
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-1 font-display flex items-center gap-2">
+              <span>{step.emoji}</span>
+              {step.title}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
+            <span className="inline-flex text-xs px-2 py-1 rounded-full bg-card border border-border/50 text-muted-foreground">
+              #{step.tag}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProcessSection = () => {
+  const { ref: headerRef, visible: headerVisible } = useReveal();
+  const { ref: footerRef, visible: footerVisible } = useReveal();
+  const { ref: ctaRef, visible: ctaVisible } = useReveal();
+  const roadRef = useRef<HTMLDivElement>(null);
+  const [roadProgress, setRoadProgress] = useState(0);
+
+  // Animate road progress based on scroll position (lightweight RAF)
+  useEffect(() => {
+    const el = roadRef.current;
+    if (!el) return;
+
+    let raf: number;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
+      setRoadProgress(progress);
+      raf = requestAnimationFrame(update);
+    };
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
-    <section id="process" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
+    <section id="process" className="py-24 md:py-32 bg-background relative overflow-hidden">
       {/* Static grid background */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute inset-0" style={{
@@ -39,9 +163,15 @@ const ProcessSection = () => {
 
       <div className="container mx-auto px-4 relative">
         {/* Header */}
-        <div className={`text-center mb-12 md:mb-20 transition-opacity duration-500 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div
+          ref={headerRef}
+          className="text-center mb-12 md:mb-20"
+          style={{
+            opacity: headerVisible ? 1 : 0,
+            transform: headerVisible ? 'translateY(0)' : 'translateY(16px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+          }}
+        >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-4 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             🗺️ The Journey 🗺️
           </span>
@@ -54,13 +184,13 @@ const ProcessSection = () => {
         </div>
 
         {/* Roadmap Container */}
-        <div className="relative max-w-5xl mx-auto">
+        <div ref={roadRef} className="relative max-w-5xl mx-auto">
           {/* Main Road Path - Desktop */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-4 -translate-x-1/2">
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
-              style={{ height: isVisible ? '100%' : '0%', transitionDelay: '0.5s' }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
+              style={{ height: `${roadProgress * 100}%`, willChange: 'height' }}
             />
           </div>
 
@@ -68,109 +198,28 @@ const ProcessSection = () => {
           <div className="md:hidden absolute left-8 top-0 bottom-0 w-3">
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full transition-all duration-1000"
-              style={{ height: isVisible ? '100%' : '0%' }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
+              style={{ height: `${roadProgress * 100}%`, willChange: 'height' }}
             />
           </div>
 
           {/* Roadmap Steps */}
           <div className="relative space-y-8 md:space-y-0">
-            {processSteps.map((step, index) => {
-              const isLeft = index % 2 === 0;
-              
-              return (
-                <div
-                  key={index}
-                  className={`relative flex items-center md:justify-center transition-all duration-500 ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
-                  style={{ transitionDelay: `${index * 150}ms` }}
-                >
-                  {/* Desktop Layout */}
-                  <div className={`hidden md:flex items-center w-full ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>
-                    <div className={`w-[calc(50%-40px)] ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-                      <div className={`group glass-card p-6 rounded-2xl md:hover:scale-105 transition-transform duration-300 cursor-pointer relative overflow-hidden ${
-                        isVisible ? 'border-primary/30' : ''
-                      }`}>
-                        <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-3 px-2 py-1 rounded-full ${
-                          step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
-                          step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-primary/20 text-primary'
-                        }`}>
-                          {step.milestone}
-                        </div>
-                        
-                        <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2 font-display flex items-center gap-2 justify-end">
-                          {isLeft ? (
-                            <>{step.title}<span className="text-2xl">{step.emoji}</span></>
-                          ) : (
-                            <><span className="text-2xl">{step.emoji}</span>{step.title}</>
-                          )}
-                        </h3>
-                        
-                        <p className="text-sm text-muted-foreground mb-3">{step.description}</p>
-                        
-                        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-card border border-border/50 text-muted-foreground">
-                          #{step.tag}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Center Node */}
-                    <div className="relative z-10 flex-shrink-0">
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl transition-transform duration-500 ${
-                        isVisible 
-                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/40 scale-110' 
-                          : 'bg-card border-2 border-border/50'
-                      }`}>
-                        {isVisible ? step.emoji : '⏳'}
-                      </div>
-                    </div>
-
-                    <div className="w-[calc(50%-40px)]" />
-                  </div>
-
-                  {/* Mobile Layout */}
-                  <div className="md:hidden flex items-start gap-6 pl-4">
-                    <div className="relative z-10 flex-shrink-0">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl transition-transform duration-500 ${
-                        isVisible 
-                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/40' 
-                          : 'bg-card border-2 border-border/50'
-                      }`}>
-                        {isVisible ? step.emoji : '⏳'}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 pb-8">
-                      <div className="glass-card p-5 rounded-xl">
-                        <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-2 px-2 py-1 rounded-full ${
-                          step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
-                          step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-primary/20 text-primary'
-                        }`}>
-                          {step.milestone}
-                        </div>
-                        <h3 className="text-lg font-bold text-foreground mb-1 font-display flex items-center gap-2">
-                          <span>{step.emoji}</span>
-                          {step.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
-                        <span className="inline-flex text-xs px-2 py-1 rounded-full bg-card border border-border/50 text-muted-foreground">
-                          #{step.tag}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {processSteps.map((step, index) => (
+              <StepCard key={index} step={step} index={index} isLeft={index % 2 === 0} />
+            ))}
           </div>
 
           {/* Finish Flag */}
-          <div className={`flex justify-center mt-12 transition-opacity duration-500 ${
-            isVisible ? 'opacity-100' : 'opacity-0'
-          }`} style={{ transitionDelay: '1s' }}>
+          <div
+            ref={footerRef}
+            className="flex justify-center mt-12"
+            style={{
+              opacity: footerVisible ? 1 : 0,
+              transform: footerVisible ? 'scale(1)' : 'scale(0.9)',
+              transition: 'opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+            }}
+          >
             <div className="flex flex-col items-center gap-3">
               <div className="text-5xl">🏁</div>
               <p className="text-lg font-bold text-foreground font-display">device = fixed</p>
@@ -181,9 +230,15 @@ const ProcessSection = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div className={`text-center mt-16 transition-opacity duration-500 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`} style={{ transitionDelay: '1.2s' }}>
+        <div
+          ref={ctaRef}
+          className="text-center mt-16"
+          style={{
+            opacity: ctaVisible ? 1 : 0,
+            transform: ctaVisible ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+          }}
+        >
           <p className="text-muted-foreground mb-4">
             ready to start your journey? 👀
           </p>
