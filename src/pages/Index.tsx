@@ -1,7 +1,8 @@
 'use client'
 
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Spotlight } from "@/components/ui/spotlight";
+import { SplineScene } from '@/components/ui/splite';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -18,8 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Lazy load Spline
-const SplineScene = lazy(() => import('@/components/ui/splite').then(m => ({ default: m.SplineScene })));
+// SplineScene is now eagerly imported so it loads during the 3s loader screen
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -144,16 +144,10 @@ export default function Index() {
 
             {/* 3D Interactive Robot - all devices */}
             <div className={`w-full relative z-10 ${isMobile ? 'h-[350px]' : 'h-[700px] lg:h-[800px]'}`}>
-              <Suspense fallback={
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="loader"></span>
-                </div>
-              }>
-                <SplineScene 
-                  scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                  className={`w-full h-full ${isMobile ? 'scale-110' : 'scale-125 lg:scale-150'}`}
-                />
-              </Suspense>
+              <SplineScene 
+                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                className={`w-full h-full ${isMobile ? 'scale-110' : 'scale-125 lg:scale-150'}`}
+              />
             </div>
           </div>
         </div>
