@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const processSteps = [
   { emoji: "📱", milestone: "START", title: "hit us up", description: "slide into our DMs (or just fill the form lol)", tag: "easy peasy" },
@@ -129,9 +129,8 @@ const ProcessSection = () => {
   const { ref: footerRef, visible: footerVisible } = useReveal();
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
-  const [roadProgress, setRoadProgress] = useState(0);
 
-  // Animate road progress based on scroll position (lightweight RAF)
+  // Animate road progress via CSS custom property (no React re-renders)
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
@@ -141,7 +140,7 @@ const ProcessSection = () => {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
-      setRoadProgress(progress);
+      el.style.setProperty('--road-progress', `${progress * 100}%`);
       raf = requestAnimationFrame(update);
     };
     raf = requestAnimationFrame(update);
@@ -190,7 +189,7 @@ const ProcessSection = () => {
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
               className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
-              style={{ height: `${roadProgress * 100}%`, willChange: 'height' }}
+              style={{ height: 'var(--road-progress, 0%)', willChange: 'height' }}
             />
           </div>
 
@@ -199,7 +198,7 @@ const ProcessSection = () => {
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
               className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
-              style={{ height: `${roadProgress * 100}%`, willChange: 'height' }}
+              style={{ height: 'var(--road-progress, 0%)', willChange: 'height' }}
             />
           </div>
 
