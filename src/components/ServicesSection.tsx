@@ -105,7 +105,7 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer ${
+              className={`group p-5 md:p-8 rounded-2xl cursor-pointer bg-card border border-border/30 shadow-sm md:hover:border-primary/40 ${
                 isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.97]'
               }`}
               style={{

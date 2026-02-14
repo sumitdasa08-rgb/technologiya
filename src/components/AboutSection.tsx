@@ -138,7 +138,7 @@ const AboutSection = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollProgressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const headerObs = new IntersectionObserver(
@@ -162,10 +162,11 @@ const AboutSection = () => {
   }, []);
 
   const handleScroll = useCallback(() => {
-    if (!scrollContainerRef.current) return;
+    if (!scrollContainerRef.current || !scrollProgressRef.current) return;
     const { scrollLeft: sl, scrollWidth, clientWidth } = scrollContainerRef.current;
     const maxScroll = scrollWidth - clientWidth;
-    setScrollProgress(maxScroll > 0 ? sl / maxScroll : 0);
+    const pct = maxScroll > 0 ? sl / maxScroll : 0;
+    scrollProgressRef.current.style.width = `${Math.max(10, pct * 100)}%`;
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -202,9 +203,10 @@ const AboutSection = () => {
         {/* Section Header */}
         <div
           ref={headerRef}
-          className={`text-center mb-10 md:mb-14 transition-all duration-600 ${
+          className={`text-center mb-10 md:mb-14 ${
             headerVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
+          style={{ transition: 'opacity 0.5s ease-out, transform 0.5s ease-out' }}
         >
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-4 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
             ✨ About Us ✨
@@ -262,8 +264,9 @@ const AboutSection = () => {
           {/* Scroll progress bar */}
           <div className="mt-4 mx-auto max-w-xs h-1 rounded-full bg-border/30 overflow-hidden">
             <div
+              ref={scrollProgressRef}
               className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary"
-              style={{ width: `${Math.max(10, scrollProgress * 100)}%` }}
+              style={{ width: '10%', transition: 'none' }}
             />
           </div>
 

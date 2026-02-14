@@ -45,7 +45,7 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
       {/* Desktop Layout */}
       <div className={`hidden md:flex items-center w-full ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>
         <div className={`w-[calc(50%-40px)] ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-          <div className="group glass-card p-6 rounded-2xl md:hover:scale-105 transition-transform duration-300 cursor-pointer relative overflow-hidden border-primary/30">
+          <div className="group glass-card p-6 rounded-2xl md:hover:scale-105 cursor-pointer relative overflow-hidden border-primary/30" style={{ transition: 'transform 0.3s ease-out' }}>
             <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-3 px-2 py-1 rounded-full ${
               step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
               step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -101,7 +101,7 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
         </div>
 
         <div className="flex-1 pb-8">
-          <div className="glass-card p-5 rounded-xl">
+          <div className="glass-card p-5 rounded-xl" style={{ transition: 'none' }}>
             <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-2 px-2 py-1 rounded-full ${
               step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
               step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -130,21 +130,21 @@ const ProcessSection = () => {
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
 
-  // Animate road progress via CSS custom property (no React re-renders)
+  // Animate road progress via passive scroll listener (no RAF spin-loop)
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
 
-    let raf: number;
     const update = () => {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
       el.style.setProperty('--road-progress', `${progress * 100}%`);
-      raf = requestAnimationFrame(update);
     };
-    raf = requestAnimationFrame(update);
-    return () => cancelAnimationFrame(raf);
+
+    update(); // initial
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
   }, []);
 
   return (
