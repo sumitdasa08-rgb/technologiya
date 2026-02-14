@@ -105,10 +105,13 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer transition-all duration-500 ${
+              className={`group glass-card p-5 md:p-8 rounded-2xl cursor-pointer ${
                 isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.97]'
               }`}
-              style={{ transitionDelay: `${index * 80}ms` }}
+              style={{
+                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+                transitionDelay: `${index * 80}ms`,
+              }}
             >
               <div className="flex items-center gap-4 md:block">
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center md:mb-6 flex-shrink-0 transition-colors duration-300 group-hover:bg-primary">

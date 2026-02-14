@@ -80,10 +80,14 @@ const HorizontalCard = ({
 }) => {
   return (
     <div
-      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer transition-all duration-500 ${
+      className={`relative flex-shrink-0 w-[280px] md:w-[320px] group cursor-pointer ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
-      style={{ transitionDelay: `${index * 80}ms` }}
+      style={{
+        transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+        transitionDelay: `${index * 80}ms`,
+      }}
+      
     >
       <div
         className={`relative rounded-2xl border-2 bg-gradient-to-br ${item.color} p-6 shadow-lg md:group-hover:shadow-2xl md:group-hover:-translate-y-3 md:group-hover:scale-[1.03] transition-transform duration-300 h-full`}
