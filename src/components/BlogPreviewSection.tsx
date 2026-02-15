@@ -59,8 +59,7 @@ const BlogPreviewSection = () => {
             Stay Updated with Tech 🔥
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto">
-            AI-generated articles about the latest in tech, gadgets, coding, and more. 
-            Updated daily for the curious minds.
+            Expert insights and analysis on the latest in tech, gadgets, and innovation — curated daily by our team.
           </p>
         </div>
 
