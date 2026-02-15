@@ -147,7 +147,7 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="py-6 border-t border-border/30 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>© 2025 Technologiya. All rights reserved.</p>
+          <p>© 2026 Technologiya. All rights reserved.</p>
           <p>Trusted by 500+ customers across India.</p>
         </div>
       </div>

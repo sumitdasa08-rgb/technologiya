@@ -93,10 +93,35 @@ interface BlogPost {
  
    return (
      <div className="min-h-screen bg-background">
-       <Helmet>
-         <title>Tech Blog | Technologiya</title>
-         <meta name="description" content="Stay updated with the latest tech news, smartphone updates, firmware releases, and AI advancements. Fresh daily content for tech enthusiasts." />
-       </Helmet>
+        <Helmet>
+          <title>Tech Blog | Technologiya – Latest Tech News & Insights</title>
+          <meta name="description" content="Expert tech insights on smartphones, firmware updates, AI advancements, and gadget reviews. Curated daily by Technologiya's team for tech enthusiasts across India." />
+          <link rel="canonical" href="https://technologiya.lovable.app/blog" />
+          <meta property="og:title" content="Tech Blog | Technologiya" />
+          <meta property="og:description" content="Expert tech insights on smartphones, firmware updates, AI advancements, and gadget reviews." />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content="https://technologiya.lovable.app/blog" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="Tech Blog | Technologiya" />
+          <meta name="twitter:description" content="Expert tech insights curated daily by Technologiya's team." />
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              "name": "Technologiya Tech Blog",
+              "description": "Expert tech insights on smartphones, firmware updates, AI advancements, and gadget reviews.",
+              "url": "https://technologiya.lovable.app/blog",
+              "publisher": {
+                "@type": "Organization",
+                "name": "Technologiya",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://technologiya.lovable.app/pwa-512x512.png"
+                }
+              }
+            })}
+          </script>
+        </Helmet>
        
        <FrameBorder />
        <Navbar />
@@ -114,9 +139,9 @@ interface BlogPost {
              <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 font-display">
                Fresh Tech Drops 🔥
              </h1>
-             <p className="text-muted-foreground max-w-md mx-auto">
-               AI-generated articles updated daily. Stay ahead of the tech curve.
-             </p>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Expert insights and analysis on smartphones, gadgets, firmware, and AI — curated daily by our tech team.
+              </p>
            </div>
  
            {/* Category Filter */}

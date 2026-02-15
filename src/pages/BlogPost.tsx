@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BlogPostContent from "@/components/BlogPostContent";
+import RelatedPosts from "@/components/RelatedPosts";
 
 interface BlogPostData {
   id: string;
@@ -112,31 +113,46 @@ export default function BlogPost() {
       <Helmet>
         <title>{post.title} | Technologiya Blog</title>
         <meta name="description" content={post.excerpt} />
+        <link rel="canonical" href={`https://technologiya.lovable.app/blog/${post.slug}`} />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
+        <meta property="og:url" content={`https://technologiya.lovable.app/blog/${post.slug}`} />
+        <meta property="article:published_time" content={post.published_at} />
+        <meta property="article:section" content={post.category} />
+        {post.tags?.map(tag => <meta key={tag} property="article:tag" content={tag} />)}
         {post.cover_image_url && <meta property="og:image" content={post.cover_image_url} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.excerpt} />
+        {post.cover_image_url && <meta name="twitter:image" content={post.cover_image_url} />}
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            headline: post.title,
-            description: post.excerpt,
-            datePublished: post.published_at,
-            ...(post.cover_image_url && { image: post.cover_image_url }),
-            author: {
-              "@type": "Organization",
-              name: "Technologiya",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "Technologiya",
-              logo: {
-                "@type": "ImageObject",
-                url: "https://technologiya.lovable.app/pwa-512x512.png",
+          {JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "NewsArticle",
+              headline: post.title,
+              description: post.excerpt,
+              datePublished: post.published_at,
+              url: `https://technologiya.lovable.app/blog/${post.slug}`,
+              ...(post.cover_image_url && { image: post.cover_image_url }),
+              author: { "@type": "Organization", name: "Technologiya" },
+              publisher: {
+                "@type": "Organization",
+                name: "Technologiya",
+                logo: { "@type": "ImageObject", url: "https://technologiya.lovable.app/pwa-512x512.png" },
               },
             },
-          })}
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://technologiya.lovable.app/" },
+                { "@type": "ListItem", position: 2, name: "Blog", item: "https://technologiya.lovable.app/blog" },
+                { "@type": "ListItem", position: 3, name: post.title, item: `https://technologiya.lovable.app/blog/${post.slug}` },
+              ],
+            },
+          ])}
         </script>
       </Helmet>
       
@@ -147,14 +163,16 @@ export default function BlogPost() {
         <div className="absolute inset-0 glow-accent opacity-20" />
         
         <article className="container mx-auto px-4 relative max-w-3xl">
-          {/* Back link */}
-          <Link 
-            to="/blog" 
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Blog
-          </Link>
+          {/* Breadcrumb Navigation */}
+          <nav aria-label="Breadcrumb" className="mb-8">
+            <ol className="flex items-center gap-2 text-sm text-muted-foreground">
+              <li><Link to="/" className="hover:text-foreground transition-colors">Home</Link></li>
+              <li>/</li>
+              <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
+              <li>/</li>
+              <li className="text-foreground truncate max-w-[200px]">{post.title}</li>
+            </ol>
+          </nav>
 
           {/* Cover Image */}
           {post.cover_image_url && (
@@ -222,6 +240,9 @@ export default function BlogPost() {
               </div>
             </div>
           )}
+
+          {/* Related Posts */}
+          <RelatedPosts currentPostId={post.id} category={post.category} />
         </article>
       </main>
       
