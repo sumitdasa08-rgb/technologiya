@@ -1,214 +1,79 @@
 
-# Technologiya Website - Complete Rebuild Plan
 
-## Overview
-Building a complete Technologiya landing page with an interactive 3D robot hero featuring gradient glow effects, using a custom Black and Grays color palette, glassmorphism navigation, and all service sections.
+## SEO Ranking Boost Plan
 
----
-
-## Color Palette Implementation
-
-The new design uses the **Black and Grays** color scheme:
-
-| Color Name | Hex Code | Usage |
-|------------|----------|-------|
-| Authentic Black | `#080808` | Primary background |
-| Sport Black | `#141414` | Card backgrounds, secondary surfaces |
-| Bold Grey | `#676767` | Muted text, subtle borders |
-| Gray | `#808080` | Secondary text |
-| Dark Gray | `#A9A9A9` | Primary text highlights |
-| Gray (X11) | `#BEBEBE` | Headings, important text |
-
-Accent color: Keep the existing purple (`hsl(258 90% 66%)`) for CTAs and highlights.
+This plan focuses on fixing critical SEO issues that are actively hurting your Google rankings and implementing best practices to climb higher in search results.
 
 ---
 
-## File Changes
+### 1. Remove "AI-Generated" Labels (Critical - Google Penalty Risk)
 
-### 1. Update CSS Variables (`src/index.css`)
+Google's Helpful Content Update actively demotes sites that label content as AI-generated. Two places currently say this:
 
-Replace the current color system with the Black and Grays palette:
+- **Blog page header**: "AI-generated articles updated daily"
+- **Blog preview section on homepage**: "AI-generated articles about the latest in tech"
 
-```text
-CSS Variable Mapping:
---background: #080808 (Authentic Black)
---card: #141414 (Sport Black)
---foreground: #BEBEBE (Gray X11)
---muted-foreground: #808080 (Gray)
---border: #676767 at 30% opacity
---primary: Keep purple accent
-```
+These will be replaced with authority-building copy like "Expert insights and analysis" and "Curated daily by our tech team."
 
 ---
 
-### 2. Hero Section with 3D Robot + Glow Effects (`src/pages/Index.tsx`)
+### 2. Add Structured Data to Blog Listing Page
 
-Transform into a full landing page with all sections.
-
-**Hero Layout:**
-
-```text
-+----------------------------------------------------------+
-|  [Navbar - glassmorphism]                                |
-+----------------------------------------------------------+
-|                                                          |
-|  +------------------------+  +------------------------+  |
-|  |                        |  |                        |  |
-|  | "Transform Your        |  |  ┌─────────────────┐  |  |
-|  |  Device Problems       |  |  │ PURPLE GLOW     │  |  |
-|  |  into Solutions"       |  |  │  ┌───────────┐  │  |  |
-|  |                        |  |  │  │ 3D ROBOT  │  │  |  |
-|  | Premium computer       |  |  │  │ (Spline)  │  │  |  |
-|  | repair services        |  |  │  └───────────┘  │  |  |
-|  |                        |  |  │ BLUE ACCENT     │  |  |
-|  | [Get Started] [Track]  |  |  └─────────────────┘  |  |
-|  |                        |  |                        |  |
-|  +------------------------+  +------------------------+  |
-|                                                          |
-+----------------------------------------------------------+
-```
-
-**Glow Effect Layers (behind robot):**
-1. **Large purple radial gradient** - 600x600px, blur-3xl, opacity 40%, centered
-2. **Blue accent glow** - 400x400px, blur-2xl, opacity 30%, offset bottom-right
-3. **Animated pulsing orb** - 300x300px, subtle pulse animation, opacity 20%
+The `/blog` page is missing JSON-LD structured data. Adding a `CollectionPage` schema will help Google understand and display the blog in search results with rich snippets.
 
 ---
 
-### 3. Navigation Updates (`src/components/Navbar.tsx`)
+### 3. Improve Blog Post SEO Meta Tags
 
-Update with new color palette:
-- Background: `#080808` with 90% opacity when scrolled
-- Border: `#676767` at 30% opacity
-- Text: `#808080` (muted) transitioning to `#BEBEBE` on hover
-- Logo box: `#141414` background with `#676767` border
-
----
-
-### 4. Frame Border Updates (`src/components/FrameBorder.tsx`)
-
-Change from white border to subtle gray:
-- Border color: `#676767` at 40% opacity
-- Creates a refined, premium frame effect
+Each blog post page (`/blog/:slug`) needs:
+- Canonical URL tag
+- `article:published_time` and `article:section` Open Graph tags
+- Twitter card meta tags
+- Better `BreadcrumbList` structured data for navigation breadcrumbs in search results
 
 ---
 
-### 5. Section Components Updates
+### 4. Add Breadcrumb Navigation to Blog Posts
 
-All existing sections need color updates to match the new palette:
-
-**Components to update:**
-- `AboutSection.tsx` - Background colors, text colors
-- `ServicesSection.tsx` - Card backgrounds, hover states
-- `PricingSection.tsx` - Tier cards, popular badge
-- `FAQSection.tsx` - Accordion styling
-- `BookingSection.tsx` - Form inputs, buttons
-- `Footer.tsx` - Background, link colors
-
-**Color changes for all sections:**
-- Section backgrounds: Alternate between `#080808` and `#141414`
-- Text: `#BEBEBE` for headings, `#808080` for body
-- Cards: `#141414` background with `#676767` subtle border
-- Hover effects: Border transitions to purple accent
+Google displays breadcrumbs in search results (Home > Blog > Post Title). Adding both visual breadcrumbs and `BreadcrumbList` JSON-LD structured data will improve click-through rates from search.
 
 ---
 
-## Page Structure
+### 5. Fix Footer Copyright Year
 
-```text
-Index.tsx Layout:
-├── FrameBorder (fixed gray border overlay)
-├── Navbar (glassmorphism with gray palette)
-├── ScrollToTop
-│
-├── <main>
-│   ├── Hero Section
-│   │   ├── Left: Headline + CTA buttons
-│   │   └── Right: 3D Robot + Glow effects
-│   │
-│   ├── LogoMarquee (trusted brands)
-│   ├── AboutSection
-│   ├── ServicesSection
-│   ├── PricingSection
-│   ├── ProcessSection (how it works)
-│   ├── FAQSection
-│   └── BookingSection
-│
-└── Footer
-```
+The footer says "2025" but the current year is 2026. This signals to Google that the site is not maintained.
 
 ---
 
-## Technical Details
+### 6. Improve Internal Linking
 
-### Animation Classes (from existing CSS)
-- `animate-fade-up` - Entrance animation
-- `animate-pulse-soft` - Glow pulsing
-- `hover-lift` - Card hover effect
-- `glass-card` - Glassmorphism styling
-
-### Responsive Breakpoints
-- Mobile: Full-width stacked layout
-- Tablet (md): Two-column hero
-- Desktop (lg): Full layout with larger robot
-
-### Glow Effect CSS
-
-```css
-/* Primary glow behind robot */
-.robot-glow-primary {
-  background: radial-gradient(
-    circle at center,
-    rgba(139, 92, 246, 0.4) 0%,
-    transparent 70%
-  );
-  filter: blur(60px);
-  width: 600px;
-  height: 600px;
-}
-
-/* Secondary blue accent */
-.robot-glow-accent {
-  background: radial-gradient(
-    circle at center,
-    rgba(59, 130, 246, 0.3) 0%,
-    transparent 70%
-  );
-  filter: blur(40px);
-  width: 400px;
-  height: 400px;
-}
-```
+- Add a "Related Posts" section at the bottom of each blog post (fetch 3 posts from the same category). This keeps users on the site longer (lower bounce rate) and helps Google discover more pages.
+- Ensure the blog preview section on the homepage passes `coverImageUrl` to cards for better visual engagement.
 
 ---
 
-## Files to Create/Modify
+### 7. Add Missing Route for Terms & Conditions
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/index.css` | Modify | Update CSS variables with Black and Grays palette |
-| `src/pages/Index.tsx` | Rewrite | Full landing page with hero + all sections |
-| `src/components/Navbar.tsx` | Modify | Update colors to new palette |
-| `src/components/FrameBorder.tsx` | Modify | Change to gray border |
-| `src/components/AboutSection.tsx` | Modify | Update colors |
-| `src/components/ServicesSection.tsx` | Modify | Update colors |
-| `src/components/PricingSection.tsx` | Modify | Update colors |
-| `src/components/FAQSection.tsx` | Modify | Update colors |
-| `src/components/BookingSection.tsx` | Modify | Update colors |
-| `src/components/Footer.tsx` | Modify | Update colors |
-| `src/components/LogoMarquee.tsx` | Modify | Update colors |
-| `src/components/ProcessSection.tsx` | Modify | Update colors |
+The sitemap and footer reference `/terms-and-conditions` but there's no route for it in `App.tsx`. This creates 404 errors that hurt SEO. A simple terms page will be added.
 
 ---
 
-## Expected Result
+### Technical Details
 
-A polished Technologiya landing page with:
+**Files to modify:**
+- `src/pages/Blog.tsx` - Remove AI labels, add JSON-LD CollectionPage schema
+- `src/pages/BlogPost.tsx` - Add canonical URL, breadcrumbs (visual + JSON-LD), Twitter cards, related posts section
+- `src/components/BlogPreviewSection.tsx` - Remove AI-generated text, pass coverImageUrl
+- `src/components/Footer.tsx` - Fix copyright year to 2026
+- `src/App.tsx` - Add `/terms-and-conditions` route
 
-1. Interactive 3D robot hero with beautiful layered gradient glow effects (purple + blue)
-2. Custom Black and Grays color palette creating a sleek, modern aesthetic
-3. All service sections: About, Services, Pricing, Process, FAQ, Booking
-4. Subtle gray fixed border frame
-5. Glassmorphism navigation with smooth scroll behavior
-6. Smooth animations on scroll (fade-up, scale, hover effects)
-7. Fully mobile-responsive design
+**New files:**
+- `src/pages/TermsAndConditions.tsx` - Basic terms page
+- `src/components/RelatedPosts.tsx` - Related posts component for blog post pages
+
+**Key changes in blog post structured data:**
+- Add `BreadcrumbList` JSON-LD
+- Add canonical `<link>` tag
+- Add `article:published_time`, `article:section`, `article:tag` OG meta
+- Add Twitter card meta tags
+
