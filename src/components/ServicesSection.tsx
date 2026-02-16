@@ -1,4 +1,4 @@
-import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, type LucideIcon } from "lucide-react";
+import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, ArrowRight, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -10,12 +10,12 @@ interface ServiceItem {
 }
 
 const services: ServiceItem[] = [
-  { icon: Monitor, id: "windows_upgrade", title: "Windows OS Installation", description: "Technologiya provides professional Windows installation and upgrade services for enhanced security and performance." },
-  { icon: Settings, id: "software_repair", title: "Computer Troubleshooting", description: "Expert Technologiya computer repair including system updates, driver installations, and performance optimization." },
-  { icon: FileText, id: "consultation", title: "Microsoft Office Setup", description: "Complete MS Office suite installation with activation by Technologiya technical service experts." },
-  { icon: HardDrive, id: "data_recovery", title: "Data Recovery & Storage", description: "Technologiya device repair specialists handle storage issues, cleanup, and data recovery solutions." },
-  { icon: Smartphone, id: "pc_optimization", title: "Laptop Repair & Fixes", description: "Technologiya laptop repair services to fix crashes, system errors, and performance problems." },
-  { icon: Volume2, id: "sound_issues", title: "Hardware Diagnostics", description: "Professional Technologiya IT support for audio, display, and hardware troubleshooting." },
+  { icon: Monitor, id: "windows_upgrade", title: "Windows OS Installation", description: "Professional Windows installation and upgrade services for enhanced security and performance." },
+  { icon: Settings, id: "software_repair", title: "Computer Troubleshooting", description: "Expert computer repair including system updates, driver installations, and performance optimization." },
+  { icon: FileText, id: "consultation", title: "Microsoft Office Setup", description: "Complete MS Office suite installation with activation by our technical service experts." },
+  { icon: HardDrive, id: "data_recovery", title: "Data Recovery & Storage", description: "Specialist storage issue handling, cleanup, and professional data recovery solutions." },
+  { icon: Smartphone, id: "pc_optimization", title: "Laptop Repair & Fixes", description: "Laptop repair services to fix crashes, system errors, and performance problems." },
+  { icon: Volume2, id: "sound_issues", title: "Hardware Diagnostics", description: "Professional IT support for audio, display, and hardware troubleshooting." },
 ];
 
 const ServicesSection = () => {
@@ -83,78 +83,93 @@ const ServicesSection = () => {
   };
 
   return (
-    <section id="services" ref={sectionRef} className="py-24 md:py-32 bg-card relative overflow-hidden">
-      <div className="absolute inset-0 glow-accent opacity-30" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
+    <section id="services" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
       
       <div className="container mx-auto px-4 relative">
-        <div className={`text-center mb-16 md:mb-20 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
-            Technologiya Services
+        {/* Header */}
+        <div className={`text-center mb-16 md:mb-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary tracking-widest uppercase mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm">
+            Our Services
           </span>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight font-display">
-            Technologiya Computer Solutions
+            What We <span className="text-primary">Fix</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Professional Technologiya device repair and IT support solutions for all your tech needs.
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            Professional device repair and IT support — fast, reliable, and transparent.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Services Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
           {services.map((service, index) => (
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group p-5 md:p-8 rounded-2xl cursor-pointer bg-card border border-border/30 shadow-sm md:hover:border-primary/40 ${
-                isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-[0.97]'
+              className={`group relative p-5 md:p-8 rounded-2xl cursor-pointer border border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 md:hover:border-primary/30 md:hover:bg-card/80 md:hover:shadow-lg md:hover:shadow-primary/5 md:hover:-translate-y-1 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
               style={{
-                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-                transitionDelay: `${index * 80}ms`,
+                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out, border-color 0.3s, background-color 0.3s, box-shadow 0.3s',
+                transitionDelay: isVisible ? `${index * 80}ms` : '0ms',
               }}
             >
-              <div className="flex items-center gap-4 md:block">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center md:mb-6 flex-shrink-0 transition-colors duration-300 group-hover:bg-primary">
+              {/* Hover glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              <div className="relative flex items-center gap-4 md:block">
+                <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center md:mb-5 flex-shrink-0 transition-all duration-300 group-hover:bg-primary group-hover:shadow-lg group-hover:shadow-primary/20">
                   <service.icon className="w-5 h-5 md:w-6 md:h-6 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                 </div>
                 <div className="flex-1 md:hidden">
                   <h3 className="text-sm font-semibold text-foreground tracking-tight leading-tight">{service.title}</h3>
                 </div>
               </div>
-              <h3 className="hidden md:block text-xl font-semibold text-foreground mb-3 tracking-tight font-display">{service.title}</h3>
-              <p className="hidden md:block text-muted-foreground text-sm leading-relaxed">{service.description}</p>
+              <h3 className="hidden md:block relative text-lg font-semibold text-foreground mb-2.5 tracking-tight font-display">{service.title}</h3>
+              <p className="hidden md:block relative text-muted-foreground text-sm leading-relaxed">{service.description}</p>
+              
+              {/* Arrow indicator on hover */}
+              <div className="hidden md:flex absolute bottom-6 right-6 w-8 h-8 rounded-full bg-primary/10 items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                <ArrowRight className="w-4 h-4 text-primary" />
+              </div>
             </div>
           ))}
         </div>
 
         <p 
-          className={`text-center text-lg md:text-xl text-muted-foreground mt-10 transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`text-center text-base text-muted-foreground mt-10 transition-all duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
           style={{ transitionDelay: '400ms' }}
         >
-          ...and many more Technologiya technical services. Contact us today!
+          ...and many more services. <button onClick={handleBookSlot} className="text-primary hover:underline underline-offset-4 font-medium">Get in touch →</button>
         </p>
 
         {/* CTA Card */}
         <div 
-          className={`mt-16 glass-card p-8 md:p-12 rounded-2xl transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`} 
+          className={`mt-14 relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 backdrop-blur-md p-8 md:p-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} 
           style={{ transitionDelay: '500ms' }}
         >
+          {/* Gradient accent line */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-              <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-                <Calendar className="w-8 h-8 text-primary-foreground" />
+            <div className="flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Calendar className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-2 tracking-tight font-display">Contact Technologiya</h3>
-                <p className="text-muted-foreground">For any type of computer repair, laptop repair, or device troubleshooting</p>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1 tracking-tight font-display">Need Expert Help?</h3>
+                <p className="text-muted-foreground text-sm md:text-base">Computer repair, laptop fixes, or device troubleshooting</p>
               </div>
             </div>
             <Button 
               onClick={handleBookSlot}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-xl font-medium transition-colors duration-300 shadow-lg shadow-primary/30"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8 rounded-xl font-medium transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"
               aria-label="Contact Technologiya for device support"
             >
-              Get Device Support
+              Book a Slot
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
