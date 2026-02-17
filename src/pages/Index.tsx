@@ -38,12 +38,11 @@ export default function Index() {
     }
   };
 
-  // Parallax effect on hero section
+  // Parallax effect on hero section — desktop only (scrub causes jank on mobile)
   useEffect(() => {
-    if (!heroRef.current) return;
+    if (!heroRef.current || isMobile) return;
 
     const ctx = gsap.context(() => {
-      // Text moves up slower (parallax depth)
       if (heroTextRef.current) {
         gsap.to(heroTextRef.current, {
           yPercent: -20,
@@ -57,7 +56,6 @@ export default function Index() {
         });
       }
 
-      // Robot moves up faster
       if (heroRobotRef.current) {
         gsap.to(heroRobotRef.current, {
           yPercent: -35,
@@ -73,7 +71,7 @@ export default function Index() {
     }, heroRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isMobile]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,13 +130,13 @@ export default function Index() {
 
           {/* Right content - 3D Robot on all devices - parallax layer */}
           <div ref={heroRobotRef} className="flex-1 relative h-full min-h-[300px] md:min-h-screen flex items-center justify-center will-change-transform">
-            {/* Glow effect */}
+            {/* Glow effect — static on mobile, blurred on desktop */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div 
                 className="absolute w-[250px] h-[250px] md:w-[600px] md:h-[600px] rounded-full opacity-30"
                 style={{
                   background: 'radial-gradient(circle at center, rgba(200, 200, 200, 0.4) 0%, rgba(180, 180, 180, 0.15) 40%, transparent 70%)',
-                  filter: isMobile ? undefined : 'blur(60px)',
+                  ...(isMobile ? {} : { filter: 'blur(60px)' }),
                 }}
               />
             </div>

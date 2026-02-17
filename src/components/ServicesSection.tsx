@@ -91,7 +91,7 @@ const ServicesSection = () => {
       <div className="container mx-auto px-4 relative">
         {/* Header */}
         <div className={`text-center mb-16 md:mb-20 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary tracking-widest uppercase mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary tracking-widest uppercase mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5">
             Our Services
           </span>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight font-display">
@@ -108,7 +108,7 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group relative p-5 md:p-8 rounded-2xl cursor-pointer border border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 md:hover:border-primary/30 md:hover:bg-card/80 md:hover:shadow-lg md:hover:shadow-primary/5 md:hover:-translate-y-1 ${
+              className={`group relative p-5 md:p-8 rounded-2xl cursor-pointer border border-border/40 bg-card/50 md:backdrop-blur-sm transition-colors duration-300 md:hover:border-primary/30 md:hover:bg-card/80 md:hover:shadow-lg md:hover:shadow-primary/5 md:hover:-translate-y-1 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
               style={{
@@ -147,7 +147,7 @@ const ServicesSection = () => {
 
         {/* CTA Card */}
         <div 
-          className={`mt-14 relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 backdrop-blur-md p-8 md:p-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} 
+          className={`mt-14 relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 md:backdrop-blur-md p-8 md:p-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} 
           style={{ transitionDelay: '500ms' }}
         >
           {/* Gradient accent line */}

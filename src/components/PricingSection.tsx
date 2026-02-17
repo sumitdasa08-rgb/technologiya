@@ -82,7 +82,7 @@ const PricingCard = ({ tier, index, isVisible, onBook }: {
       <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-primary/30 via-primary/10 to-transparent opacity-100" />
     )}
 
-    <div className={`relative h-full rounded-2xl border bg-card/50 backdrop-blur-sm p-8 transition-all duration-300 ${
+    <div className={`relative h-full rounded-2xl border bg-card/50 md:backdrop-blur-sm p-8 transition-colors duration-300 ${
       tier.popular
         ? 'border-primary/30 shadow-lg shadow-primary/5'
         : 'border-border/20 hover:border-border/40'
@@ -142,7 +142,7 @@ const ComparisonTable = ({ isVisible }: { isVisible: boolean }) => (
   <div className={`hidden lg:block max-w-4xl mx-auto transition-all duration-700 ${
     isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
   }`} style={{ transitionDelay: '500ms' }}>
-    <div className="rounded-2xl border border-border/20 bg-card/50 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl border border-border/20 bg-card/50 md:backdrop-blur-sm overflow-hidden">
       <table className="w-full">
         <thead>
           <tr className="border-b border-border/30">

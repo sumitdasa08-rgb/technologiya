@@ -138,7 +138,7 @@ const TestimonialsSection = () => {
       
       <div className="container mx-auto px-4 relative">
         {/* Header */}
-        <div className={`mb-12 md:mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div className={`mb-12 md:mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ transition: 'opacity 0.5s ease-out, transform 0.5s ease-out' }}>
           <div>
             <span className="inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
               Testimonials

@@ -197,7 +197,7 @@ const BookingSection = () => {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary tracking-widest uppercase mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary tracking-widest uppercase mb-6 px-5 py-2.5 rounded-full border border-primary/20 bg-primary/5">
             Book Now
           </span>
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mt-4 mb-6 tracking-tight font-display">
@@ -210,7 +210,7 @@ const BookingSection = () => {
 
         <div className="max-w-md mx-auto">
           <div
-            className={`relative rounded-2xl border border-border/40 bg-card/50 backdrop-blur-md p-7 md:p-8 transition-all duration-700 ${
+            className={`relative rounded-2xl border border-border/40 bg-card/50 md:backdrop-blur-md p-7 md:p-8 transition-all duration-700 ${
               isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-6"
             }`}
             style={{ transitionDelay: '150ms' }}
