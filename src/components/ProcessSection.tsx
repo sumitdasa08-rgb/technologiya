@@ -130,21 +130,30 @@ const ProcessSection = () => {
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
 
-  // Animate road progress via passive scroll listener (no RAF spin-loop)
+  // Animate road progress via passive scroll listener — throttled with rAF
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
 
+    let ticking = false;
     const update = () => {
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
       el.style.setProperty('--road-progress', `${progress * 100}%`);
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
     };
 
     update(); // initial
-    window.addEventListener('scroll', update, { passive: true });
-    return () => window.removeEventListener('scroll', update);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (

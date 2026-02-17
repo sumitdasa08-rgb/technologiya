@@ -52,7 +52,7 @@ const Navbar = () => {
     <nav className="fixed top-2 md:top-3 lg:top-4 left-2 md:left-3 lg:left-4 right-2 md:right-3 lg:right-4 z-[60]">
       <div className={`rounded-xl border transition-colors duration-300 ${
         scrolled 
-          ? "bg-card/90 backdrop-blur-xl border-border/30" 
+          ? "bg-card/95 md:bg-card/90 md:backdrop-blur-xl border-border/30" 
           : "bg-transparent border-transparent"
       }`}>
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">

@@ -172,12 +172,24 @@
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border) / 0.3);
   box-shadow: var(--shadow-sm);
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.glass-card:hover {
-  border-color: hsl(var(--primary) / 0.4);
-  box-shadow: var(--shadow-lg), 0 0 40px -10px hsl(var(--primary) / 0.2);
+@media (min-width: 768px) {
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: var(--shadow-lg), 0 0 40px -10px hsl(var(--primary) / 0.2);
+  }
+}
+
+/* Disable expensive backdrop-filter on mobile for 60fps scrolling */
+@media (max-width: 767px) {
+  .glass,
+  .glass-subtle,
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
 }
 
 .glass-subtle {
