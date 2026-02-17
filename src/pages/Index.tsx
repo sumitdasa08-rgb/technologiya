@@ -14,6 +14,7 @@ import ServicesSection from "@/components/ServicesSection";
 import ProcessSection from "@/components/ProcessSection";
 import FAQSection from "@/components/FAQSection";
 import BookingSection from "@/components/BookingSection";
+import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
@@ -163,6 +164,7 @@ export default function Index() {
       <AboutSection />
       <ServicesSection />
       <ProcessSection />
+      <PricingSection />
       <BookingSection />
       <FAQSection />
       <Footer />
