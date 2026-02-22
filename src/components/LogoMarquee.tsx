@@ -32,7 +32,7 @@ const LogoMarquee = () => {
       const dist = Math.abs(elCenter - centerX);
       const proximity = Math.max(0, 1 - dist / maxDist);
       // Scale from 1.0 to 1.35 at center, opacity from 0.35 to 0.9
-      const scale = 1 + proximity * 0.35;
+      const scale = 1 + proximity * 3.0; // Scale from 1.0 to 4.0 at center (1 + 3.0 = 4.0)
       const opacity = 0.35 + proximity * 0.55;
       el.style.transform = `scale(${scale})`;
       el.style.opacity = `${opacity}`;
