@@ -162,7 +162,7 @@ export default function Index() {
       <AboutSection />
       <ServicesSection />
       <ProcessSection />
-      <PricingSection />
+      
       <BookingSection />
       <FAQSection />
       <Footer />
