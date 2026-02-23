@@ -180,15 +180,10 @@ export default function Index() {
               Technologiya
             </span>
 
-            <h1 className="opacity-0 animate-fade-up delay-100 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight font-display mb-6">
-              <span className="block text-foreground">Transform Your</span>
-              <span className="block text-foreground">Device Problems</span>
-              <span className="block gradient-text">into Solutions.</span>
+            <h1 className="opacity-0 animate-fade-up delay-100 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight font-display mb-8">
+              <span className="block text-foreground">Fix Your Tech.</span>
+              <span className="block gradient-text">Fast & Simple.</span>
             </h1>
-            
-            <p className="opacity-0 animate-fade-up delay-200 text-base md:text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
-              Expert computer repair, laptop repair, and device troubleshooting services. Fast, affordable, and transparent—helping individuals and businesses fix their tech issues.
-            </p>
 
             <div className="opacity-0 animate-fade-up delay-300 flex flex-col sm:flex-row gap-4">
               <Button 
