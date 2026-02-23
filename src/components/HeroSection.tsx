@@ -89,8 +89,8 @@ const HeroSection = () => {
                   className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 px-8 py-5 text-sm font-medium rounded-md"
                   asChild
                 >
-                  <a href="#booking" onClick={scrollToBooking} aria-label="Get Started with Technologiya">
-                    Get Started
+                  <a href="#booking" onClick={scrollToBooking} aria-label="Book now with Technologiya">
+                    Book now
                   </a>
                 </Button>
               </div>
