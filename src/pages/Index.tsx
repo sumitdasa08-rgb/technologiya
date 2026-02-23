@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Spotlight } from "@/components/ui/spotlight";
 import { SplineScene } from '@/components/ui/splite';
 import { Button } from "@/components/ui/button";
@@ -20,15 +20,52 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// SplineScene is now eagerly imported so it loads during the 3s loader screen
-
 gsap.registerPlugin(ScrollTrigger);
+
+const LOADER_DURATION = 3000; // 3 seconds
 
 export default function Index() {
   const isMobile = useIsMobile();
   const heroRef = useRef<HTMLElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
   const heroRobotRef = useRef<HTMLDivElement>(null);
+
+  // Loading state — true on every mount (every navigation to this page)
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  // Lock scroll & show loader for 3s on every mount
+  useEffect(() => {
+    // Scroll to top immediately
+    window.scrollTo(0, 0);
+
+    // Lock scrolling
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.top = '0';
+
+    const timer = setTimeout(() => {
+      setIsFadingOut(true);
+      // After fade animation completes, unlock
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsFadingOut(false);
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+      }, 400); // match fade-out duration
+    }, LOADER_DURATION);
+
+    return () => {
+      clearTimeout(timer);
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, []);
 
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -38,7 +75,7 @@ export default function Index() {
     }
   };
 
-  // Parallax effect on hero section — desktop only (scrub causes jank on mobile)
+  // Parallax effect on hero section — desktop only
   useEffect(() => {
     if (!heroRef.current || isMobile) return;
 
@@ -75,6 +112,54 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Forced Loading Screen — shows on every mount */}
+      {isLoading && (
+        <div
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-background transition-opacity duration-400 ${
+            isFadingOut ? 'opacity-0' : 'opacity-100'
+          }`}
+          style={{ pointerEvents: isFadingOut ? 'none' : 'all' }}
+        >
+          {/* Background orbs */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div
+              className="absolute w-[200px] h-[200px] rounded-full animate-pulse-soft"
+              style={{
+                background: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.15), transparent)',
+                filter: 'blur(60px)',
+                top: '20%',
+                left: '10%',
+              }}
+            />
+            <div
+              className="absolute w-[150px] h-[150px] rounded-full animate-pulse-soft"
+              style={{
+                background: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.12), transparent)',
+                filter: 'blur(60px)',
+                bottom: '30%',
+                right: '15%',
+                animationDelay: '1s',
+              }}
+            />
+          </div>
+
+          {/* Bouncing dots */}
+          <div className="relative z-10 flex items-center gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-muted-foreground/80"
+                style={{
+                  animation: 'dotBounce 0.6s ease-in-out infinite',
+                  animationDelay: `${i * 0.1}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main content — rendered but visually hidden behind loader */}
       <FrameBorder />
       <Navbar />
       <ScrollToTop />
@@ -130,7 +215,7 @@ export default function Index() {
 
           {/* Right content - 3D Robot on all devices - parallax layer */}
           <div ref={heroRobotRef} className="flex-1 relative h-full min-h-[300px] md:min-h-screen flex items-center justify-center will-change-transform">
-            {/* Glow effect — static on mobile, blurred on desktop */}
+            {/* Glow effect */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div 
                 className="absolute w-[250px] h-[250px] md:w-[600px] md:h-[600px] rounded-full opacity-30"
@@ -141,7 +226,7 @@ export default function Index() {
               />
             </div>
 
-            {/* 3D Interactive Robot - all devices */}
+            {/* 3D Interactive Robot */}
             <div className={`w-full relative z-10 ${isMobile ? 'h-[350px]' : 'h-[700px] lg:h-[800px]'}`}>
               <SplineScene 
                 scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"

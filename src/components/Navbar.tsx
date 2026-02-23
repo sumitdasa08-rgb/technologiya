@@ -41,8 +41,17 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
+  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Force full page reload to trigger loading screen
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      window.location.reload();
+    }
+    // If on another page, normal navigation will remount Index
+  };
+
   const navItems = [
-    { name: "Home", href: "/#" },
+    { name: "Home", href: "/" },
     { name: "About Us", href: "/#about" },
     { name: "Services", href: "/#services" },
   ];
@@ -55,7 +64,7 @@ const Navbar = () => {
           : "bg-transparent border-transparent"
       }`}>
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3 group z-10">
+          <a href="/" onClick={handleHomeClick} className="flex items-center gap-3 group z-10">
             <div className="w-10 h-10 rounded-xl bg-card border border-border/30 flex items-center justify-center transition-colors duration-300 group-hover:border-primary/40 group-hover:bg-primary/10">
               <span className="text-foreground font-bold text-lg font-display">T</span>
             </div>
@@ -63,7 +72,12 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center justify-center flex-1 gap-8 lg:gap-10">
             {navItems.map((item) => (
-              <a key={item.name} href={item.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
+              <a 
+                key={item.name} 
+                href={item.href} 
+                onClick={item.name === 'Home' ? handleHomeClick : undefined}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide"
+              >
                 {item.name}
               </a>
             ))}
@@ -103,7 +117,10 @@ const Navbar = () => {
                       key={item.name} 
                       href={item.href} 
                       className="block text-lg text-foreground hover:text-primary transition-colors py-2 font-medium"
-                      onClick={() => setIsOpen(false)}
+                      onClick={(e) => {
+                        setIsOpen(false);
+                        if (item.name === 'Home') handleHomeClick(e);
+                      }}
                     >
                       {item.name}
                     </a>
