@@ -51,7 +51,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-medium hover:bg-primary/90 transition-all duration-300 hover:scale-105 shadow-lg shadow-primary/20"
               >
-                Get Started
+                Book now
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>

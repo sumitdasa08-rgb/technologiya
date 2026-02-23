@@ -197,7 +197,7 @@ export default function Index() {
                 asChild
               >
                 <a href="#booking" onClick={scrollToBooking}>
-                  Get Started
+                  Book now
                 </a>
               </Button>
               <Button 

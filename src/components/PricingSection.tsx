@@ -15,7 +15,7 @@ const pricingTiers = [
       "Driver Updates",
       "Same-day Service",
     ],
-    cta: "Get Started",
+    cta: "Book now",
     popular: false,
   },
   {
@@ -31,7 +31,7 @@ const pricingTiers = [
       "Priority Support",
       "30-day Warranty",
     ],
-    cta: "Get Started",
+    cta: "Book now",
     popular: true,
   },
   {
@@ -48,7 +48,7 @@ const pricingTiers = [
       "90-day Warranty",
       "24/7 Phone Support",
     ],
-    cta: "Get Started",
+    cta: "Book now",
     popular: false,
   },
 ];
