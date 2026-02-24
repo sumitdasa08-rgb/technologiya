@@ -185,7 +185,7 @@ export default function Index() {
               <span className="block gradient-text">Fast & Simple.</span>
             </h1>
 
-            <div className="opacity-0 animate-fade-up delay-300 flex flex-col sm:flex-row gap-4">
+            <div className="opacity-0 animate-fade-up delay-300 flex flex-col sm:flex-row gap-4 mb-16 md:mb-0">
               <Button 
                 size="lg" 
                 className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-300 px-8 py-6 text-base font-medium rounded-xl shadow-lg shadow-primary/20"
@@ -232,7 +232,7 @@ export default function Index() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-[fade-in_1s_ease-out_1s_forwards]" style={{ opacity: 0 }}>
+        <div className="absolute bottom-2 md:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-[fade-in_1s_ease-out_1s_forwards]" style={{ opacity: 0 }}>
           <span className="text-xs text-muted-foreground tracking-wider uppercase">Scroll</span>
           <div className="w-px h-8 bg-gradient-to-b from-muted-foreground to-transparent animate-[fade-in_2s_ease-in-out_infinite_alternate]" />
         </div>
