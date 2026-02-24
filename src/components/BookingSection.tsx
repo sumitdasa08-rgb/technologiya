@@ -9,10 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, ArrowRight, ArrowLeft, IndianRupee, Smartphone, Shield, Clock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, IndianRupee, Smartphone, Shield, Clock, CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ServicePricing {
   id: string;
@@ -48,6 +49,7 @@ const MONTH_NAMES = [
 ];
 
 const BookingSection = () => {
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<BookingStep>("datetime");
   const [formData, setFormData] = useState({
     name: "",
@@ -71,6 +73,7 @@ const BookingSection = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [use24h, setUse24h] = useState(false);
+  const [mobileTimeCollapsed, setMobileTimeCollapsed] = useState(false);
 
   const selectedService = services.find((s) => s.id === selectedServiceId);
 
@@ -377,44 +380,75 @@ const BookingSection = () => {
                 <div className="lg:w-[200px] p-4 md:p-6">
                   {selectedDate ? (
                     <>
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-semibold text-foreground">{formatSelectedDate()}</h4>
-                        <div className="flex items-center rounded-full border border-border/50 overflow-hidden text-xs">
+                      {/* Mobile: collapsed state after time selected */}
+                      {isMobile && selectedTime && mobileTimeCollapsed ? (
+                        <div className="space-y-3">
                           <button
-                            onClick={() => setUse24h(false)}
-                            className={`px-2.5 py-1 transition-colors ${!use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                            onClick={() => setMobileTimeCollapsed(false)}
+                            className="w-full flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5"
                           >
-                            12h
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium text-foreground">
+                                {formatSelectedDate()} · {use24h ? to24h(selectedTime) : selectedTime}
+                              </span>
+                            </div>
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <button
-                            onClick={() => setUse24h(true)}
-                            className={`px-2.5 py-1 transition-colors ${use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                          <Button
+                            size="lg"
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20"
+                            onClick={() => setStep("details")}
                           >
-                            24h
-                          </button>
+                            Continue
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
                         </div>
-                      </div>
-                      <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                        {availableTimeSlots.length === 0 ? (
-                          <p className="text-xs text-muted-foreground text-center py-4">No slots available today</p>
-                        ) : (
-                          availableTimeSlots.map((slot) => (
-                            <button
-                              key={slot}
-                              onClick={() => setSelectedTime(slot)}
-                              className={`
-                                w-full py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200
-                                ${selectedTime === slot
-                                  ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                                  : "border-border/50 text-foreground hover:border-primary/40 hover:bg-secondary/50"
-                                }
-                              `}
-                            >
-                              {use24h ? to24h(slot) : slot}
-                            </button>
-                          ))
-                        )}
-                      </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-sm font-semibold text-foreground">{formatSelectedDate()}</h4>
+                            <div className="flex items-center rounded-full border border-border/50 overflow-hidden text-xs">
+                              <button
+                                onClick={() => setUse24h(false)}
+                                className={`px-2.5 py-1 transition-colors ${!use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                              >
+                                12h
+                              </button>
+                              <button
+                                onClick={() => setUse24h(true)}
+                                className={`px-2.5 py-1 transition-colors ${use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                              >
+                                24h
+                              </button>
+                            </div>
+                          </div>
+                          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
+                            {availableTimeSlots.length === 0 ? (
+                              <p className="text-xs text-muted-foreground text-center py-4">No slots available today</p>
+                            ) : (
+                              availableTimeSlots.map((slot) => (
+                                <button
+                                  key={slot}
+                                  onClick={() => {
+                                    setSelectedTime(slot);
+                                    if (isMobile) setMobileTimeCollapsed(true);
+                                  }}
+                                  className={`
+                                    w-full py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200
+                                    ${selectedTime === slot
+                                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                                      : "border-border/50 text-foreground hover:border-primary/40 hover:bg-secondary/50"
+                                    }
+                                  `}
+                                >
+                                  {use24h ? to24h(slot) : slot}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </>
+                      )}
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
