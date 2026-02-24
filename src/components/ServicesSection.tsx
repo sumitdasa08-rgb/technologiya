@@ -109,11 +109,13 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group flex items-center gap-4 p-4 rounded-xl cursor-pointer border border-border/30 bg-card/40 active:scale-[0.98] ${
+              className={`group flex items-center gap-4 p-4 rounded-xl cursor-pointer border border-border/30 bg-card/40 active:scale-[0.98] will-change-[opacity,transform] ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
               }`}
               style={{
-                transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
+                transitionProperty: 'opacity, transform',
+                transitionDuration: '0.4s',
+                transitionTimingFunction: 'ease-out',
                 transitionDelay: isVisible ? `${index * 60}ms` : '0ms',
               }}
             >
@@ -132,11 +134,13 @@ const ServicesSection = () => {
             <div 
               key={index}
               onClick={() => handleServiceClick(service)}
-              className={`group relative p-8 rounded-2xl cursor-pointer border border-border/40 bg-card/50 transition-colors duration-300 hover:border-primary/30 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 ${
+              className={`group relative p-8 rounded-2xl cursor-pointer border border-border/40 bg-card/50 hover:border-primary/30 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 will-change-[opacity,transform] ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
               style={{
-                transition: 'opacity 0.5s ease-out, transform 0.5s ease-out, border-color 0.3s, background-color 0.3s, box-shadow 0.3s',
+                transitionProperty: 'opacity, transform, border-color, background-color, box-shadow',
+                transitionDuration: isVisible ? '0.5s, 0.5s, 0.3s, 0.3s, 0.3s' : '0.5s',
+                transitionTimingFunction: 'ease-out',
                 transitionDelay: isVisible ? `${index * 80}ms` : '0ms',
               }}
             >

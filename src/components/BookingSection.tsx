@@ -136,10 +136,7 @@ const BookingSection = () => {
     return d < todayStart;
   };
 
-  const isSunday = (day: number) => {
-    return new Date(calYear, calMonth, day).getDay() === 0;
-  };
-
+  // Sundays are now open — no day-of-week restrictions
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
     return selectedDate.getDate() === day && selectedDate.getMonth() === calMonth && selectedDate.getFullYear() === calYear;
@@ -347,10 +344,9 @@ const BookingSection = () => {
                   {/* Day cells */}
                   <div className="grid grid-cols-7 gap-1">
                     {calendarCells.map((day, i) => {
-                      if (day === null) return <div key={`empty-${i}`} />;
+                    if (day === null) return <div key={`empty-${i}`} />;
                       const past = isPastDate(day);
-                      const sunday = isSunday(day);
-                      const disabled = past || sunday;
+                      const disabled = past;
                       const sel = isSelected(day);
                       const todayCell = isToday(day);
 
