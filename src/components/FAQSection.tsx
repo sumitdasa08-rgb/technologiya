@@ -57,6 +57,7 @@ const FAQItem = ({ faq, idx, fromRight = false, activeId, setActiveId }: {
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
         transition: 'opacity 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.4s cubic-bezier(0.4,0,0.2,1)',
         willChange: 'opacity, transform',
+        contain: 'layout style',
       }}
     >
       <button
@@ -83,15 +84,15 @@ const FAQItem = ({ faq, idx, fromRight = false, activeId, setActiveId }: {
           </div>
           
           <div
-            className="overflow-hidden"
+            className="grid"
             style={{
-              maxHeight: isActive ? '160px' : '0px',
-              opacity: isActive ? 1 : 0,
-              marginTop: isActive ? '12px' : '0px',
-              transition: 'max-height 0.3s ease-out, opacity 0.25s ease-out, margin-top 0.3s ease-out',
+              gridTemplateRows: isActive ? '1fr' : '0fr',
+              transition: 'grid-template-rows 0.25s ease-out',
             }}
           >
-            <p className="text-muted-foreground text-sm leading-relaxed pl-11">{faq.answer}</p>
+            <div className="overflow-hidden">
+              <p className={`text-muted-foreground text-sm leading-relaxed pl-11 pt-3 transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-0'}`}>{faq.answer}</p>
+            </div>
           </div>
         </div>
       </button>
