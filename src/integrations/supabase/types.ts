@@ -65,6 +65,36 @@ export type Database = {
         }
         Relationships: []
       }
+      blogs: {
+        Row: {
+          category: string
+          content: string
+          id: string
+          image_url: string | null
+          published_at: string | null
+          source: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          source?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           amount: number
