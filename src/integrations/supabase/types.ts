@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_comments: {
+        Row: {
+          blog_id: string
+          comment: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          blog_id: string
+          comment: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          blog_id?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_comments_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           category: string
@@ -65,6 +97,38 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_reactions: {
+        Row: {
+          blog_id: string
+          created_at: string
+          id: string
+          reaction: string
+          user_fingerprint: string
+        }
+        Insert: {
+          blog_id: string
+          created_at?: string
+          id?: string
+          reaction: string
+          user_fingerprint: string
+        }
+        Update: {
+          blog_id?: string
+          created_at?: string
+          id?: string
+          reaction?: string
+          user_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_reactions_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blogs: {
         Row: {
           category: string
@@ -74,6 +138,7 @@ export type Database = {
           published_at: string | null
           source: string | null
           title: string
+          views: number
         }
         Insert: {
           category: string
@@ -83,6 +148,7 @@ export type Database = {
           published_at?: string | null
           source?: string | null
           title: string
+          views?: number
         }
         Update: {
           category?: string
@@ -92,6 +158,7 @@ export type Database = {
           published_at?: string | null
           source?: string | null
           title?: string
+          views?: number
         }
         Relationships: []
       }
@@ -251,7 +318,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_blog_views: { Args: { p_blog_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

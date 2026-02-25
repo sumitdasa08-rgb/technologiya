@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.generate-tech-blog]
 verify_jwt = false
+
+[functions.increment-blog-views]
+verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false

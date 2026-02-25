@@ -80,7 +80,7 @@ const TechBlogPreview = () => {
             {blogs.slice(0, 6).map((blog, i) => (
               <Link
                 key={blog.id}
-                to={`/blogs/${blog.id}`}
+                to={`/blog/${blog.id}`}
                 className="group block rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/40 animate-fade-in"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
@@ -113,7 +113,7 @@ const TechBlogPreview = () => {
         {blogs && blogs.length > 0 && (
           <div className="flex justify-center mt-10">
             <Button asChild variant="outline" className="group rounded-xl border-border hover:border-primary/50 hover:bg-primary/5">
-              <Link to="/blogs" className="flex items-center gap-2">
+              <Link to="/blog" className="flex items-center gap-2">
                 View All Tech Blogs
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>

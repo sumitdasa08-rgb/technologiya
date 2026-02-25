@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import FrameBorder from "@/components/FrameBorder";
 import Footer from "@/components/Footer";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 
 const CATEGORIES = ["All", "AI", "Software", "Gadgets", "Startups", "Web3"];
 
@@ -26,6 +26,7 @@ interface TechBlog {
   image_url: string | null;
   source: string | null;
   published_at: string;
+  views: number;
 }
 
 export default function TechBlogs() {
@@ -60,8 +61,13 @@ export default function TechBlogs() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Tech Blogs | Technologiya</title>
-        <meta name="description" content="Latest AI-generated tech blogs covering AI, Software, Gadgets, Startups, and Web3." />
+        <title>Tech Blogs — Daily AI & Tech News | Technologiya</title>
+        <meta name="description" content="Get the latest AI, software, gadgets and startup news every day, auto-updated at 6AM." />
+        <link rel="canonical" href="https://technologiya.lovable.app/blog" />
+        <meta property="og:title" content="Tech Blogs — Daily AI & Tech News | Technologiya" />
+        <meta property="og:description" content="Get the latest AI, software, gadgets and startup news every day." />
+        <meta property="og:url" content="https://technologiya.lovable.app/blog" />
+        <meta property="og:type" content="website" />
       </Helmet>
 
       <FrameBorder />
@@ -110,7 +116,7 @@ export default function TechBlogs() {
               {blogs.map((blog) => (
                 <Link
                   key={blog.id}
-                  to={`/blogs/${blog.id}`}
+                  to={`/blog/${blog.id}`}
                   className="group block rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                 >
                   {blog.image_url && (
@@ -134,7 +140,10 @@ export default function TechBlogs() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{getExcerpt(blog.content)}</p>
                     <div className="flex items-center justify-between pt-2 border-t border-border/30 text-xs text-muted-foreground">
                       <span>{formatDate(blog.published_at)}</span>
-                      {blog.source && <span className="truncate max-w-[120px]">via {blog.source}</span>}
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {blog.views.toLocaleString("en-IN")}</span>
+                        {blog.source && <span className="truncate max-w-[100px]">via {blog.source}</span>}
+                      </div>
                     </div>
                   </div>
                 </Link>

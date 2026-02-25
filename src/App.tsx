@@ -7,10 +7,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
- import Track from "./pages/Track";
- import Status from "./pages/Status";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
+import Track from "./pages/Track";
+import Status from "./pages/Status";
 import TechBlogs from "./pages/TechBlogs";
 import TechBlogPost from "./pages/TechBlogPost";
 import GenerateBlog from "./pages/GenerateBlog";
@@ -28,14 +26,14 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-               <Route path="/track" element={<Track />} />
-               <Route path="/status" element={<Status />} />
-               <Route path="/blog" element={<Blog />} />
-               <Route path="/blog/:slug" element={<BlogPost />} />
-               <Route path="/blogs" element={<TechBlogs />} />
-               <Route path="/blogs/:id" element={<TechBlogPost />} />
-               <Route path="/generate" element={<GenerateBlog />} />
-               <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+              <Route path="/track" element={<Track />} />
+              <Route path="/status" element={<Status />} />
+              <Route path="/blog" element={<TechBlogs />} />
+              <Route path="/blog/:id" element={<TechBlogPost />} />
+              <Route path="/blogs" element={<TechBlogs />} />
+              <Route path="/blogs/:id" element={<TechBlogPost />} />
+              <Route path="/generate" element={<GenerateBlog />} />
+              <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
