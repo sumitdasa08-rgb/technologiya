@@ -2,7 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -15,11 +16,11 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Fetch blog posts from blogs table
     const { data: posts } = await supabase
-      .from("blog_posts")
-      .select("slug, created_at, cover_image_url, title")
-      .eq("is_published", true)
-      .order("created_at", { ascending: false });
+      .from("blogs")
+      .select("id, title, published_at, image_url")
+      .order("published_at", { ascending: false });
 
     const baseUrl = "https://technologiya.lovable.app";
     const today = new Date().toISOString().split("T")[0];
@@ -29,6 +30,7 @@ Deno.serve(async (req) => {
       { loc: "/blog", priority: "0.9", changefreq: "daily" },
       { loc: "/track", priority: "0.8", changefreq: "daily" },
       { loc: "/status", priority: "0.7", changefreq: "daily" },
+      { loc: "/terms-and-conditions", priority: "0.5", changefreq: "monthly" },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -36,7 +38,6 @@ Deno.serve(async (req) => {
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 `;
 
-    // Static pages
     for (const page of staticPages) {
       xml += `  <url>
     <loc>${baseUrl}${page.loc}</loc>
@@ -47,19 +48,18 @@ Deno.serve(async (req) => {
 `;
     }
 
-    // Blog posts
     if (posts) {
       for (const post of posts) {
-        const lastmod = new Date(post.created_at).toISOString().split("T")[0];
+        const lastmod = post.published_at ? new Date(post.published_at).toISOString().split("T")[0] : today;
         xml += `  <url>
-    <loc>${baseUrl}/blog/${post.slug}</loc>
+    <loc>${baseUrl}/blog/${post.id}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>`;
-        if (post.cover_image_url) {
+        if (post.image_url) {
           xml += `
     <image:image>
-      <image:loc>${post.cover_image_url}</image:loc>
+      <image:loc>${post.image_url}</image:loc>
       <image:title>${post.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</image:title>
     </image:image>`;
         }
