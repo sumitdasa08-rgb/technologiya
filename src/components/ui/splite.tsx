@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, lazy, useRef, useState, useEffect } from 'react'
+import { Suspense, lazy } from 'react'
 const Spline = lazy(() => import('@splinetool/react-spline'))
 
 interface SplineSceneProps {
@@ -9,46 +9,22 @@ interface SplineSceneProps {
 }
 
 /**
- * Load robot scene once per page load and keep it mounted.
- * No pause/resume re-triggers while scrolling.
+ * Load robot scene immediately on mount and keep it mounted.
+ * No lazy IntersectionObserver gating — starts loading during the
+ * loader screen so the robot is fully visible when the loader fades out.
  */
 export function SplineScene({ scene, className }: SplineSceneProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [hasLoaded, setHasLoaded] = useState(false)
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el || hasLoaded) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasLoaded(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: '200px' }
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [hasLoaded])
-
   return (
-    <div ref={containerRef} className="w-full h-full">
-      {hasLoaded ? (
-        <Suspense
-          fallback={
-            <div className="w-full h-full flex items-center justify-center">
-              <span className="loader"></span>
-            </div>
-          }
-        >
-          <Spline scene={scene} className={className} />
-        </Suspense>
-      ) : (
-        <div className="w-full h-full" />
-      )}
+    <div className="w-full h-full">
+      <Suspense
+        fallback={
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="loader"></span>
+          </div>
+        }
+      >
+        <Spline scene={scene} className={className} />
+      </Suspense>
     </div>
   )
 }

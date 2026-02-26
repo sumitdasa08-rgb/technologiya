@@ -456,9 +456,11 @@
   letter-spacing: -0.03em;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+/* Smooth scrolling — desktop only; native momentum is smoother on mobile */
+@media (min-width: 768px) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Selection color */
