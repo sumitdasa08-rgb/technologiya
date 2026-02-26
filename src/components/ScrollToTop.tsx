@@ -6,14 +6,24 @@ const ScrollToTop = () => {
 
   useEffect(() => {
     if (hash) {
-      // Wait for page render, then scroll to the hash element
-      const timer = setTimeout(() => {
-        const el = document.getElementById(hash.replace("#", ""));
+      const targetId = hash.replace("#", "");
+
+      const scrollToHash = () => {
+        const el = document.getElementById(targetId);
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
         }
-      }, 100);
-      return () => clearTimeout(timer);
+      };
+
+      // If navigating to home with hash, wait for loader to fully unlock body
+      // Loader: 3000ms + 400ms fade = 3400ms body lock, add buffer
+      if (pathname === "/") {
+        const timer = setTimeout(scrollToHash, 3800);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(scrollToHash, 100);
+        return () => clearTimeout(timer);
+      }
     } else {
       window.scrollTo(0, 0);
     }
