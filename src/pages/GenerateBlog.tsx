@@ -19,35 +19,31 @@ export default function GenerateBlog() {
     setResult(null);
 
     try {
-      setStage("Fetching latest tech news...");
-      await new Promise((r) => setTimeout(r, 800));
-
-      setStage("Writing blog with AI...");
+      setStage("Generating blog post...");
 
       const res = await fetch(
-        "https://lwuebemrzpublhrsyjmx.supabase.co/functions/v1/generate-tech-blog",
+        'https://lwuebemrzpublhrsyjmx.supabase.co/functions/v1/generate-tech-blog',
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer f4483fcca2ba2849d410653c29676440b1b1ca2366f40e82fa6b8d874767a3af',
           },
           body: JSON.stringify({}),
         }
       );
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`${res.status}: ${errText}`);
+      const text = await res.text();
+      let generatedResult: any;
+      try {
+        generatedResult = JSON.parse(text);
+      } catch {
+        throw new Error('Raw response: ' + text.substring(0, 300));
       }
 
-      const generatedResult = await res.json();
-      if (generatedResult.success === false) {
-        throw new Error(generatedResult.error || "Unknown error from edge function");
+      if (!res.ok || generatedResult.success === false) {
+        throw new Error(generatedResult.error || 'HTTP ' + res.status);
       }
-
-      setStage("Saving to database...");
-      await new Promise((r) => setTimeout(r, 500));
 
       setResult({
         success: true,
