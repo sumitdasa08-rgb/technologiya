@@ -12,12 +12,15 @@ gsap.registerPlugin(ScrollTrigger);
  */
 const SmoothScrollProvider = () => {
   useEffect(() => {
+    // Disable Lenis on mobile/touch devices — native scroll is smoother
+    const isTouchDevice = window.matchMedia("(max-width: 767px)").matches || "ontouchstart" in window;
+    if (isTouchDevice) return;
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       smoothWheel: true,
-      touchMultiplier: 1.5,
     });
 
     // Sync Lenis scroll position with GSAP ScrollTrigger
