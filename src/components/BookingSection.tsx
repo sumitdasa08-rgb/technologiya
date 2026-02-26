@@ -107,12 +107,20 @@ const BookingSection = () => {
 
   useEffect(() => {
     const fetchServices = async () => {
-      const { data, error } = await supabase
-        .from("service_pricing")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-      if (data && !error) setServices(data);
+      try {
+        const { data, error } = await supabase
+          .from("service_pricing")
+          .select("*")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+        if (error) {
+          console.error("Failed to fetch services:", error);
+          return;
+        }
+        if (data) setServices(data);
+      } catch (err) {
+        console.error("Service fetch error:", err);
+      }
     };
     fetchServices();
   }, []);
