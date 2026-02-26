@@ -24,34 +24,25 @@ export default function GenerateBlog() {
 
       setStage("Writing blog with AI...");
 
-      const { data: { session } } = await supabase.auth.getSession();
-      void session;
-
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-tech-blog`,
+      const res = await fetch(
+        "https://lwuebemrzpublhrsyjmx.supabase.co/functions/v1/generate-tech-blog",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${anonKey}`,
-            "apikey": anonKey,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({}),
         }
       );
 
-      const responseText = await response.text();
-      let generatedResult: any = {};
-
-      try {
-        generatedResult = responseText ? JSON.parse(responseText) : {};
-      } catch {
-        throw new Error(`Invalid JSON response: ${responseText.substring(0, 300)}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`${res.status}: ${errText}`);
       }
 
-      if (!response.ok || generatedResult.success === false) {
+      const generatedResult = await res.json();
+      if (generatedResult.success === false) {
         throw new Error(generatedResult.error || "Unknown error from edge function");
       }
 
