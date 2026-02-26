@@ -16,6 +16,7 @@ import FAQSection from "@/components/FAQSection";
 import BookingSection from "@/components/BookingSection";
 import PricingSection from "@/components/PricingSection";
 
+import TechBlogPreview from "@/components/TechBlogPreview";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
@@ -245,7 +246,7 @@ export default function Index() {
       <ProcessSection />
       
       <BookingSection />
-      
+      <TechBlogPreview />
       <FAQSection />
       <Footer />
     </div>
