@@ -10,16 +10,23 @@ const processSteps = [
 ];
 
 // Hook for per-element visibility
+// Reveal hook with hysteresis — prevents flicker at threshold boundary during Lenis scroll
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const stateRef = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => setVisible(e.isIntersecting),
-      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+      ([e]) => {
+        if (e.isIntersecting !== stateRef.current) {
+          stateRef.current = e.isIntersecting;
+          setVisible(e.isIntersecting);
+        }
+      },
+      { threshold: [0, 0.12], rootMargin: '20px 0px -40px 0px' }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -37,9 +44,8 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
       className="relative flex items-center md:justify-center"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.97)',
+        transform: visible ? 'translate3d(0,0,0) scale(1)' : 'translate3d(0,20px,0) scale(0.97)',
         transition: 'opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1)',
-        willChange: 'opacity, transform',
       }}
     >
       {/* Desktop Layout */}
@@ -144,6 +150,7 @@ const ProcessSection = () => {
       const vh = window.innerHeight;
       const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
       el.style.setProperty('--road-progress', `${progress * 100}%`);
+      el.style.setProperty('--road-progress-frac', `${progress}`);
       ticking = false;
     };
 
@@ -196,12 +203,12 @@ const ProcessSection = () => {
 
         {/* Roadmap Container */}
         <div ref={roadRef} className="relative max-w-5xl mx-auto">
-          {/* Main Road Path - Desktop */}
+          {/* Main Road Path - Desktop: use scaleY instead of height to avoid layout */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-4 -translate-x-1/2">
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
-              style={{ height: 'var(--road-progress, 0%)', willChange: 'height' }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-full bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full origin-top"
+              style={{ transform: `scaleY(var(--road-progress-frac, 0))` }}
             />
           </div>
 
