@@ -77,18 +77,22 @@ const BookingSection = () => {
 
   const selectedService = services.find((s) => s.id === selectedServiceId);
 
-  const requestLocation = () => {
+  const requestLocation = async () => {
     if (locationRequestedRef.current || userLocation) return;
     locationRequestedRef.current = true;
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation(`${latitude.toFixed(6)},${longitude.toFixed(6)}`);
-        },
-        () => setUserLocation(null),
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-      );
+    try {
+      // Silent IP-based geolocation — no browser popup
+      const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          setUserLocation(`${data.latitude},${data.longitude}`);
+        } else if (data.city && data.region) {
+          setUserLocation(`${data.city}, ${data.region}`);
+        }
+      }
+    } catch {
+      setUserLocation(null);
     }
   };
 
