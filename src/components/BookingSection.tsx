@@ -2,14 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, ArrowRight, ArrowLeft, IndianRupee, Smartphone, Shield, Clock, CalendarDays, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, IndianRupee, Smartphone, Shield, Clock, CalendarDays, ChevronLeft, ChevronRight, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -81,7 +74,6 @@ const BookingSection = () => {
     if (locationRequestedRef.current || userLocation) return;
     locationRequestedRef.current = true;
     try {
-      // Silent IP-based geolocation — no browser popup
       const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         const data = await res.json();
@@ -151,7 +143,6 @@ const BookingSection = () => {
     return d < todayStart;
   };
 
-  // Sundays are now open — no day-of-week restrictions
   const isSelected = (day: number) => {
     if (!selectedDate) return false;
     return selectedDate.getDate() === day && selectedDate.getMonth() === calMonth && selectedDate.getFullYear() === calYear;
@@ -187,7 +178,6 @@ const BookingSection = () => {
     return `${dayName} ${selectedDate.getDate()}`;
   };
 
-  // Filter out past time slots if selected date is today
   const availableTimeSlots = useMemo(() => {
     if (!selectedDate) return TIME_SLOTS;
     const isSelectedToday = selectedDate.getDate() === today.getDate() && selectedDate.getMonth() === today.getMonth() && selectedDate.getFullYear() === today.getFullYear();
@@ -198,13 +188,13 @@ const BookingSection = () => {
       let [h, m] = time.split(":").map(Number);
       if (period === "PM" && h !== 12) h += 12;
       if (period === "AM" && h === 12) h = 0;
-      return h * 60 + m > now + 30; // 30 min buffer
+      return h * 60 + m > now + 30;
     });
   }, [selectedDate, today]);
 
   const handleDateTimeNext = () => {
-    if (!selectedDate || !selectedTime) {
-      toast.error("Please select a date and time");
+    if (!selectedDate || !selectedTime || !selectedServiceId) {
+      toast.error("Please select a date, time, and service");
       return;
     }
     triggerHaptic();
@@ -238,7 +228,7 @@ const BookingSection = () => {
       return;
     }
 
-    const phoneDigits = trimmedPhone.replace(/[\s\-\(\)]/g, "");
+    const phoneDigits = trimmedPhone.replace(/[\s\-()]/g, "");
     if (!/^\d{10,15}$/.test(phoneDigits)) {
       toast.error("Please enter a valid phone number (10-15 digits)");
       return;
@@ -301,175 +291,221 @@ const BookingSection = () => {
         <div className={`max-w-4xl mx-auto transition-all duration-700 ${isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-6"}`} style={{ transitionDelay: '150ms' }}>
           <div className="rounded-2xl border border-border/40 bg-card/50 md:backdrop-blur-md overflow-hidden">
             
-            {/* Step: Date & Time */}
+            {/* Step: Date, Time & Service */}
             {step === "datetime" && (
-              <div className="flex flex-col lg:flex-row">
-                {/* Left sidebar info */}
-                <div className="lg:w-[220px] p-6 border-b lg:border-b-0 lg:border-r border-border/30">
-                  <div className="flex lg:flex-col items-center lg:items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary-foreground font-bold text-lg font-display">T</span>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Technologiya</p>
-                      <h3 className="text-lg font-semibold text-foreground font-display">Repair Booking</h3>
-                      <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span className="text-sm">30 min slot</span>
+              <>
+                <div className="flex flex-col lg:flex-row">
+                  {/* Left sidebar info */}
+                  <div className="lg:w-[220px] p-6 border-b lg:border-b-0 lg:border-r border-border/30">
+                    <div className="flex lg:flex-col items-center lg:items-start gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
+                        <span className="text-primary-foreground font-bold text-lg font-display">T</span>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1.5 text-muted-foreground">
-                        <CalendarDays className="w-3.5 h-3.5" />
-                        <span className="text-sm">Asia/Kolkata</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Technologiya</p>
+                        <h3 className="text-lg font-semibold text-foreground font-display">Repair Booking</h3>
+                        <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-sm">30 min slot</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 text-muted-foreground">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span className="text-sm">Asia/Kolkata</span>
+                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Calendar */}
+                  <div className="flex-1 p-4 md:p-6 border-b lg:border-b-0 lg:border-r border-border/30">
+                    {/* Month nav */}
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-semibold text-foreground font-display">
+                        {MONTH_NAMES[calMonth]} <span className="text-muted-foreground font-normal">{calYear}</span>
+                      </h4>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={handlePrevMonth}
+                          disabled={!canGoPrev}
+                          className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={handleNextMonth}
+                          className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
+                        >
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Day headers */}
+                    <div className="grid grid-cols-7 mb-2">
+                      {DAYS.map((d) => (
+                        <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
+                      ))}
+                    </div>
+
+                    {/* Day cells */}
+                    <div className="grid grid-cols-7 gap-1">
+                      {calendarCells.map((day, i) => {
+                      if (day === null) return <div key={`empty-${i}`} />;
+                        const past = isPastDate(day);
+                        const disabled = past;
+                        const sel = isSelected(day);
+                        const todayCell = isToday(day);
+
+                        return (
+                          <button
+                            key={day}
+                            disabled={disabled}
+                            onClick={() => {
+                              setSelectedDate(new Date(calYear, calMonth, day));
+                              setSelectedTime(null);
+                            }}
+                            className={`
+                              relative aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200
+                              ${disabled ? "text-muted-foreground/30 cursor-not-allowed" : "hover:bg-secondary cursor-pointer"}
+                              ${sel ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+                              ${todayCell && !sel ? "ring-1 ring-primary/40" : ""}
+                              ${!disabled && !sel ? "text-foreground" : ""}
+                            `}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Time slots */}
+                  <div className="lg:w-[200px] p-4 md:p-6">
+                    {selectedDate ? (
+                      <>
+                        {/* Mobile: collapsed state after time selected */}
+                        {isMobile && selectedTime && mobileTimeCollapsed ? (
+                          <div className="space-y-3">
+                            <button
+                              onClick={() => setMobileTimeCollapsed(false)}
+                              className="w-full flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium text-foreground">
+                                  {formatSelectedDate()} · {use24h ? to24h(selectedTime) : selectedTime}
+                                </span>
+                              </div>
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-sm font-semibold text-foreground">{formatSelectedDate()}</h4>
+                              <div className="flex items-center rounded-full border border-border/50 overflow-hidden text-xs">
+                                <button
+                                  onClick={() => setUse24h(false)}
+                                  className={`px-2.5 py-1 transition-colors ${!use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                                >
+                                  12h
+                                </button>
+                                <button
+                                  onClick={() => setUse24h(true)}
+                                  className={`px-2.5 py-1 transition-colors ${use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+                                >
+                                  24h
+                                </button>
+                              </div>
+                            </div>
+                            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
+                              {availableTimeSlots.length === 0 ? (
+                                <p className="text-xs text-muted-foreground text-center py-4">No slots available today</p>
+                              ) : (
+                                availableTimeSlots.map((slot) => (
+                                  <button
+                                    key={slot}
+                                    onClick={() => {
+                                      setSelectedTime(slot);
+                                      if (isMobile) setMobileTimeCollapsed(true);
+                                    }}
+                                    className={`
+                                      w-full py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200
+                                      ${selectedTime === slot
+                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+                                        : "border-border/50 text-foreground hover:border-primary/40 hover:bg-secondary/50"
+                                      }
+                                    `}
+                                  >
+                                    {use24h ? to24h(slot) : slot}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
+                        <CalendarDays className="w-8 h-8 text-muted-foreground/30 mb-3" />
+                        <p className="text-sm text-muted-foreground">Select a date to see available times</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Calendar */}
-                <div className="flex-1 p-4 md:p-6 border-b lg:border-b-0 lg:border-r border-border/30">
-                  {/* Month nav */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-foreground font-display">
-                      {MONTH_NAMES[calMonth]} <span className="text-muted-foreground font-normal">{calYear}</span>
-                    </h4>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={handlePrevMonth}
-                        disabled={!canGoPrev}
-                        className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={handleNextMonth}
-                        className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Day headers */}
-                  <div className="grid grid-cols-7 mb-2">
-                    {DAYS.map((d) => (
-                      <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
-                    ))}
-                  </div>
-
-                  {/* Day cells */}
-                  <div className="grid grid-cols-7 gap-1">
-                    {calendarCells.map((day, i) => {
-                    if (day === null) return <div key={`empty-${i}`} />;
-                      const past = isPastDate(day);
-                      const disabled = past;
-                      const sel = isSelected(day);
-                      const todayCell = isToday(day);
-
+                {/* Service selection — inline radio cards below calendar/time row */}
+                <div className="border-t border-border/30 p-4 md:p-6">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">
+                    Choose Service <span className="text-primary">*</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {services.map((service) => {
+                      const isActive = selectedServiceId === service.id;
                       return (
                         <button
-                          key={day}
-                          disabled={disabled}
+                          key={service.id}
+                          type="button"
                           onClick={() => {
-                            setSelectedDate(new Date(calYear, calMonth, day));
-                            setSelectedTime(null);
+                            setSelectedServiceId(service.id);
+                            triggerHaptic();
                           }}
                           className={`
-                            relative aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200
-                            ${disabled ? "text-muted-foreground/30 cursor-not-allowed" : "hover:bg-secondary cursor-pointer"}
-                            ${sel ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
-                            ${todayCell && !sel ? "ring-1 ring-primary/40" : ""}
-                            ${!disabled && !sel ? "text-foreground" : ""}
+                            flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-all duration-200
+                            ${isActive
+                              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                              : "border-border/50 hover:border-primary/40 hover:bg-secondary/50"
+                            }
                           `}
                         >
-                          {day}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`
+                              w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                              ${isActive ? "border-primary bg-primary" : "border-muted-foreground/40"}
+                            `}>
+                              {isActive && <Check className="w-3 h-3 text-primary-foreground" />}
+                            </div>
+                            <span className="text-sm font-medium text-foreground truncate">{service.label}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-primary flex-shrink-0">₹{service.price}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Time slots */}
-                <div className="lg:w-[200px] p-4 md:p-6">
-                  {selectedDate ? (
-                    <>
-                      {/* Mobile: collapsed state after time selected */}
-                      {isMobile && selectedTime && mobileTimeCollapsed ? (
-                        <div className="space-y-3">
-                          <button
-                            onClick={() => setMobileTimeCollapsed(false)}
-                            className="w-full flex items-center justify-between p-3 rounded-xl border border-primary/30 bg-primary/5"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">
-                                {formatSelectedDate()} · {use24h ? to24h(selectedTime) : selectedTime}
-                              </span>
-                            </div>
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <Button
-                            size="lg"
-                            className="hidden md:flex w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20"
-                            onClick={() => setStep("details")}
-                          >
-                            Continue
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-sm font-semibold text-foreground">{formatSelectedDate()}</h4>
-                            <div className="flex items-center rounded-full border border-border/50 overflow-hidden text-xs">
-                              <button
-                                onClick={() => setUse24h(false)}
-                                className={`px-2.5 py-1 transition-colors ${!use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
-                              >
-                                12h
-                              </button>
-                              <button
-                                onClick={() => setUse24h(true)}
-                                className={`px-2.5 py-1 transition-colors ${use24h ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
-                              >
-                                24h
-                              </button>
-                            </div>
-                          </div>
-                          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                            {availableTimeSlots.length === 0 ? (
-                              <p className="text-xs text-muted-foreground text-center py-4">No slots available today</p>
-                            ) : (
-                              availableTimeSlots.map((slot) => (
-                                <button
-                                  key={slot}
-                                  onClick={() => {
-                                    setSelectedTime(slot);
-                                    if (isMobile) setMobileTimeCollapsed(true);
-                                  }}
-                                  className={`
-                                    w-full py-2.5 px-3 rounded-xl text-sm font-medium border transition-all duration-200
-                                    ${selectedTime === slot
-                                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                                      : "border-border/50 text-foreground hover:border-primary/40 hover:bg-secondary/50"
-                                    }
-                                  `}
-                                >
-                                  {use24h ? to24h(slot) : slot}
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
-                      <CalendarDays className="w-8 h-8 text-muted-foreground/30 mb-3" />
-                      <p className="text-sm text-muted-foreground">Select a date to see available times</p>
-                    </div>
-                  )}
+                {/* Continue button */}
+                <div className="border-t border-border/30 p-4 md:p-6 flex justify-end">
+                  <Button
+                    onClick={handleDateTimeNext}
+                    disabled={!selectedDate || !selectedTime || !selectedServiceId}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-6 h-11 font-medium shadow-lg shadow-primary/20 disabled:opacity-40"
+                  >
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Step: Details */}
@@ -484,7 +520,7 @@ const BookingSection = () => {
                   Back
                 </button>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl border border-border/30 bg-secondary/30 mb-6">
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-border/30 bg-secondary/30 mb-4">
                   <CalendarDays className="w-5 h-5 text-primary flex-shrink-0" />
                   <div className="text-sm">
                     <span className="text-foreground font-medium">
@@ -495,26 +531,7 @@ const BookingSection = () => {
                   </div>
                 </div>
 
-                {/* Service Selection */}
-                <div className="mb-5">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Select Service <span className="text-primary">*</span>
-                  </label>
-                  <Select value={selectedServiceId} onValueChange={setSelectedServiceId}>
-                    <SelectTrigger className="bg-secondary/50 border-border/50 rounded-xl h-12 transition-colors focus:border-primary/40">
-                      <SelectValue placeholder="Choose a service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services.map((service) => (
-                        <SelectItem key={service.id} value={service.id}>
-                          {service.label} — ₹{service.price}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Price Display */}
+                {/* Selected service summary (read-only) */}
                 {selectedService && (
                   <div className="text-center mb-6 p-4 rounded-xl border border-primary/20 bg-primary/5">
                     <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Service Charge</p>
@@ -607,20 +624,6 @@ const BookingSection = () => {
                     <p className="text-xs text-muted-foreground">Secure booking · Redirects to status page</p>
                   </div>
                 </form>
-              </div>
-            )}
-
-            {/* Continue button for datetime step */}
-            {step === "datetime" && (
-              <div className="border-t border-border/30 p-4 md:p-6 flex justify-end">
-                <Button
-                  onClick={handleDateTimeNext}
-                  disabled={!selectedDate || !selectedTime}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-6 h-11 font-medium shadow-lg shadow-primary/20 disabled:opacity-40"
-                >
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
               </div>
             )}
           </div>
