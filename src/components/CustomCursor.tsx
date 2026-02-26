@@ -2,12 +2,16 @@ import { useEffect } from "react";
 
 const CustomCursor = () => {
   useEffect(() => {
-    // Only on non-touch desktop devices
-    const isTouchOnly = window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(pointer: fine)").matches;
+    // Skip on touch-only devices
+    const isTouchOnly =
+      window.matchMedia("(pointer: coarse)").matches &&
+      !window.matchMedia("(pointer: fine)").matches;
     if (isTouchOnly) return;
 
     const dot = document.createElement("div");
     const ring = document.createElement("div");
+    dot.className = "custom-cursor-dot";
+    ring.className = "custom-cursor-ring";
 
     const applyColors = () => {
       const isDark = document.documentElement.classList.contains("dark");
@@ -20,7 +24,7 @@ const CustomCursor = () => {
         : "2px solid rgba(0,0,0,0.3)";
     };
 
-    // Dot styles
+    // Use transform for GPU-accelerated positioning
     Object.assign(dot.style, {
       position: "fixed",
       width: "12px",
@@ -28,14 +32,13 @@ const CustomCursor = () => {
       borderRadius: "50%",
       pointerEvents: "none",
       zIndex: "99999",
-      transition: "opacity 0.3s ease, transform 0.08s ease",
-      transform: "translate(-50%, -50%)",
+      top: "0",
+      left: "0",
       opacity: "0",
-      top: "0px",
-      left: "0px",
+      willChange: "transform, opacity",
+      transition: "opacity 0.3s ease",
     });
 
-    // Ring styles
     Object.assign(ring.style, {
       position: "fixed",
       width: "28px",
@@ -43,52 +46,73 @@ const CustomCursor = () => {
       borderRadius: "50%",
       pointerEvents: "none",
       zIndex: "99998",
-      transition: "opacity 0.3s ease, transform 0.12s ease",
-      transform: "translate(-50%, -50%)",
+      top: "0",
+      left: "0",
       opacity: "0",
-      top: "0px",
-      left: "0px",
+      willChange: "transform, opacity",
+      transition: "opacity 0.3s ease",
     });
 
     applyColors();
     document.body.appendChild(dot);
     document.body.appendChild(ring);
 
-    // Hide default cursor on desktop
+    // Hide default cursor
     document.body.style.cursor = "none";
     const styleEl = document.createElement("style");
     styleEl.textContent = `*, *::before, *::after { cursor: none !important; }`;
     document.head.appendChild(styleEl);
 
     let timeout: ReturnType<typeof setTimeout>;
+    let mouseX = 0;
+    let mouseY = 0;
+    let ringX = 0;
+    let ringY = 0;
+    let rafId: number;
+    let visible = false;
 
-    const moveCursor = (x: number, y: number) => {
-      dot.style.left = x + "px";
-      dot.style.top = y + "px";
-      dot.style.opacity = "1";
+    // Use rAF loop for smooth ring trailing — single loop, lightweight
+    const tick = () => {
+      // Lerp ring toward mouse for smooth trailing
+      ringX += (mouseX - ringX) * 0.15;
+      ringY += (mouseY - ringY) * 0.15;
+      ring.style.transform = `translate3d(${ringX - 14}px, ${ringY - 14}px, 0)`;
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
 
-      setTimeout(() => {
-        ring.style.left = x + "px";
-        ring.style.top = y + "px";
+    const onMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      // Dot follows instantly via transform (GPU)
+      dot.style.transform = `translate3d(${mouseX - 6}px, ${mouseY - 6}px, 0)`;
+
+      if (!visible) {
+        dot.style.opacity = "1";
         ring.style.opacity = "1";
-      }, 80);
+        visible = true;
+      }
 
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         dot.style.opacity = "0";
         ring.style.opacity = "0";
+        visible = false;
       }, 1500);
     };
 
-    const onMouseMove = (e: MouseEvent) => moveCursor(e.clientX, e.clientY);
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
 
-    // Watch for theme changes
-    const observer = new MutationObserver(() => applyColors());
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    // Theme observer
+    const observer = new MutationObserver(applyColors);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
+      cancelAnimationFrame(rafId);
       observer.disconnect();
       clearTimeout(timeout);
       dot.remove();
