@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useRocketScroll } from "@/components/RocketScrollAnimation";
 
 const WhyChooseSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -23,11 +24,15 @@ const WhyChooseSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const launchRocket = useRocketScroll();
+
   const scrollToBooking = () => {
-    const bookingSection = document.getElementById('booking');
-    if (bookingSection) {
-      bookingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    launchRocket(() => {
+      const bookingSection = document.getElementById('booking');
+      if (bookingSection) {
+        bookingSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   };
 
   return (

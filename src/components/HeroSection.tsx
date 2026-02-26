@@ -1,25 +1,28 @@
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
+import { useRocketScroll } from "@/components/RocketScrollAnimation";
 
 const HeroSection = () => {
+  const launchRocket = useRocketScroll();
+
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const isMobile = window.innerWidth < 768;
-    
-    if (isMobile) {
-      const mobileHeader = document.getElementById('booking-mobile-header');
-      if (mobileHeader) {
-        const offset = 20;
-        const elementPosition = mobileHeader.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-        return;
+    launchRocket(() => {
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const mobileHeader = document.getElementById('booking-mobile-header');
+        if (mobileHeader) {
+          const offset = 20;
+          const elementPosition = mobileHeader.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+          return;
+        }
       }
-    }
-    
-    const bookingSection = document.getElementById('booking');
-    if (bookingSection) {
-      bookingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+      const bookingSection = document.getElementById('booking');
+      if (bookingSection) {
+        bookingSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   };
 
   return (

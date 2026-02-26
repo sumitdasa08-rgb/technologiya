@@ -1,6 +1,7 @@
 import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, ArrowRight, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useRocketScroll } from "@/components/RocketScrollAnimation";
 
 interface ServiceItem {
   icon: LucideIcon;
@@ -21,6 +22,7 @@ const services: ServiceItem[] = [
 const ServicesSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const launchRocket = useRocketScroll();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -31,26 +33,21 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  const SCROLL_DURATION_MS = 1200;
-
-  const smoothScrollTo = (element: HTMLElement, duration: number = SCROLL_DURATION_MS) => {
-    const targetPosition = element.getBoundingClientRect().top + window.scrollY;
-    const startPosition = window.scrollY;
-    const distance = targetPosition - startPosition;
-    let startTime: number | null = null;
-
-    const easeInOutCubic = (t: number): number =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    const animation = (currentTime: number) => {
-      if (startTime === null) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1);
-      window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
-      if (progress < 1) requestAnimationFrame(animation);
-    };
-
-    requestAnimationFrame(animation);
+  const scrollToBooking = () => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      const mobileHeader = document.getElementById('booking-mobile-header');
+      if (mobileHeader) {
+        const offset = 20;
+        const elementPosition = mobileHeader.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
+        return;
+      }
+    }
+    const bookingSection = document.getElementById("booking");
+    if (bookingSection) {
+      bookingSection.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const triggerHaptic = () => {
@@ -59,27 +56,25 @@ const ServicesSection = () => {
 
   const handleServiceClick = (service: ServiceItem) => {
     triggerHaptic();
-    const bookingSection = document.getElementById("booking");
-    if (bookingSection) {
-      smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
+    launchRocket(() => {
+      scrollToBooking();
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { issue: service.title, message: service.description },
         }));
-      }, SCROLL_DURATION_MS + 100);
-    }
+      }, 800);
+    });
   };
 
   const handleBookSlot = () => {
-    const bookingSection = document.getElementById("booking");
-    if (bookingSection) {
-      smoothScrollTo(bookingSection, SCROLL_DURATION_MS);
+    launchRocket(() => {
+      scrollToBooking();
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { issue: "Consultation", message: "I want to book a slot for computer/mobile software related issue consultation." },
         }));
-      }, SCROLL_DURATION_MS + 100);
-    }
+      }, 800);
+    });
   };
 
   return (
