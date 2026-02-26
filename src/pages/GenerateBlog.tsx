@@ -1,34 +1,45 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import FrameBorder from "@/components/FrameBorder";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
 
 export default function GenerateBlog() {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; title?: string; error?: string } | null>(null);
+  const [stage, setStage] = useState("");
+  const [result, setResult] = useState<{ success: boolean; title?: string; id?: string; error?: string } | null>(null);
+  const navigate = useNavigate();
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setResult(null);
 
     try {
+      setStage("Fetching latest tech news...");
+      await new Promise((r) => setTimeout(r, 800));
+
+      setStage("Writing blog with AI...");
       const { data, error } = await supabase.functions.invoke("generate-tech-blog");
 
-      if (error) throw error;
+      if (error) throw new Error(error.message || JSON.stringify(error));
+
+      setStage("Saving to database...");
+      await new Promise((r) => setTimeout(r, 500));
 
       if (data?.success) {
-        setResult({ success: true, title: data.blog?.title });
+        setResult({ success: true, title: data.blog?.title, id: data.blog?.id });
       } else {
-        setResult({ success: false, error: data?.error || "Unknown error" });
+        setResult({ success: false, error: data?.error || "Unknown error from edge function" });
       }
     } catch (err: any) {
       setResult({ success: false, error: err.message || "Failed to generate blog" });
     } finally {
       setIsGenerating(false);
+      setStage("");
     }
   };
 
@@ -58,32 +69,37 @@ export default function GenerateBlog() {
               </p>
             </div>
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full rounded-xl"
-              size="lg"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Blog Post
-                </>
-              )}
-            </Button>
+            {isGenerating && (
+              <div className="flex items-center justify-center gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-sm font-medium text-primary">{stage}</span>
+              </div>
+            )}
 
-            {result && (
-              <div className={`p-4 rounded-xl text-sm text-left ${
-                result.success
-                  ? "bg-chart-2/10 border border-chart-2/30 text-chart-2"
-                  : "bg-destructive/10 border border-destructive/30 text-destructive"
-              }`}>
-                {result.success ? (
+            {!result && (
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className="w-full rounded-xl"
+                size="lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate Blog Post
+                  </>
+                )}
+              </Button>
+            )}
+
+            {result && result.success && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-chart-2/10 border border-chart-2/30 text-chart-2 text-sm text-left">
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" />
                     <div>
@@ -91,15 +107,48 @@ export default function GenerateBlog() {
                       <p className="mt-1 opacity-80">"{result.title}"</p>
                     </div>
                   </div>
-                ) : (
+                </div>
+                <div className="flex gap-3">
+                  {result.id && (
+                    <Button
+                      onClick={() => navigate(`/blog/${result.id}`)}
+                      className="flex-1 rounded-xl"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      View Blog
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => { setResult(null); }}
+                    className="flex-1 rounded-xl"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Generate Another
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {result && !result.success && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm text-left">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
                     <div>
                       <p className="font-medium">Generation failed</p>
-                      <p className="mt-1 opacity-80">{result.error}</p>
+                      <p className="mt-1 opacity-80 break-all">{result.error}</p>
                     </div>
                   </div>
-                )}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => { setResult(null); }}
+                  className="w-full rounded-xl"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
               </div>
             )}
           </div>
