@@ -28,6 +28,17 @@ const TIME_SLOTS = [
   "6:00 PM", "6:30 PM", "7:00 PM",
 ];
 
+const FALLBACK_SERVICES: ServicePricing[] = [
+  { id: "windows_upgrade", label: "Windows Upgrade", description: null, price: 100, is_active: true, display_order: 1 },
+  { id: "software_repair", label: "Software Repair", description: null, price: 250, is_active: true, display_order: 2 },
+  { id: "sound_issues", label: "Sound Issues", description: null, price: 200, is_active: true, display_order: 3 },
+  { id: "network_setup", label: "Network Setup", description: null, price: 100, is_active: true, display_order: 4 },
+  { id: "virus_removal", label: "Virus Removal", description: null, price: 300, is_active: true, display_order: 5 },
+  { id: "pc_optimization", label: "PC Optimization", description: null, price: 200, is_active: true, display_order: 6 },
+  { id: "data_recovery", label: "Data Recovery", description: null, price: 350, is_active: true, display_order: 7 },
+  { id: "consultation", label: "Consultation", description: null, price: 100, is_active: true, display_order: 8 },
+];
+
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -51,6 +62,8 @@ const BookingSection = () => {
     issue: "",
   });
   const [services, setServices] = useState<ServicePricing[]>([]);
+  const [isServicesLoading, setIsServicesLoading] = useState(true);
+  const [servicesLoadError, setServicesLoadError] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -97,24 +110,33 @@ const BookingSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("service_pricing")
-          .select("*")
-          .eq("is_active", true)
-          .order("display_order", { ascending: true });
-        if (error) {
-          console.error("Failed to fetch services:", error);
-          return;
-        }
-        if (data) setServices(data);
-      } catch (err) {
-        console.error("Service fetch error:", err);
+  const fetchServices = async () => {
+    setIsServicesLoading(true);
+    setServicesLoadError(false);
+
+    try {
+      const { data, error } = await supabase
+        .from("service_pricing")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error || !data || data.length === 0) {
+        throw error || new Error("No services found");
       }
-    };
-    fetchServices();
+
+      setServices(data);
+    } catch (err) {
+      console.error("Failed to fetch services:", err);
+      setServices(FALLBACK_SERVICES);
+      setServicesLoadError(true);
+    } finally {
+      setIsServicesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchServices();
   }, []);
 
   useEffect(() => {
@@ -460,10 +482,29 @@ const BookingSection = () => {
                     Choose Service <span className="text-primary">*</span>
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {services.length === 0 && (
+                    {isServicesLoading && (
                       <p className="text-sm text-muted-foreground col-span-full text-center py-4">Loading services...</p>
                     )}
-                    {services.map((service) => {
+
+                    {!isServicesLoading && servicesLoadError && (
+                      <div className="col-span-full flex flex-col items-center gap-2 py-2">
+                        <p className="text-xs text-muted-foreground">Network issue detected — showing backup service list.</p>
+                        <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
+                          Retry live services
+                        </Button>
+                      </div>
+                    )}
+
+                    {!isServicesLoading && services.length === 0 && (
+                      <div className="col-span-full flex flex-col items-center gap-2 py-4">
+                        <p className="text-sm text-muted-foreground">No services available right now.</p>
+                        <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+
+                    {!isServicesLoading && services.map((service) => {
                       const isActive = selectedServiceId === service.id;
                       return (
                         <button
