@@ -10,53 +10,19 @@ const processSteps = [
 ];
 
 // Hook for per-element visibility
-// Desktop/Tablet reverted to pre-last-change reveal behavior; mobile remains untouched.
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const stateRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
-    const isDesktopOrTablet = window.matchMedia("(min-width: 769px)").matches;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (isDesktopOrTablet) {
-          setVisible(entry.isIntersecting);
-          return;
-        }
-
-        // Mobile behavior unchanged.
-        const ratio = entry.intersectionRatio;
-        const nextVisible = stateRef.current ? ratio > 0.08 : ratio > 0.24;
-
-        if (nextVisible !== stateRef.current) {
-          stateRef.current = nextVisible;
-          if (rafRef.current) cancelAnimationFrame(rafRef.current);
-          rafRef.current = requestAnimationFrame(() => setVisible(nextVisible));
-        }
-      },
-      isDesktopOrTablet
-        ? {
-            threshold: 0.1,
-            rootMargin: "0px 0px -60px 0px",
-          }
-        : {
-            threshold: [0, 0.08, 0.16, 0.24, 0.36],
-            rootMargin: "0px 0px -10% 0px",
-          }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     );
-
-    observer.observe(el);
-
-    return () => {
-      observer.disconnect();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   return { ref, visible };
@@ -71,14 +37,15 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
       className="relative flex items-center md:justify-center"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translate3d(0,0,0) scale(1)' : 'translate3d(0,20px,0) scale(0.97)',
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.97)',
         transition: 'opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1)',
+        willChange: 'opacity, transform',
       }}
     >
       {/* Desktop Layout */}
       <div className={`hidden md:flex items-center w-full ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>
         <div className={`w-[calc(50%-40px)] ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-          <div className="group glass-card p-6 rounded-2xl lg:hover:scale-105 cursor-pointer relative overflow-hidden border-primary/30" style={{ transition: 'transform 0.3s ease-out' }}>
+          <div className="group glass-card p-6 rounded-2xl md:hover:scale-105 cursor-pointer relative overflow-hidden border-primary/30" style={{ transition: 'transform 0.3s ease-out' }}>
             <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-3 px-2 py-1 rounded-full ${
               step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
               step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -166,84 +133,30 @@ const ProcessSection = () => {
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
 
-  // Desktop/Tablet reverted to previous scroll-progress behavior; mobile logic preserved.
+  // Animate road progress via passive scroll listener — throttled with rAF
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
 
-    const isDesktopOrTablet = window.matchMedia("(min-width: 769px)").matches;
-
-    if (isDesktopOrTablet) {
-      const updateProgress = () => {
-        const rect = el.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const elementHeight = rect.height;
-
-        const start = viewportHeight;
-        const end = -elementHeight * 0.5;
-        const raw = (start - rect.top) / Math.max(1, start - end);
-        const progress = Math.min(1, Math.max(0, raw));
-
-        el.style.setProperty('--road-progress', `${progress * 100}%`);
-        el.style.setProperty('--road-progress-frac', `${progress}`);
-      };
-
-      updateProgress();
-      window.addEventListener('scroll', updateProgress, { passive: true });
-      window.addEventListener('resize', updateProgress, { passive: true });
-
-      return () => {
-        window.removeEventListener('scroll', updateProgress);
-        window.removeEventListener('resize', updateProgress);
-      };
-    }
-
-    // Mobile behavior unchanged.
     let ticking = false;
-    const metrics = { start: 0, end: 1 };
-
-    const computeMetrics = () => {
+    const update = () => {
       const rect = el.getBoundingClientRect();
-      const scrollY = window.scrollY || window.pageYOffset;
-      const top = rect.top + scrollY;
-      const height = el.offsetHeight;
       const vh = window.innerHeight;
-
-      metrics.start = top - vh;
-      metrics.end = top + height - vh * 0.5;
-    };
-
-    const updateProgress = () => {
-      const y = window.scrollY || window.pageYOffset;
-      const raw = (y - metrics.start) / Math.max(1, metrics.end - metrics.start);
-      const progress = Math.min(1, Math.max(0, raw));
+      const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
       el.style.setProperty('--road-progress', `${progress * 100}%`);
-      el.style.setProperty('--road-progress-frac', `${progress}`);
       ticking = false;
     };
 
-    const scheduleUpdate = () => {
+    const onScroll = () => {
       if (!ticking) {
-        requestAnimationFrame(updateProgress);
+        requestAnimationFrame(update);
         ticking = true;
       }
     };
 
-    const onResize = () => {
-      computeMetrics();
-      scheduleUpdate();
-    };
-
-    computeMetrics();
-    updateProgress();
-
-    window.addEventListener('scroll', scheduleUpdate, { passive: true });
-    window.addEventListener('resize', onResize, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', scheduleUpdate);
-      window.removeEventListener('resize', onResize);
-    };
+    update(); // initial
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
@@ -283,12 +196,12 @@ const ProcessSection = () => {
 
         {/* Roadmap Container */}
         <div ref={roadRef} className="relative max-w-5xl mx-auto">
-          {/* Main Road Path - Desktop: use scaleY instead of height to avoid layout */}
+          {/* Main Road Path - Desktop */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-4 -translate-x-1/2">
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-full bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full origin-top"
-              style={{ transform: `scaleY(var(--road-progress-frac, 0))` }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
+              style={{ height: 'var(--road-progress, 0%)', willChange: 'height' }}
             />
           </div>
 
@@ -342,7 +255,7 @@ const ProcessSection = () => {
           </p>
           <a 
             href="#booking" 
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium lg:hover:scale-105 transition-transform duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium md:hover:scale-105 transition-transform duration-300"
           >
             let's gooo 
             <span className="text-lg">→</span>
