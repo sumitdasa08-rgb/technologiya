@@ -54,7 +54,7 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
               {step.milestone}
             </div>
             
-            <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2 font-display flex items-center gap-2 justify-end">
+            <h3 className={`text-xl md:text-2xl font-bold text-foreground mb-2 font-display flex items-center gap-2 ${isLeft ? 'justify-end' : 'justify-start'}`}>
               {isLeft ? (
                 <>{step.title}<span className="text-2xl">{step.emoji}</span></>
               ) : (
@@ -86,8 +86,8 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
         <div className="w-[calc(50%-40px)]" />
       </div>
 
-      {/* Mobile Layout */}
-      <div className="md:hidden flex items-start gap-6 pl-4">
+      {/* Mobile Layout — zigzag */}
+      <div className={`md:hidden flex items-start gap-4 ${isLeft ? 'flex-row pl-4' : 'flex-row-reverse pr-4'}`}>
         <div className="relative z-10 flex-shrink-0">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/40"
@@ -101,7 +101,7 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
         </div>
 
         <div className="flex-1 pb-8">
-          <div className="glass-card p-5 rounded-xl" style={{ transition: 'none' }}>
+          <div className={`glass-card p-5 rounded-xl ${isLeft ? 'text-left' : 'text-right'}`} style={{ transition: 'none' }}>
             <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-2 px-2 py-1 rounded-full ${
               step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
               step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -109,9 +109,12 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
             }`}>
               {step.milestone}
             </div>
-            <h3 className="text-lg font-bold text-foreground mb-1 font-display flex items-center gap-2">
-              <span>{step.emoji}</span>
-              {step.title}
+            <h3 className={`text-lg font-bold text-foreground mb-1 font-display flex items-center gap-2 ${isLeft ? 'justify-start' : 'justify-end'}`}>
+              {isLeft ? (
+                <><span>{step.emoji}</span>{step.title}</>
+              ) : (
+                <>{step.title}<span>{step.emoji}</span></>
+              )}
             </h3>
             <p className="text-sm text-muted-foreground mb-2">{step.description}</p>
             <span className="inline-flex text-xs px-2 py-1 rounded-full bg-card border border-border/50 text-muted-foreground">
@@ -202,8 +205,8 @@ const ProcessSection = () => {
             />
           </div>
 
-          {/* Mobile Road Path */}
-          <div className="md:hidden absolute left-8 top-0 bottom-0 w-3">
+          {/* Mobile Road Path — centered */}
+          <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-3">
             <div className="absolute inset-0 bg-card rounded-full border-2 border-border/50" />
             <div 
               className="absolute top-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-primary via-purple-500 to-pink-500 rounded-full"
