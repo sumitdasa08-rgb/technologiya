@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (hash) {
@@ -12,11 +13,14 @@ const ScrollToTop = () => {
         const el = document.getElementById(targetId);
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
+          // Clear the hash from URL after scrolling so refresh starts clean at top
+          setTimeout(() => {
+            navigate(pathname, { replace: true });
+          }, 1000);
         }
       };
 
       // If navigating to home with hash, wait for loader to fully unlock body
-      // Loader: 3000ms + 400ms fade = 3400ms body lock, add buffer
       if (pathname === "/") {
         const timer = setTimeout(scrollToHash, 3800);
         return () => clearTimeout(timer);
@@ -27,7 +31,7 @@ const ScrollToTop = () => {
     } else {
       window.scrollTo(0, 0);
     }
-  }, [pathname, hash]);
+  }, [pathname, hash, navigate]);
 
   return null;
 };
