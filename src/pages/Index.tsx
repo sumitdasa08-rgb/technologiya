@@ -186,7 +186,7 @@ export default function Index() {
         
         <div className="flex min-h-screen flex-col-reverse md:flex-row items-center relative">
           {/* Left content - parallax layer */}
-          <div ref={heroTextRef} className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center will-change-transform">
+          <div ref={heroTextRef} className={`flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center ${isMobile ? '' : 'will-change-transform'}`}>
             <span className="opacity-0 animate-fade-up inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 w-fit">
               🛠️ Technologiya
             </span>
@@ -220,7 +220,7 @@ export default function Index() {
           </div>
 
           {/* Right content - 3D Robot on all devices - parallax layer */}
-          <div ref={heroRobotRef} className="flex-1 relative h-full min-h-[300px] md:min-h-screen flex items-center justify-center will-change-transform">
+          <div ref={heroRobotRef} className={`flex-1 relative h-full min-h-[300px] md:min-h-screen flex items-center justify-center ${isMobile ? '' : 'will-change-transform'}`}>
             {/* Glow effect */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div 
