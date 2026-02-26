@@ -6,17 +6,23 @@ const ScrollToTop = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const lenis = (window as any).__lenis;
+
     if (hash) {
       const targetId = hash.replace("#", "");
 
       const scrollToHash = () => {
         const el = document.getElementById(targetId);
         if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-          // Clear the hash from URL after scrolling so refresh starts clean at top
+          if (lenis) {
+            lenis.scrollTo(el, { duration: 1.5, offset: -20 });
+          } else {
+            el.scrollIntoView({ behavior: "smooth" });
+          }
+          // Clear hash so refresh starts clean at top
           setTimeout(() => {
             navigate(pathname, { replace: true });
-          }, 1000);
+          }, 1500);
         }
       };
 
@@ -29,7 +35,11 @@ const ScrollToTop = () => {
         return () => clearTimeout(timer);
       }
     } else {
-      window.scrollTo(0, 0);
+      if (lenis) {
+        lenis.scrollTo(0, { immediate: true });
+      } else {
+        window.scrollTo(0, 0);
+      }
     }
   }, [pathname, hash, navigate]);
 

@@ -2,6 +2,7 @@ import { Monitor, FileText, Smartphone, Volume2, HardDrive, Settings, Calendar, 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRocketScroll } from "@/components/RocketScrollAnimation";
+import { scrollToBookingSection } from "@/lib/scroll-utils";
 
 interface ServiceItem {
   icon: LucideIcon;
@@ -33,23 +34,6 @@ const ServicesSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  const scrollToBooking = () => {
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
-      const mobileHeader = document.getElementById('booking-mobile-header');
-      if (mobileHeader) {
-        const offset = 20;
-        const elementPosition = mobileHeader.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
-        return;
-      }
-    }
-    const bookingSection = document.getElementById("booking");
-    if (bookingSection) {
-      bookingSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const triggerHaptic = () => {
     if ('vibrate' in navigator) navigator.vibrate(10);
   };
@@ -57,7 +41,7 @@ const ServicesSection = () => {
   const handleServiceClick = (service: ServiceItem) => {
     triggerHaptic();
     launchRocket(() => {
-      scrollToBooking();
+      scrollToBookingSection();
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { issue: service.title, message: service.description },
@@ -68,7 +52,7 @@ const ServicesSection = () => {
 
   const handleBookSlot = () => {
     launchRocket(() => {
-      scrollToBooking();
+      scrollToBookingSection();
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
           detail: { issue: "Consultation", message: "I want to book a slot for computer/mobile software related issue consultation." },
