@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import FrameBorder from "@/components/FrameBorder";
-import ScrollToTop from "@/components/ScrollToTop";
+
 import LogoMarquee from "@/components/LogoMarquee";
 import AboutSection from "@/components/AboutSection";
 import ServicesSection from "@/components/ServicesSection";
@@ -168,7 +168,7 @@ export default function Index() {
       {/* Main content — rendered but visually hidden behind loader */}
       <FrameBorder />
       <Navbar />
-      <ScrollToTop />
+      
 
       {/* Hero Section with parallax */}
       <section ref={heroRef} className="relative min-h-screen overflow-hidden">
