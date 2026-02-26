@@ -6,36 +6,38 @@ import { useCallback } from "react";
  */
 export function useRocketScroll() {
   const launchRocket = useCallback((onComplete?: () => void) => {
-    // 🔊 Rocket launch sound via Web Audio API
+    // 🔊 Woooosh sound via white noise + frequency sweep
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      // Rumble bass
-      const rumble = ctx.createOscillator();
-      const rumbleGain = ctx.createGain();
-      rumble.connect(rumbleGain);
-      rumbleGain.connect(ctx.destination);
-      rumble.frequency.setValueAtTime(80, ctx.currentTime);
-      rumble.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
-      rumble.type = "sawtooth";
-      rumbleGain.gain.setValueAtTime(0.25, ctx.currentTime);
-      rumbleGain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.15);
-      rumbleGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-      rumble.start(ctx.currentTime);
-      rumble.stop(ctx.currentTime + 0.5);
+      const t = ctx.currentTime;
 
-      // Rising whoosh
-      const whoosh = ctx.createOscillator();
-      const whooshGain = ctx.createGain();
-      whoosh.connect(whooshGain);
-      whooshGain.connect(ctx.destination);
-      whoosh.frequency.setValueAtTime(300, ctx.currentTime + 0.1);
-      whoosh.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
-      whoosh.type = "sine";
-      whooshGain.gain.setValueAtTime(0, ctx.currentTime + 0.1);
-      whooshGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.2);
-      whooshGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.55);
-      whoosh.start(ctx.currentTime + 0.1);
-      whoosh.stop(ctx.currentTime + 0.55);
+      // White noise buffer for the "shhhh" texture
+      const bufferSize = ctx.sampleRate * 0.7;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      // Bandpass filter sweeps up for the "wooo → shhhh" feel
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.Q.value = 0.8;
+      filter.frequency.setValueAtTime(400, t);
+      filter.frequency.exponentialRampToValueAtTime(3000, t + 0.35);
+      filter.frequency.exponentialRampToValueAtTime(6000, t + 0.7);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0, t);
+      noiseGain.gain.linearRampToValueAtTime(0.3, t + 0.08);
+      noiseGain.gain.setValueAtTime(0.3, t + 0.2);
+      noiseGain.gain.linearRampToValueAtTime(0, t + 0.7);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+      noise.start(t);
+      noise.stop(t + 0.7);
     } catch (_) { /* audio unsupported */ }
 
     // 📳 Launch-style vibration pattern (rumble → burst → trail)
