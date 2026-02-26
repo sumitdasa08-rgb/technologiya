@@ -183,12 +183,12 @@ export default function Index() {
           {/* Left content - parallax layer */}
           <div ref={heroTextRef} className="flex-1 p-8 md:p-16 lg:pl-24 relative z-10 flex flex-col justify-center will-change-transform">
             <span className="opacity-0 animate-fade-up inline-flex items-center gap-2 text-sm font-medium text-primary tracking-wide uppercase mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 w-fit">
-              Technologiya
+              🛠️ Technologiya
             </span>
 
             <h1 className="opacity-0 animate-fade-up delay-100 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight font-display mb-8">
-              <span className="block text-foreground">Fix Your Tech.</span>
-              <span className="block gradient-text">Fast & Simple.</span>
+              <span className="block text-foreground">Fix Your Tech. 💻</span>
+              <span className="block gradient-text">Fast & Simple. ⚡</span>
             </h1>
 
             <div className="opacity-0 animate-fade-up delay-300 flex flex-col sm:flex-row gap-4 mb-16 md:mb-0">
