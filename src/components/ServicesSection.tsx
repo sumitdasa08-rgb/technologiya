@@ -44,7 +44,7 @@ const ServicesSection = () => {
       scrollToBookingSection();
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent("prefillContact", {
-          detail: { issue: service.title, message: service.description },
+          detail: { issue: service.title, message: service.description, serviceId: service.id },
         }));
       }, 800);
     });
