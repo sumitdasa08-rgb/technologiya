@@ -6,6 +6,43 @@ import { useCallback } from "react";
  */
 export function useRocketScroll() {
   const launchRocket = useCallback((onComplete?: () => void) => {
+    // 🔊 Rocket launch sound via Web Audio API
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Rumble bass
+      const rumble = ctx.createOscillator();
+      const rumbleGain = ctx.createGain();
+      rumble.connect(rumbleGain);
+      rumbleGain.connect(ctx.destination);
+      rumble.frequency.setValueAtTime(80, ctx.currentTime);
+      rumble.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+      rumble.type = "sawtooth";
+      rumbleGain.gain.setValueAtTime(0.25, ctx.currentTime);
+      rumbleGain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.15);
+      rumbleGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+      rumble.start(ctx.currentTime);
+      rumble.stop(ctx.currentTime + 0.5);
+
+      // Rising whoosh
+      const whoosh = ctx.createOscillator();
+      const whooshGain = ctx.createGain();
+      whoosh.connect(whooshGain);
+      whooshGain.connect(ctx.destination);
+      whoosh.frequency.setValueAtTime(300, ctx.currentTime + 0.1);
+      whoosh.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
+      whoosh.type = "sine";
+      whooshGain.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+      whooshGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.2);
+      whooshGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.55);
+      whoosh.start(ctx.currentTime + 0.1);
+      whoosh.stop(ctx.currentTime + 0.55);
+    } catch (_) { /* audio unsupported */ }
+
+    // 📳 Launch-style vibration pattern (rumble → burst → trail)
+    if ("vibrate" in navigator) {
+      navigator.vibrate([50, 30, 80, 30, 150]);
+    }
+
     // Create rocket element
     const rocket = document.createElement("div");
     rocket.innerHTML = "🚀";
