@@ -17,6 +17,7 @@ import BookingSection from "@/components/BookingSection";
 import PricingSection from "@/components/PricingSection";
 
 import { useRocketScroll } from "@/components/RocketScrollAnimation";
+import { scrollToBookingSection } from "@/lib/scroll-utils";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
@@ -82,12 +83,7 @@ export default function Index() {
 
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    launchRocket(() => {
-      const bookingSection = document.getElementById('booking');
-      if (bookingSection) {
-        bookingSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
+    launchRocket(() => scrollToBookingSection());
   };
 
   // Parallax effect on hero section — desktop only
