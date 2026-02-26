@@ -1,49 +1,12 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import FrameBorder from "@/components/FrameBorder";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
-
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-tech-blog`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-async function callGenerateBlog(attempt = 1): Promise<any> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-  try {
-    const res = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": ANON_KEY,
-        "Authorization": `Bearer ${ANON_KEY}`,
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      const errBody = await res.text();
-      throw new Error(`Edge function returned ${res.status}: ${errBody}`);
-    }
-    return await res.json();
-  } catch (err: any) {
-    clearTimeout(timeout);
-    if (attempt < 2 && (err.name === "AbortError" || err.message?.includes("Failed to fetch"))) {
-      // Retry once on timeout/network failure
-      await new Promise((r) => setTimeout(r, 1000));
-      return callGenerateBlog(attempt + 1);
-    }
-    if (err.name === "AbortError") {
-      throw new Error("Request timed out after 30 seconds. Please try again.");
-    }
-    throw err;
-  }
-}
 
 export default function GenerateBlog() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -60,18 +23,48 @@ export default function GenerateBlog() {
       await new Promise((r) => setTimeout(r, 800));
 
       setStage("Writing blog with AI...");
-      const data = await callGenerateBlog();
+
+      const { data: { session } } = await supabase.auth.getSession();
+      void session;
+
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-tech-blog`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${anonKey}`,
+            "apikey": anonKey,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
+      const responseText = await response.text();
+      let generatedResult: any = {};
+
+      try {
+        generatedResult = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(`Invalid JSON response: ${responseText.substring(0, 300)}`);
+      }
+
+      if (!response.ok || generatedResult.success === false) {
+        throw new Error(generatedResult.error || "Unknown error from edge function");
+      }
 
       setStage("Saving to database...");
       await new Promise((r) => setTimeout(r, 500));
 
-      if (data?.success) {
-        setResult({ success: true, title: data.blog?.title, id: data.blog?.id });
-      } else {
-        setResult({ success: false, error: data?.error || "Unknown error from edge function" });
-      }
+      setResult({
+        success: true,
+        title: generatedResult.blog?.title,
+        id: generatedResult.blog?.id,
+      });
     } catch (err: any) {
-      setResult({ success: false, error: err.message || "Failed to generate blog" });
+      setResult({ success: false, error: err?.message || "Failed to generate blog" });
     } finally {
       setIsGenerating(false);
       setStage("");
@@ -171,8 +164,7 @@ export default function GenerateBlog() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
                     <div>
-                      <p className="font-medium">Generation failed</p>
-                      <p className="mt-1 opacity-80 break-all">{result.error}</p>
+                      <p className="font-medium">Error: {result.error}</p>
                     </div>
                   </div>
                 </div>

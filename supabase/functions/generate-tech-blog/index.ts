@@ -18,7 +18,6 @@ async function fetchNewsFromRSS(): Promise<{ headline: string; description: stri
       if (!res.ok) continue;
       const xml = await res.text();
 
-      // Extract first <item> title and description
       const itemMatch = xml.match(/<item[^>]*>([\s\S]*?)<\/item>/);
       if (!itemMatch) continue;
 
@@ -69,9 +68,8 @@ Deno.serve(async (req) => {
     if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not configured");
     if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Step 1: Fetch news — try Mediastack first, fallback to RSS
     let news: { headline: string; description: string; source: string };
     try {
       if (MEDIASTACK_API_KEY) {
@@ -84,28 +82,27 @@ Deno.serve(async (req) => {
       news = await fetchNewsFromRSS();
     }
 
-    // Step 2: Generate blog with Groq
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
+    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
-            role: 'system',
-            content: 'You are an expert tech blogger. Always respond with only valid JSON, no markdown, no backticks, no extra text whatsoever.'
+            role: "system",
+            content: "You are an expert tech blogger. Always respond with only valid JSON, no markdown, no backticks, no extra text whatsoever.",
           },
           {
-            role: 'user',
-            content: `Based on this tech news: Title: "${news.headline}" Description: "${news.description}" — Write a detailed 400-word blog post and return ONLY a raw JSON object with these exact keys: "title" (string), "content" (full blog in plain paragraphs, no markdown), "category" (must be one of: AI, Software, Gadgets, Startups, Web3), "image_url" (use this exact URL: https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800)`
-          }
+            role: "user",
+            content: `Based on this tech news: Title: "${news.headline}" Description: "${news.description}" — Write a detailed 400-word blog post and return ONLY a raw JSON object with these exact keys: "title" (string), "content" (full blog in plain paragraphs, no markdown), "category" (must be one of: AI, Software, Gadgets, Startups, Web3), "image_url" (use this exact URL: https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800)`,
+          },
         ],
         temperature: 0.7,
         max_tokens: 4096,
-      })
+      }),
     });
 
     if (!groqResponse.ok) {
@@ -114,61 +111,71 @@ Deno.serve(async (req) => {
     }
 
     const groqData = await groqResponse.json();
-    const blogText = groqData.choices[0].message.content.trim();
 
-    let blogData: { title: string; content: string; category: string; image_url: string };
+    let blogText = groqData.choices?.[0]?.message?.content?.trim?.() ?? "";
+    blogText = blogText
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+
+    let blog: { title: string; content: string; category: string; image_url?: string };
     try {
-      // Try parsing directly first
-      blogData = JSON.parse(blogText);
+      blog = JSON.parse(blogText);
     } catch {
-      // Try extracting JSON from possible markdown wrapping
-      const jsonMatch = blogText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          blogData = JSON.parse(jsonMatch[0]);
-        } catch {
-          throw new Error(`Failed to parse Groq response as JSON: ${blogText.substring(0, 300)}`);
-        }
-      } else {
-        throw new Error(`Failed to parse Groq response as JSON: ${blogText.substring(0, 300)}`);
-      }
+      throw new Error(`JSON parse failed. Raw response was: ${blogText.substring(0, 300)}`);
+    }
+
+    if (!blog.title || !blog.content || !blog.category) {
+      throw new Error(`Groq response missing required fields. Got keys: ${Object.keys(blog || {}).join(", ")}`);
     }
 
     const validCategories = ["AI", "Software", "Gadgets", "Startups", "Web3"];
-    if (!validCategories.includes(blogData.category)) {
-      blogData.category = "Software";
+    if (!validCategories.includes(blog.category)) {
+      blog.category = "Software";
     }
 
-    // Step 3: Save to Supabase
-    const { data: insertedBlog, error: insertError } = await supabase
+    const { data: insertedBlog, error: insertError } = await supabaseClient
       .from("blogs")
-      .insert({
-        title: blogData.title,
-        content: blogData.content,
-        category: blogData.category,
-        image_url: blogData.image_url || null,
-        source: news.source,
-      })
+      .insert([{
+        title: blog.title,
+        content: blog.content,
+        category: blog.category,
+        image_url: blog.image_url || null,
+        source: news.source || "TechCrunch",
+        published_at: new Date().toISOString(),
+      }])
       .select()
       .single();
 
-    if (insertError) throw new Error(`Supabase insert error: ${insertError.message}`);
+    if (insertError) {
+      throw new Error(`Database insert failed: ${insertError.message}`);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        blog: { id: insertedBlog.id, title: insertedBlog.title, category: insertedBlog.category },
+        blog: {
+          id: insertedBlog.id,
+          title: insertedBlog.title,
+        },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
-  } catch (error) {
-    console.error("generate-tech-blog error:", error);
+  } catch (error: any) {
+    console.error("Edge function error:", error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error?.message || "Unknown error",
+        stack: error?.stack || null,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
