@@ -100,11 +100,11 @@ Deno.serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Based on this tech news: Title: "${news.headline}" Description: "${news.description}" — Write a detailed 600-word blog post and return ONLY a raw JSON object with these exact keys: "title" (string), "content" (full blog in plain paragraphs, no markdown), "category" (must be one of: AI, Software, Gadgets, Startups, Web3), "image_url" (use this exact URL: https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800)`
+            content: `Based on this tech news: Title: "${news.headline}" Description: "${news.description}" — Write a detailed 400-word blog post and return ONLY a raw JSON object with these exact keys: "title" (string), "content" (full blog in plain paragraphs, no markdown), "category" (must be one of: AI, Software, Gadgets, Startups, Web3), "image_url" (use this exact URL: https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800)`
           }
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 4096,
       })
     });
 
@@ -118,9 +118,20 @@ Deno.serve(async (req) => {
 
     let blogData: { title: string; content: string; category: string; image_url: string };
     try {
+      // Try parsing directly first
       blogData = JSON.parse(blogText);
     } catch {
-      throw new Error(`Failed to parse Groq response as JSON: ${blogText}`);
+      // Try extracting JSON from possible markdown wrapping
+      const jsonMatch = blogText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          blogData = JSON.parse(jsonMatch[0]);
+        } catch {
+          throw new Error(`Failed to parse Groq response as JSON: ${blogText.substring(0, 300)}`);
+        }
+      } else {
+        throw new Error(`Failed to parse Groq response as JSON: ${blogText.substring(0, 300)}`);
+      }
     }
 
     const validCategories = ["AI", "Software", "Gadgets", "Startups", "Web3"];
