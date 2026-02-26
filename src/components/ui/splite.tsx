@@ -14,23 +14,28 @@ interface SplineSceneProps {
  */
 export function SplineScene({ scene, className }: SplineSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || hasLoaded) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { rootMargin: '200px' } // preload slightly before entering viewport
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasLoaded(true);
+          observer.disconnect(); // load once, never unmount
+        }
+      },
+      { rootMargin: '200px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [hasLoaded]);
 
   return (
     <div ref={containerRef} className="w-full h-full">
-      {isVisible ? (
+      {hasLoaded ? (
         <Suspense
           fallback={
             <div className="w-full h-full flex items-center justify-center">
