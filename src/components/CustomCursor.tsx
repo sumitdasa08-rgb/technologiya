@@ -1,8 +1,12 @@
 import { useEffect } from "react";
+import gsap from "gsap";
 
+/**
+ * Custom cursor — uses GSAP ticker (shared with Lenis) instead of a
+ * separate rAF loop to reduce frame overhead and eliminate jitter.
+ */
 const CustomCursor = () => {
   useEffect(() => {
-    // Skip on touch-only devices
     const isTouchOnly =
       window.matchMedia("(pointer: coarse)").matches &&
       !window.matchMedia("(pointer: fine)").matches;
@@ -24,7 +28,6 @@ const CustomCursor = () => {
         : "2px solid rgba(0,0,0,0.3)";
     };
 
-    // Use transform for GPU-accelerated positioning
     Object.assign(dot.style, {
       position: "fixed",
       width: "12px",
@@ -57,7 +60,6 @@ const CustomCursor = () => {
     document.body.appendChild(dot);
     document.body.appendChild(ring);
 
-    // Hide default cursor
     document.body.style.cursor = "none";
     const styleEl = document.createElement("style");
     styleEl.textContent = `*, *::before, *::after { cursor: none !important; }`;
@@ -68,23 +70,19 @@ const CustomCursor = () => {
     let mouseY = 0;
     let ringX = 0;
     let ringY = 0;
-    let rafId: number;
     let visible = false;
 
-    // Use rAF loop for smooth ring trailing — single loop, lightweight
-    const tick = () => {
-      // Lerp ring toward mouse for smooth trailing
+    // Use GSAP ticker instead of a separate rAF loop — single shared loop
+    const tickerCallback = () => {
       ringX += (mouseX - ringX) * 0.15;
       ringY += (mouseY - ringY) * 0.15;
       ring.style.transform = `translate3d(${ringX - 14}px, ${ringY - 14}px, 0)`;
-      rafId = requestAnimationFrame(tick);
     };
-    rafId = requestAnimationFrame(tick);
+    gsap.ticker.add(tickerCallback);
 
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      // Dot follows instantly via transform (GPU)
       dot.style.transform = `translate3d(${mouseX - 6}px, ${mouseY - 6}px, 0)`;
 
       if (!visible) {
@@ -103,7 +101,6 @@ const CustomCursor = () => {
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
 
-    // Theme observer
     const observer = new MutationObserver(applyColors);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -112,7 +109,7 @@ const CustomCursor = () => {
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(tickerCallback);
       observer.disconnect();
       clearTimeout(timeout);
       dot.remove();
