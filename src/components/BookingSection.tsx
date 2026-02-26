@@ -397,7 +397,7 @@ const BookingSection = () => {
                           </button>
                           <Button
                             size="lg"
-                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20"
+                            className="hidden md:flex w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20"
                             onClick={() => setStep("details")}
                           >
                             Continue
