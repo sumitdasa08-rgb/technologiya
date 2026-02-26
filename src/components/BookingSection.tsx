@@ -460,6 +460,9 @@ const BookingSection = () => {
                     Choose Service <span className="text-primary">*</span>
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {services.length === 0 && (
+                      <p className="text-sm text-muted-foreground col-span-full text-center py-4">Loading services...</p>
+                    )}
                     {services.map((service) => {
                       const isActive = selectedServiceId === service.id;
                       return (
