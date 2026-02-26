@@ -114,6 +114,7 @@ const BookingSection = () => {
   const fetchServices = async () => {
     setIsServicesLoading(true);
     setServicesLoadError(false);
+    console.log("[Booking] Fetching services from database...");
 
     try {
       const { data, error } = await supabase
@@ -126,9 +127,10 @@ const BookingSection = () => {
         throw error || new Error("No services found");
       }
 
+      console.log(`[Booking] ✅ Loaded ${data.length} services from DB`);
       setServices(data);
     } catch (err) {
-      console.error("Failed to fetch services:", err);
+      console.warn("[Booking] ⚠️ DB fetch failed, using fallback services:", err);
       setServices(FALLBACK_SERVICES);
       setServicesLoadError(false);
     } finally {
@@ -220,6 +222,7 @@ const BookingSection = () => {
       toast.error("Please select a date, time, and service");
       return;
     }
+    console.log(`[Booking] Step 1 → 2 | Date: ${selectedDate.toISOString()} | Time: ${selectedTime} | Service: ${selectedServiceId}`);
     triggerHaptic();
     requestLocation();
     setStep("details");
@@ -258,6 +261,7 @@ const BookingSection = () => {
     }
 
     setIsLoading(true);
+    console.log(`[Booking] Submitting → Name: ${trimmedName} | Phone: ${phoneDigits} | Service: ${selectedServiceId}`);
 
     try {
       const { data: response, error: createError } = await supabase.functions.invoke("create-booking", {
@@ -270,14 +274,19 @@ const BookingSection = () => {
         },
       });
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error("[Booking] ❌ Edge function error:", createError);
+        throw createError;
+      }
       if (!response?.success || !response?.booking) {
+        console.error("[Booking] ❌ Invalid response:", response);
         throw new Error(response?.error || "Failed to create booking");
       }
 
+      console.log(`[Booking] ✅ Booking created: ${response.booking.id} | Ref: ${response.booking.short_ref} | Redirecting to status page...`);
       navigate(`/status?booking_id=${response.booking.id}`);
     } catch (error) {
-      console.error("Booking error:", error);
+      console.error("[Booking] ❌ Submission failed:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create booking";
       toast.error(errorMessage);
     } finally {
