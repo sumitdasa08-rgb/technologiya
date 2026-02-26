@@ -1,6 +1,7 @@
 import { Check, ArrowRight, Shield } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useRocketScroll } from "@/components/RocketScrollAnimation";
 
 const pricingTiers = [
   {
@@ -216,9 +217,13 @@ const PricingSection = () => {
     return () => observer.disconnect();
   }, []);
 
+  const launchRocket = useRocketScroll();
+
   const scrollToBooking = () => {
-    const el = document.getElementById('booking');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    launchRocket(() => {
+      const el = document.getElementById('booking');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    });
   };
 
   return (

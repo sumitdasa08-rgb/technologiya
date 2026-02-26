@@ -17,6 +17,7 @@ import BookingSection from "@/components/BookingSection";
 import PricingSection from "@/components/PricingSection";
 
 import TechBlogPreview from "@/components/TechBlogPreview";
+import { useRocketScroll } from "@/components/RocketScrollAnimation";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import gsap from 'gsap';
@@ -69,12 +70,16 @@ export default function Index() {
     };
   }, []);
 
+  const launchRocket = useRocketScroll();
+
   const scrollToBooking = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const bookingSection = document.getElementById('booking');
-    if (bookingSection) {
-      bookingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    launchRocket(() => {
+      const bookingSection = document.getElementById('booking');
+      if (bookingSection) {
+        bookingSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   };
 
   // Parallax effect on hero section — desktop only
