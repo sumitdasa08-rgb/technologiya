@@ -62,7 +62,8 @@ const CustomCursor = () => {
 
     document.body.style.cursor = "none";
     const styleEl = document.createElement("style");
-    styleEl.textContent = `*, *::before, *::after { cursor: none !important; }`;
+    styleEl.textContent = `*, *::before, *::after { cursor: none !important; }
+    [data-radix-popper-content-wrapper] { z-index: 999999 !important; }`; 
     document.head.appendChild(styleEl);
 
     let timeout: ReturnType<typeof setTimeout>;
