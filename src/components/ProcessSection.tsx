@@ -15,21 +15,36 @@ function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const stateRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting !== stateRef.current) {
-          stateRef.current = e.isIntersecting;
-          setVisible(e.isIntersecting);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Hysteresis to prevent rapid toggle jitter around viewport boundaries.
+        const ratio = entry.intersectionRatio;
+        const nextVisible = stateRef.current ? ratio > 0.08 : ratio > 0.24;
+
+        if (nextVisible !== stateRef.current) {
+          stateRef.current = nextVisible;
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+          rafRef.current = requestAnimationFrame(() => setVisible(nextVisible));
         }
       },
-      { threshold: [0, 0.12], rootMargin: '20px 0px -40px 0px' }
+      {
+        threshold: [0, 0.08, 0.16, 0.24, 0.36],
+        rootMargin: "0px 0px -10% 0px",
+      }
     );
-    obs.observe(el);
-    return () => obs.disconnect();
+
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return { ref, visible };
@@ -51,7 +66,7 @@ const StepCard = ({ step, index, isLeft }: { step: typeof processSteps[0]; index
       {/* Desktop Layout */}
       <div className={`hidden md:flex items-center w-full ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>
         <div className={`w-[calc(50%-40px)] ${isLeft ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-          <div className="group glass-card p-6 rounded-2xl md:hover:scale-105 cursor-pointer relative overflow-hidden border-primary/30" style={{ transition: 'transform 0.3s ease-out' }}>
+          <div className="group glass-card p-6 rounded-2xl lg:hover:scale-105 cursor-pointer relative overflow-hidden border-primary/30" style={{ transition: 'transform 0.3s ease-out' }}>
             <div className={`inline-flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase mb-3 px-2 py-1 rounded-full ${
               step.milestone === 'START' ? 'bg-green-500/20 text-green-400' :
               step.milestone === 'FINISH' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -139,31 +154,56 @@ const ProcessSection = () => {
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
 
-  // Animate road progress via passive scroll listener — throttled with rAF
+  // Animate road progress without layout reads on every scroll frame.
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
 
     let ticking = false;
-    const update = () => {
+    const metrics = { start: 0, end: 1 };
+
+    const computeMetrics = () => {
       const rect = el.getBoundingClientRect();
+      const scrollY = window.scrollY || window.pageYOffset;
+      const top = rect.top + scrollY;
+      const height = el.offsetHeight;
       const vh = window.innerHeight;
-      const progress = Math.min(1, Math.max(0, (vh - rect.top) / (rect.height + vh * 0.5)));
+
+      metrics.start = top - vh;
+      metrics.end = top + height - vh * 0.5;
+    };
+
+    const updateProgress = () => {
+      const y = window.scrollY || window.pageYOffset;
+      const raw = (y - metrics.start) / Math.max(1, metrics.end - metrics.start);
+      const progress = Math.min(1, Math.max(0, raw));
       el.style.setProperty('--road-progress', `${progress * 100}%`);
       el.style.setProperty('--road-progress-frac', `${progress}`);
       ticking = false;
     };
 
-    const onScroll = () => {
+    const scheduleUpdate = () => {
       if (!ticking) {
-        requestAnimationFrame(update);
+        requestAnimationFrame(updateProgress);
         ticking = true;
       }
     };
 
-    update(); // initial
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const onResize = () => {
+      computeMetrics();
+      scheduleUpdate();
+    };
+
+    computeMetrics();
+    updateProgress();
+
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return (
@@ -262,7 +302,7 @@ const ProcessSection = () => {
           </p>
           <a 
             href="#booking" 
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium md:hover:scale-105 transition-transform duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium lg:hover:scale-105 transition-transform duration-300"
           >
             let's gooo 
             <span className="text-lg">→</span>
