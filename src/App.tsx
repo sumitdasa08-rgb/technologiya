@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
-import SmoothScrollProvider from "./components/SmoothScrollProvider";
 import CustomCursor from "./components/CustomCursor";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -25,7 +24,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <CustomCursor />
-            <SmoothScrollProvider />
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Index />} />
