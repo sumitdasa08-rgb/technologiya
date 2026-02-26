@@ -65,6 +65,7 @@ const BookingSection = () => {
   const [isServicesLoading, setIsServicesLoading] = useState(true);
   const [servicesLoadError, setServicesLoadError] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [userLocation, setUserLocation] = useState<string | null>(null);
@@ -476,66 +477,85 @@ const BookingSection = () => {
                   </div>
                 </div>
 
-                {/* Service selection — inline radio cards below calendar/time row */}
+                {/* Service selection — collapsible dropdown */}
                 <div className="border-t border-border/30 p-4 md:p-6">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">
-                    Choose Service <span className="text-primary">*</span>
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {isServicesLoading && (
-                      <p className="text-sm text-muted-foreground col-span-full text-center py-4">Loading services...</p>
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => setServiceDropdownOpen((prev) => !prev)}
+                    className="w-full flex items-center justify-between gap-3 p-3 rounded-xl border border-border/50 hover:border-primary/40 transition-colors duration-200 text-left"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-semibold text-foreground">
+                        {selectedService ? selectedService.label : "Choose Service"}
+                      </span>
+                      {!selectedService && <span className="text-primary text-sm">*</span>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {selectedService && (
+                        <span className="text-sm font-semibold text-primary">₹{selectedService.price}</span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${serviceDropdownOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
 
-                    {!isServicesLoading && servicesLoadError && (
-                      <div className="col-span-full flex flex-col items-center gap-2 py-2">
-                        <p className="text-xs text-muted-foreground">Network issue detected — showing backup service list.</p>
-                        <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
-                          Retry live services
-                        </Button>
-                      </div>
-                    )}
+                  {serviceDropdownOpen && (
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {isServicesLoading && (
+                        <p className="text-sm text-muted-foreground col-span-full text-center py-4">Loading services...</p>
+                      )}
 
-                    {!isServicesLoading && services.length === 0 && (
-                      <div className="col-span-full flex flex-col items-center gap-2 py-4">
-                        <p className="text-sm text-muted-foreground">No services available right now.</p>
-                        <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
-                          Retry
-                        </Button>
-                      </div>
-                    )}
+                      {!isServicesLoading && servicesLoadError && (
+                        <div className="col-span-full flex flex-col items-center gap-2 py-2">
+                          <p className="text-xs text-muted-foreground">Network issue — showing backup list.</p>
+                          <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
+                            Retry
+                          </Button>
+                        </div>
+                      )}
 
-                    {!isServicesLoading && services.map((service) => {
-                      const isActive = selectedServiceId === service.id;
-                      return (
-                        <button
-                          key={service.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedServiceId(service.id);
-                            triggerHaptic();
-                          }}
-                          className={`
-                            flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-all duration-200
-                            ${isActive
-                              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                              : "border-border/50 hover:border-primary/40 hover:bg-secondary/50"
-                            }
-                          `}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={`
-                              w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                              ${isActive ? "border-primary bg-primary" : "border-muted-foreground/40"}
-                            `}>
-                              {isActive && <Check className="w-3 h-3 text-primary-foreground" />}
+                      {!isServicesLoading && services.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center gap-2 py-4">
+                          <p className="text-sm text-muted-foreground">No services available.</p>
+                          <Button type="button" variant="outline" size="sm" onClick={fetchServices}>
+                            Retry
+                          </Button>
+                        </div>
+                      )}
+
+                      {!isServicesLoading && services.map((service) => {
+                        const isActive = selectedServiceId === service.id;
+                        return (
+                          <button
+                            key={service.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedServiceId(service.id);
+                              setServiceDropdownOpen(false);
+                              triggerHaptic();
+                            }}
+                            className={`
+                              flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-colors duration-200
+                              ${isActive
+                                ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                                : "border-border/50 hover:border-primary/40 hover:bg-secondary/50"
+                              }
+                            `}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`
+                                w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                                ${isActive ? "border-primary bg-primary" : "border-muted-foreground/40"}
+                              `}>
+                                {isActive && <Check className="w-3 h-3 text-primary-foreground" />}
+                              </div>
+                              <span className="text-sm font-medium text-foreground truncate">{service.label}</span>
                             </div>
-                            <span className="text-sm font-medium text-foreground truncate">{service.label}</span>
-                          </div>
-                          <span className="text-sm font-semibold text-primary flex-shrink-0">₹{service.price}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                            <span className="text-sm font-semibold text-primary flex-shrink-0">₹{service.price}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Continue button */}
