@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Track from "./pages/Track";
 import Status from "./pages/Status";
+import TechBlogs from "./pages/TechBlogs";
+import TechBlogPost from "./pages/TechBlogPost";
+import GenerateBlog from "./pages/GenerateBlog";
 import TermsAndConditions from "./pages/TermsAndConditions";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/track" element={<Track />} />
               <Route path="/status" element={<Status />} />
+              <Route path="/blog" element={<TechBlogs />} />
+              <Route path="/blogs" element={<TechBlogs />} />
+              <Route path="/blog/:id" element={<TechBlogPost />} />
+              <Route path="/blogs/:id" element={<TechBlogPost />} />
+              <Route path="/generate" element={<GenerateBlog />} />
               <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

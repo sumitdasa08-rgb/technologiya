@@ -84,7 +84,7 @@ const Navbar = () => {
             <Link to="/track" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
               Track Repair
             </Link>
-            <Link to="/blog" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
+            <Link to="/blogs" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
               Blog
             </Link>
           </div>
@@ -129,7 +129,7 @@ const Navbar = () => {
                     <Package className="w-5 h-5" />
                     Track Repair
                   </Link>
-                  <Link to="/blog" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
+                  <Link to="/blogs" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
                     <Newspaper className="w-5 h-5" />
                     Blog
                   </Link>
