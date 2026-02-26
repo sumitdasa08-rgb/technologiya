@@ -10,7 +10,7 @@ const processSteps = [
 ];
 
 // Hook for per-element visibility
-// Reveal hook with hysteresis — prevents flicker at threshold boundary during Lenis scroll
+// Desktop/Tablet reverted to pre-last-change reveal behavior; mobile remains untouched.
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -21,9 +21,16 @@ function useReveal() {
     const el = ref.current;
     if (!el) return;
 
+    const isDesktopOrTablet = window.matchMedia("(min-width: 769px)").matches;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Hysteresis to prevent rapid toggle jitter around viewport boundaries.
+        if (isDesktopOrTablet) {
+          setVisible(entry.isIntersecting);
+          return;
+        }
+
+        // Mobile behavior unchanged.
         const ratio = entry.intersectionRatio;
         const nextVisible = stateRef.current ? ratio > 0.08 : ratio > 0.24;
 
@@ -33,10 +40,15 @@ function useReveal() {
           rafRef.current = requestAnimationFrame(() => setVisible(nextVisible));
         }
       },
-      {
-        threshold: [0, 0.08, 0.16, 0.24, 0.36],
-        rootMargin: "0px 0px -10% 0px",
-      }
+      isDesktopOrTablet
+        ? {
+            threshold: 0.1,
+            rootMargin: "0px 0px -60px 0px",
+          }
+        : {
+            threshold: [0, 0.08, 0.16, 0.24, 0.36],
+            rootMargin: "0px 0px -10% 0px",
+          }
     );
 
     observer.observe(el);
@@ -154,11 +166,39 @@ const ProcessSection = () => {
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
   const roadRef = useRef<HTMLDivElement>(null);
 
-  // Animate road progress without layout reads on every scroll frame.
+  // Desktop/Tablet reverted to previous scroll-progress behavior; mobile logic preserved.
   useEffect(() => {
     const el = roadRef.current;
     if (!el) return;
 
+    const isDesktopOrTablet = window.matchMedia("(min-width: 769px)").matches;
+
+    if (isDesktopOrTablet) {
+      const updateProgress = () => {
+        const rect = el.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const elementHeight = rect.height;
+
+        const start = viewportHeight;
+        const end = -elementHeight * 0.5;
+        const raw = (start - rect.top) / Math.max(1, start - end);
+        const progress = Math.min(1, Math.max(0, raw));
+
+        el.style.setProperty('--road-progress', `${progress * 100}%`);
+        el.style.setProperty('--road-progress-frac', `${progress}`);
+      };
+
+      updateProgress();
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', updateProgress, { passive: true });
+
+      return () => {
+        window.removeEventListener('scroll', updateProgress);
+        window.removeEventListener('resize', updateProgress);
+      };
+    }
+
+    // Mobile behavior unchanged.
     let ticking = false;
     const metrics = { start: 0, end: 1 };
 
