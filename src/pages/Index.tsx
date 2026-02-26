@@ -57,12 +57,14 @@ export default function Index() {
         document.body.style.position = '';
         document.body.style.width = '';
         document.body.style.top = '';
-        // After unlock, scroll to hash if present
+        // After unlock, handle scroll position
         if (window.location.hash) {
           const el = document.getElementById(window.location.hash.replace('#', ''));
           if (el) {
             setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
           }
+        } else {
+          window.scrollTo(0, 0);
         }
       }, 400); // match fade-out duration
     }, LOADER_DURATION);
