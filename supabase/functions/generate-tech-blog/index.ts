@@ -61,12 +61,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
     const MEDIASTACK_API_KEY = Deno.env.get("MEDIASTACK_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -83,36 +80,43 @@ Deno.serve(async (req) => {
       news = await fetchNewsFromRSS();
     }
 
-    // Step 2: Generate blog with Gemini
-    const geminiPrompt = `You are an expert tech blogger. Based on this news: "${news.headline}. ${news.description}", write a detailed blog post of 600 words. Cover what happened, why it matters, and future impact. Return ONLY a valid JSON object with keys: title (string), content (string - use markdown formatting), category (one of: AI, Software, Gadgets, Startups, Web3), image_url (use a relevant free Unsplash image URL like https://images.unsplash.com/photo-... )`;
+    // Step 2: Generate blog with Groq
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert tech blogger. Always respond with only valid JSON, no markdown, no backticks, no extra text whatsoever.'
+          },
+          {
+            role: 'user',
+            content: `Based on this tech news: Title: "${news.headline}" Description: "${news.description}" — Write a detailed 600-word blog post and return ONLY a raw JSON object with these exact keys: "title" (string), "content" (full blog in plain paragraphs, no markdown), "category" (must be one of: AI, Software, Gadgets, Startups, Web3), "image_url" (use this exact URL: https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800)`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      })
+    });
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: geminiPrompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-        }),
-      }
-    );
-
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      throw new Error(`Gemini API error [${geminiRes.status}]: ${errText}`);
+    if (!groqResponse.ok) {
+      const errText = await groqResponse.text();
+      throw new Error(`Groq API error: ${groqResponse.status} — ${errText}`);
     }
 
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error("No content from Gemini API");
+    const groqData = await groqResponse.json();
+    const blogText = groqData.choices[0].message.content.trim();
 
-    const jsonStr = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     let blogData: { title: string; content: string; category: string; image_url: string };
     try {
-      blogData = JSON.parse(jsonStr);
+      blogData = JSON.parse(blogText);
     } catch {
-      throw new Error(`Failed to parse Gemini JSON: ${jsonStr.substring(0, 200)}`);
+      throw new Error(`Failed to parse Groq response as JSON: ${blogText}`);
     }
 
     const validCategories = ["AI", "Software", "Gadgets", "Startups", "Web3"];
