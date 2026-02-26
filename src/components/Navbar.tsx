@@ -1,4 +1,4 @@
-import { Phone, Menu, X, Package, Newspaper } from "lucide-react";
+import { Phone, Menu, X, Package } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
@@ -84,9 +84,6 @@ const Navbar = () => {
             <Link to="/track" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
               Track Repair
             </Link>
-            <Link to="/blogs" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-medium tracking-wide">
-              Blog
-            </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -128,10 +125,6 @@ const Navbar = () => {
                   <Link to="/track" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
                     <Package className="w-5 h-5" />
                     Track Repair
-                  </Link>
-                  <Link to="/blogs" className="flex items-center gap-2 text-lg text-foreground hover:text-primary transition-colors py-2 font-medium" onClick={() => setIsOpen(false)}>
-                    <Newspaper className="w-5 h-5" />
-                    Blog
                   </Link>
                   <div className="pt-4 border-t border-border flex flex-col gap-3">
                     <div className="flex items-center justify-between">
