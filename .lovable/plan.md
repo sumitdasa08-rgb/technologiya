@@ -1,79 +1,63 @@
 
+Goal: remove the unreliable “Choose a service” dropdown and redesign the booking flow so service selection happens in the first step (with date/time), then user moves to details (name/phone/email/issue), then booking/payment flow continues as it does now.
 
-## SEO Ranking Boost Plan
+Implementation approach
 
-This plan focuses on fixing critical SEO issues that are actively hurting your Google rankings and implementing best practices to climb higher in search results.
+1) Restructure step 1 to include service selection
+- File: `src/components/BookingSection.tsx`
+- Keep current multi-step flow (`datetime` → `details`) but move service picking into `datetime`.
+- Add a dedicated “Choose Service” section in the first step UI (below calendar/time area, or as a full-width section under that row so it has enough space for all 8 services).
+- Use a stable inline UI instead of Radix Select:
+  - Preferred: radio-card list (using existing `RadioGroup` / `RadioGroupItem`) with each row/card showing service name + price.
+  - Alternative equivalent: plain button list with selected state.
+- Make each service option clearly clickable and visibly selected.
 
----
+2) Remove dropdown from details step
+- File: `src/components/BookingSection.tsx`
+- Delete the current Select-based block in details step:
+  - `Select`, `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectValue`.
+- Keep service price visible in details step as read-only summary (selected from step 1), so user still sees what they are booking and amount before submit.
 
-### 1. Remove "AI-Generated" Labels (Critical - Google Penalty Risk)
+3) Update validation and navigation gating
+- File: `src/components/BookingSection.tsx`
+- Update `handleDateTimeNext` validation:
+  - Require `selectedDate`, `selectedTime`, and `selectedService`.
+  - Show clear toast message if any missing (e.g. “Please select date, time, and service”).
+- Update “Continue” button disabled state to require all three selections.
+- Keep `handleSubmit` validation as safety check (still validates service before create-booking call).
 
-Google's Helpful Content Update actively demotes sites that label content as AI-generated. Two places currently say this:
+4) Keep backend flow unchanged (no database changes)
+- No backend schema or policy updates required.
+- Existing booking function already securely validates service and computes amount server-side.
+- Existing `service_pricing` data is already present (8 active services), so this is purely a frontend interaction fix.
 
-- **Blog page header**: "AI-generated articles updated daily"
-- **Blog preview section on homepage**: "AI-generated articles about the latest in tech"
+5) Mobile behavior polish
+- Ensure service list in step 1 is mobile-friendly:
+  - vertical stack, adequate touch targets, visible selected state.
+- Preserve current mobile time-collapse behavior, but do not hide service section when time collapses.
+- Ensure user can still select/change service before moving forward.
 
-These will be replaced with authority-building copy like "Expert insights and analysis" and "Curated daily by our tech team."
+6) Clean imports and dead UI references
+- File: `src/components/BookingSection.tsx`
+- Remove Select imports after replacing dropdown UI.
+- Add radio-group import if using `RadioGroup`.
+- Keep `selectedService` computed value and reuse it in summary + button label.
 
----
+Testing plan (end-to-end)
+1. Open booking section.
+2. In step 1, select:
+   - date
+   - time
+   - service (from new radio-card list)
+3. Confirm Continue only enables when all 3 are selected.
+4. Move to details step and verify:
+   - selected date/time summary is correct
+   - selected service and charge are shown correctly
+5. Enter name + phone and submit.
+6. Confirm redirect to status page and booking is created with correct `service_id` and amount.
+7. Repeat on mobile viewport to verify touch selection and step progression.
 
-### 2. Add Structured Data to Blog Listing Page
-
-The `/blog` page is missing JSON-LD structured data. Adding a `CollectionPage` schema will help Google understand and display the blog in search results with rich snippets.
-
----
-
-### 3. Improve Blog Post SEO Meta Tags
-
-Each blog post page (`/blog/:slug`) needs:
-- Canonical URL tag
-- `article:published_time` and `article:section` Open Graph tags
-- Twitter card meta tags
-- Better `BreadcrumbList` structured data for navigation breadcrumbs in search results
-
----
-
-### 4. Add Breadcrumb Navigation to Blog Posts
-
-Google displays breadcrumbs in search results (Home > Blog > Post Title). Adding both visual breadcrumbs and `BreadcrumbList` JSON-LD structured data will improve click-through rates from search.
-
----
-
-### 5. Fix Footer Copyright Year
-
-The footer says "2025" but the current year is 2026. This signals to Google that the site is not maintained.
-
----
-
-### 6. Improve Internal Linking
-
-- Add a "Related Posts" section at the bottom of each blog post (fetch 3 posts from the same category). This keeps users on the site longer (lower bounce rate) and helps Google discover more pages.
-- Ensure the blog preview section on the homepage passes `coverImageUrl` to cards for better visual engagement.
-
----
-
-### 7. Add Missing Route for Terms & Conditions
-
-The sitemap and footer reference `/terms-and-conditions` but there's no route for it in `App.tsx`. This creates 404 errors that hurt SEO. A simple terms page will be added.
-
----
-
-### Technical Details
-
-**Files to modify:**
-- `src/pages/Blog.tsx` - Remove AI labels, add JSON-LD CollectionPage schema
-- `src/pages/BlogPost.tsx` - Add canonical URL, breadcrumbs (visual + JSON-LD), Twitter cards, related posts section
-- `src/components/BlogPreviewSection.tsx` - Remove AI-generated text, pass coverImageUrl
-- `src/components/Footer.tsx` - Fix copyright year to 2026
-- `src/App.tsx` - Add `/terms-and-conditions` route
-
-**New files:**
-- `src/pages/TermsAndConditions.tsx` - Basic terms page
-- `src/components/RelatedPosts.tsx` - Related posts component for blog post pages
-
-**Key changes in blog post structured data:**
-- Add `BreadcrumbList` JSON-LD
-- Add canonical `<link>` tag
-- Add `article:published_time`, `article:section`, `article:tag` OG meta
-- Add Twitter card meta tags
-
+Technical notes
+- This intentionally avoids dropdown/portal layering issues entirely by removing service selection dependence on popper overlays.
+- No change needed in `src/components/ui/select.tsx` for this fix path, because booking flow no longer relies on that component.
+- Scope is focused to `BookingSection.tsx` unless tiny styling helpers are needed.
