@@ -130,7 +130,7 @@ const BookingSection = () => {
     } catch (err) {
       console.error("Failed to fetch services:", err);
       setServices(FALLBACK_SERVICES);
-      setServicesLoadError(true);
+      setServicesLoadError(false);
     } finally {
       setIsServicesLoading(false);
     }
