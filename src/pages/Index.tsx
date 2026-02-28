@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Spotlight } from "@/components/ui/spotlight";
-import { SplineScene } from '@/components/ui/splite';
+import OptimizedSplineScene from '@/components/OptimizedSplineScene';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -20,12 +20,13 @@ import { useRocketScroll } from "@/components/RocketScrollAnimation";
 import { scrollToBookingSection } from "@/lib/scroll-utils";
 import Footer from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDevicePerformance, getQualitySettings } from '@/hooks/use-device-performance';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const LOADER_DURATION = 3000; // 3 seconds
+const LOADER_DURATION = 800; // Reduced to 800ms for smooth, quick transition
 
 export default function Index() {
   const isMobile = useIsMobile();
@@ -87,8 +88,12 @@ export default function Index() {
   };
 
   // Parallax effect on hero section — desktop only
+  const performance = useDevicePerformance();
+  const quality = getQualitySettings(performance);
+
   useEffect(() => {
-    if (!heroRef.current || isMobile) return;
+    // Disable parallax for low-end devices
+    if (!heroRef.current || isMobile || quality.disableParallax) return;
 
     const ctx = gsap.context(() => {
       if (heroTextRef.current) {
@@ -119,7 +124,7 @@ export default function Index() {
     }, heroRef);
 
     return () => ctx.revert();
-  }, [isMobile]);
+  }, [isMobile, quality.disableParallax]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -234,9 +239,10 @@ export default function Index() {
 
             {/* 3D Interactive Robot */}
             <div className={`w-full relative z-10 ${isMobile ? 'h-[350px]' : 'h-[700px] lg:h-[800px]'}`}>
-              <SplineScene 
+              <OptimizedSplineScene
                 scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-                className={`w-full h-full ${isMobile ? 'scale-110' : 'scale-125 lg:scale-150'}`}
+                className={`w-full h-full ${quality.splineScale}`}
+                fallbackImage="/images/robot-fallback.jpg"
               />
             </div>
           </div>

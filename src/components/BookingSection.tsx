@@ -132,7 +132,7 @@ const BookingSection = () => {
     } catch (err) {
       console.warn("[Booking] ⚠️ DB fetch failed, using fallback services:", err);
       setServices(FALLBACK_SERVICES);
-      setServicesLoadError(false);
+      setServicesLoadError(true);
     } finally {
       setIsServicesLoading(false);
     }

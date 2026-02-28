@@ -1,7 +1,7 @@
 'use client'
 
-import { Suspense, lazy } from 'react'
-const Spline = lazy(() => import('@splinetool/react-spline'))
+import { Suspense } from 'react'
+import Spline from '@splinetool/react-spline'
 
 interface SplineSceneProps {
   scene: string
@@ -9,17 +9,17 @@ interface SplineSceneProps {
 }
 
 /**
- * Load robot scene immediately on mount and keep it mounted.
- * No lazy IntersectionObserver gating — starts loading during the
- * loader screen so the robot is fully visible when the loader fades out.
+ * Load robot scene immediately on mount (eager, not lazy).
+ * Spline loads during the loader screen so robot is fully visible
+ * and ready when loader fades out.
  */
 export function SplineScene({ scene, className }: SplineSceneProps) {
   return (
     <div className="w-full h-full">
       <Suspense
         fallback={
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="loader"></span>
+          <div className="w-full h-full flex items-center justify-center bg-background/50">
+            {/* Minimal fallback - should not be visible with eager loading */}
           </div>
         }
       >

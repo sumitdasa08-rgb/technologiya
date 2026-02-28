@@ -3,7 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Development delay for testing loader (set to 0 for production)
-const LOADER_DELAY_MS = 3000; // 3 seconds to preload all content
+const LOADER_DELAY_MS = 800; // 800ms for quick transition
 
 // Fade out loader after delay
 const fadeOutLoader = () => {
