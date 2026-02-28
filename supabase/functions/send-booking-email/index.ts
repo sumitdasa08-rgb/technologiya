@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const SENDER_EMAIL = Deno.env.get("SENDER_EMAIL") || "noreply@technologiya.local";
 
 // Debug: log key format (not the full key)
 console.log("BREVO_API_KEY configured:", BREVO_API_KEY ? `yes (${BREVO_API_KEY.substring(0, 10)}...)` : "no");
+console.log("SENDER_EMAIL:", SENDER_EMAIL);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +24,7 @@ async function sendEmail(to: string, toName: string, subject: string, html: stri
     body: JSON.stringify({
       sender: {
         name: "TechnoLogiya",
-        email: "emailme.sumit.das@gmail.com"  // Must be verified in Brevo
+        email: SENDER_EMAIL
       },
       to: [{ email: to, name: toName }],
       subject,
@@ -200,8 +202,10 @@ serve(async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Email send error:", error);
+    // Sanitize error message to avoid exposing internal details
+    const errorMessage = error?.message?.includes("Brevo") ? "Email service temporarily unavailable" : "Failed to send notification email";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -76,6 +76,7 @@ serve(async (req) => {
   try {
     const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
     const chatId = Deno.env.get("TELEGRAM_CHAT_ID");
+    const upiId = Deno.env.get("UPI_ID") || "upi_id@bank";
 
     if (!botToken || !chatId) {
       console.error("Telegram credentials not configured");
@@ -109,7 +110,7 @@ serve(async (req) => {
 🛠 Service: ${service || "Not specified"}
 🆔 Ref: \`${shortRef}\`
 💰 Amount: ₹${amount}
-${locationLine}💳 UPI: \`sumitdasa99-3@oksbi\`
+${locationLine}💳 UPI: \`${upiId}\`
 
 _Waiting for payment confirmation..._`;
 

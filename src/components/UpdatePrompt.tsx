@@ -5,8 +5,10 @@ const UpdatePrompt = () => {
     // Force a hard refresh bypassing cache
     if (caches) {
       caches.keys().then((names) => {
-        names.forEach((name) => caches.delete(name));
-      });
+        names.forEach((name) => {
+          caches.delete(name).catch((err) => console.error(`Failed to delete cache ${name}:`, err));
+        });
+      }).catch((err) => console.error("Failed to clear caches:", err));
     }
     window.location.reload();
   }, []);

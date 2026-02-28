@@ -10,10 +10,10 @@ const corsHeaders = {
 function isValidWebhookRequest(req: Request): boolean {
   const webhookSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET");
   if (!webhookSecret) {
-    console.warn("TELEGRAM_WEBHOOK_SECRET not configured - webhook validation disabled");
-    return true; // Allow if not configured (for backwards compatibility during migration)
+    console.error("TELEGRAM_WEBHOOK_SECRET not configured - rejecting webhook");
+    throw new Error("Webhook validation disabled due to missing configuration");
   }
-  
+
   const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
   return secretToken === webhookSecret;
 }
