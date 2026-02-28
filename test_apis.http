@@ -1,0 +1,396 @@
+###
+# Technologiya - Local API Testing
+# Use with REST Client extension (VS Code)
+# Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+#
+# Instructions:
+# 1. Install Rest Client extension in VS Code
+# 2. Set the appropriate @baseUrl based on your environment
+# 3. Click "Send Request" above each request
+# 4. View responses in the right panel
+###
+
+### ============================================================================
+### CONFIGURATION - Choose your environment
+### ============================================================================
+
+@localhost = http://localhost:54321
+@production = https://ryehkycxyhdpufigcotc.supabase.co/functions/v1
+@ngrok = https://placeholder.ngrok.io
+@baseUrl = {{localhost}}
+
+# Change @baseUrl above based on where you're testing:
+# - Local: @baseUrl = {{localhost}} (needs supabase start running)
+# - Production: @baseUrl = {{production}} (real endpoints)
+
+### ============================================================================
+### TEST 1: CREATE BOOKING
+### ============================================================================
+
+### 1a. Create a new booking (Standard)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "John Doe",
+  "phone": "+919876543210",
+  "email": "john@example.com",
+  "service_id": "screen-replacement",
+  "location": "Mumbai, India",
+  "booking_date": "2026-03-15",
+  "booking_time": "14:00",
+  "issue": "Cracked display screen on front"
+}
+
+###
+
+### 1b. Create booking without email (should still work)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Jane Smith",
+  "phone": "+918765432109",
+  "service_id": "battery-replacement",
+  "location": "Delhi",
+  "booking_date": "2026-03-16",
+  "booking_time": "10:00",
+  "issue": "Battery drains quickly"
+}
+
+###
+
+### 1c. Test invalid booking (missing required fields) - should fail
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Invalid Test"
+}
+
+###
+
+### ============================================================================
+### TEST 2: GET BOOKING STATUS
+### ============================================================================
+
+### 2a. Get booking by reference (use the short_ref from Test 1)
+GET {{baseUrl}}/get-booking-status?ref=ABC123XY
+
+###
+
+### 2b. Get booking by reference (another example)
+GET {{baseUrl}}/get-booking-status?ref=TEST001
+
+###
+
+### 2c. Rapid-fire requests to test rate limiting
+GET {{baseUrl}}/get-booking-status?ref=ABC123XY
+
+###
+
+GET {{baseUrl}}/get-booking-status?ref=ABC123XY
+
+###
+
+GET {{baseUrl}}/get-booking-status?ref=ABC123XY
+
+###
+
+### ============================================================================
+### TEST 3: SEND BOOKING TELEGRAM NOTIFICATION
+### ============================================================================
+
+### 3a. Send test Telegram notification
+POST {{baseUrl}}/send-booking-telegram
+Content-Type: application/json
+
+{
+  "booking_id": "550e8400-e29b-41d4-a716-446655440000",
+  "customer_name": "Ahmed Hassan",
+  "phone": "+919876543210",
+  "amount": 500,
+  "service": "Screen Replacement",
+  "short_ref": "TEST001",
+  "location": "Mumbai"
+}
+
+###
+
+### 3b. Send Telegram without location (optional field)
+POST {{baseUrl}}/send-booking-telegram
+Content-Type: application/json
+
+{
+  "booking_id": "550e8400-e29b-41d4-a716-446655440001",
+  "customer_name": "Test User 2",
+  "phone": "+918765432109",
+  "amount": 800,
+  "service": "Battery Replacement",
+  "short_ref": "TEST002"
+}
+
+###
+
+### 3c. Test missing required fields - should fail
+POST {{baseUrl}}/send-booking-telegram
+Content-Type: application/json
+
+{
+  "customer_name": "Invalid"
+}
+
+###
+
+### ============================================================================
+### TEST 4: SEND BOOKING EMAIL NOTIFICATION
+### ============================================================================
+
+### 4a. Send payment confirmation email
+POST {{baseUrl}}/send-booking-email
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "customer_name": "Ahmed Hassan",
+  "short_ref": "TEST001",
+  "event_type": "payment_confirmed",
+  "amount": 500
+}
+
+###
+
+### 4b. Send repair status update email
+POST {{baseUrl}}/send-booking-email
+Content-Type: application/json
+
+{
+  "email": "customer@example.com",
+  "customer_name": "Ahmed Hassan",
+  "short_ref": "TEST001",
+  "event_type": "status_update",
+  "repair_status": "technician_fixing"
+}
+
+###
+
+### 4c. Send without email (should skip gracefully)
+POST {{baseUrl}}/send-booking-email
+Content-Type: application/json
+
+{
+  "customer_name": "No Email User",
+  "short_ref": "TEST002",
+  "event_type": "payment_confirmed",
+  "amount": 800
+}
+
+###
+
+### ============================================================================
+### TEST 5: TELEGRAM WEBHOOK (Setup & Testing)
+### ============================================================================
+
+### 5a. Setup Telegram Webhook (requires valid webhook URL)
+POST {{baseUrl}}/setup-telegram-webhook
+Content-Type: application/json
+
+{
+  "webhook_url": "https://your-ngrok-url.ngrok.io/functions/v1/telegram-webhook"
+}
+
+###
+
+### 5b. Simulate Telegram webhook callback (payment received)
+POST {{baseUrl}}/telegram-webhook
+Content-Type: application/json
+x-telegram-bot-api-secret-token: your_webhook_secret_here
+
+{
+  "update_id": 123456789,
+  "callback_query": {
+    "id": "callback_query_id_123",
+    "from": {
+      "id": 123456789,
+      "is_bot": false,
+      "first_name": "Admin"
+    },
+    "chat_instance": "1234567890",
+    "data": "py:TEST001"
+  }
+}
+
+###
+
+### 5c. Simulate webhook with invalid secret (should fail)
+POST {{baseUrl}}/telegram-webhook
+Content-Type: application/json
+x-telegram-bot-api-secret-token: wrong_secret
+
+{
+  "update_id": 123456790,
+  "callback_query": {
+    "id": "callback_query_id_124",
+    "from": { "id": 123456789 },
+    "data": "py:TEST002"
+  }
+}
+
+###
+
+### ============================================================================
+### TEST 6: OPTIONS/CORS REQUESTS
+### ============================================================================
+
+### 6a. Test CORS preflight (should return 200 OK)
+OPTIONS {{baseUrl}}/create-booking
+
+###
+
+### 6b. Test CORS with all headers
+OPTIONS {{baseUrl}}/send-booking-telegram
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type
+
+###
+
+### ============================================================================
+### TEST 7: EDGE CASES & ERROR HANDLING
+### ============================================================================
+
+### 7a. Invalid phone number format
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Test",
+  "phone": "invalid",
+  "email": "test@example.com",
+  "service_id": "screen",
+  "location": "Test",
+  "booking_date": "2026-03-15",
+  "booking_time": "14:00",
+  "issue": "Test"
+}
+
+###
+
+### 7b. Invalid email format
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Test",
+  "phone": "+919876543210",
+  "email": "invalid-email",
+  "service_id": "screen",
+  "location": "Test",
+  "booking_date": "2026-03-15",
+  "booking_time": "14:00",
+  "issue": "Test"
+}
+
+###
+
+### 7c. Past booking date (should fail validation)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Test",
+  "phone": "+919876543210",
+  "email": "test@example.com",
+  "service_id": "screen",
+  "location": "Test",
+  "booking_date": "2020-01-01",
+  "booking_time": "14:00",
+  "issue": "Test"
+}
+
+###
+
+### ============================================================================
+### TEST 8: DATABASE STATUS CHECK
+### ============================================================================
+
+### 8a. Check if services exist (use get-booking-status as surrogate)
+GET {{baseUrl}}/get-booking-status?ref=MISSING
+
+###
+
+### ============================================================================
+### TEST 9: PERFORMANCE & LOAD TESTING
+### ============================================================================
+
+### 9a. Create booking (test 1)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Load Test 1",
+  "phone": "+919876543210",
+  "email": "load1@example.com",
+  "service_id": "screen",
+  "location": "Test",
+  "booking_date": "2026-03-15",
+  "booking_time": "14:00",
+  "issue": "Test"
+}
+
+###
+
+### 9b. Create booking (test 2)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Load Test 2",
+  "phone": "+919876543210",
+  "email": "load2@example.com",
+  "service_id": "battery",
+  "location": "Test",
+  "booking_date": "2026-03-16",
+  "booking_time": "15:00",
+  "issue": "Test"
+}
+
+###
+
+### 9c. Create booking (test 3)
+POST {{baseUrl}}/create-booking
+Content-Type: application/json
+
+{
+  "customer_name": "Load Test 3",
+  "phone": "+919876543210",
+  "email": "load3@example.com",
+  "service_id": "motherboard",
+  "location": "Test",
+  "booking_date": "2026-03-17",
+  "booking_time": "16:00",
+  "issue": "Test"
+}
+
+###
+
+### ============================================================================
+### NOTES
+### ============================================================================
+
+# Monitor response times and status codes:
+# - 200: Success
+# - 400: Bad request (validate input)
+# - 404: Endpoint not found (check function name)
+# - 500: Server error (check logs)
+# - 429: Rate limited (wait before retrying)
+
+# To change environment:
+# 1. Find the line: @baseUrl = {{localhost}}
+# 2. Replace {{localhost}} with {{production}} or {{ngrok}}
+# 3. All requests will now use that URL
+
+# Check supabase logs for real-time debugging:
+# supabase functions list (show deployed functions)
+# supabase logs (real-time logs)
+
+### ============================================================================
